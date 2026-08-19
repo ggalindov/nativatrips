@@ -34,6 +34,7 @@ build/
 
 ### Entorno local ###
 .env
+.env.example
 
 ### Documentos de analisis (no son codigo del backend) ###
 NativaTrips_Matriz_Requerimientos_v2.xlsx
