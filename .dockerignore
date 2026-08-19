@@ -1,0 +1,8 @@
+target/
+.git/
+.idea/
+*.iml
+.env
+.mvn/wrapper/maven-wrapper.jar
+*.md
+NativaTrips_Matriz_Requerimientos_v2.xlsx
