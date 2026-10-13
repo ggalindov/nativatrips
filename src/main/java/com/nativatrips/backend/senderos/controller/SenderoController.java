@@ -1,11 +1,15 @@
 package com.nativatrips.backend.senderos.controller;
 
+import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
+import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.senderos.dto.SenderoRequest;
 import com.nativatrips.backend.senderos.dto.SenderoResponse;
 import com.nativatrips.backend.senderos.service.SenderoService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -22,9 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SenderoController {
 
     private final SenderoService senderoService;
+    private final ReservaService reservaService;
 
-    public SenderoController(SenderoService senderoService) {
+    public SenderoController(SenderoService senderoService, ReservaService reservaService) {
         this.senderoService = senderoService;
+        this.reservaService = reservaService;
     }
 
     @GetMapping
@@ -35,6 +42,12 @@ public class SenderoController {
     @GetMapping("/{id}")
     public SenderoResponse obtener(@PathVariable Long id) {
         return senderoService.obtener(id);
+    }
+
+    @GetMapping("/{id}/disponibilidad")
+    public DisponibilidadResponse disponibilidad(
+            @PathVariable Long id, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        return reservaService.obtenerDisponibilidad(id, fecha);
     }
 
     @PostMapping

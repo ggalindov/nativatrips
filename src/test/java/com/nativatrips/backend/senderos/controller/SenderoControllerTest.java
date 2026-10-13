@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.nativatrips.backend.config.JwtProperties;
 import com.nativatrips.backend.config.SecurityConfig;
+import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.senderos.dto.SenderoResponse;
 import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.service.SenderoService;
@@ -43,6 +44,9 @@ class SenderoControllerTest {
 
     @MockitoBean
     private SenderoService senderoService;
+
+    @MockitoBean
+    private ReservaService reservaService;
 
     @TestConfiguration
     static class TestSecurityBeans {
