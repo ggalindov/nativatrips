@@ -9,6 +9,8 @@ import { mensajeDeError, useConsulta } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Campo } from '@/ui/Campo';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
+import { fotoDeSendero } from '@/contenido/fotos';
+import { FotoAnimada } from '@/ui/movimiento';
 
 function Acompanantes({ reserva, token, onCambio }: { reserva: Reserva; token: string; onCambio: (r: Reserva) => void }) {
   const { reservas } = useServicios();
@@ -114,8 +116,13 @@ export function MiReservaPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-14 px-6 pt-14 pb-24">
-      <div className="flex flex-wrap items-end justify-between gap-8">
+    <>
+    <section className="relative isolate h-56 overflow-hidden bg-bosque md:h-72" aria-hidden="true">
+      <FotoAnimada src={fotoDeSendero(r.senderoId).src} alt="" kenBurns prioridad />
+      <div className="absolute inset-0 bg-gradient-to-t from-arena via-arena/20 to-transparent" />
+    </section>
+    <div className="relative mx-auto -mt-24 flex max-w-7xl flex-col gap-14 px-4 pb-24 sm:px-8 lg:px-12">
+      <div className="tarjeta flex flex-wrap items-end justify-between gap-8 p-8">
         <div className="flex flex-col gap-3">
           <span className="font-mono text-[13px] text-tinta-suave">Reserva {r.codigo}</span>
           <h1 className="m-0 font-display text-5xl leading-none font-extrabold tracking-tight md:text-[56px]">{r.senderoNombre}</h1>
@@ -199,5 +206,6 @@ export function MiReservaPage() {
         </aside>
       </div>
     </div>
+    </>
   );
 }

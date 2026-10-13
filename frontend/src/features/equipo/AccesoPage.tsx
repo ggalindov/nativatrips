@@ -6,7 +6,9 @@ import { useServicios } from '@/services/ServiciosContext';
 import { mensajeDeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Campo } from '@/ui/Campo';
+import { foto } from '@/contenido/fotos';
 import { Contornos } from '@/ui/Contornos';
+import { FotoAnimada } from '@/ui/movimiento';
 import { Logo } from '@/ui/Logo';
 import { useSesion } from './SesionContext';
 
@@ -44,6 +46,10 @@ export function AccesoPage() {
   return (
     <div className="grid min-h-screen bg-arena text-bosque lg:grid-cols-[5fr_6fr]">
       <div className="relative flex min-h-[220px] flex-col justify-between gap-8 overflow-hidden bg-bosque p-8 text-arena lg:p-12">
+        <div className="absolute inset-0">
+          <FotoAnimada src={foto('camino-niebla').src} alt="" kenBurns prioridad />
+          <div className="absolute inset-0 bg-gradient-to-t from-bosque via-bosque/70 to-bosque/40" />
+        </div>
         <Contornos />
         <Link to="/" className="relative text-arena no-underline hover:text-arena">
           <Logo lema="Equipo" />
