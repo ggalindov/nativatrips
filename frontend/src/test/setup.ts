@@ -30,6 +30,13 @@ class IntersectionObserverDePrueba implements IntersectionObserver {
 
 globalThis.IntersectionObserver ??= IntersectionObserverDePrueba;
 
+// jsdom no reproduce video.
+HTMLMediaElement.prototype.play = () => Promise.resolve();
+HTMLMediaElement.prototype.pause = () => undefined;
+
+// jsdom no dibuja en canvas; la secuencia de cuadros simplemente no pinta en pruebas.
+HTMLCanvasElement.prototype.getContext = (() => null) as typeof HTMLCanvasElement.prototype.getContext;
+
 afterEach(() => {
   cleanup();
 });

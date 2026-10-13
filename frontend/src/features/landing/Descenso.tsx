@@ -1,39 +1,17 @@
 import { useRef, useState } from 'react';
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'motion/react';
-import type { MotionValue } from 'motion/react';
-import { FOTOS_DESCENSO, foto } from '@/contenido/fotos';
+import { foto } from '@/contenido/fotos';
+import { urlCuadro } from '@/contenido/secuencia';
 import { ETAPAS, altitudPorProgreso, formatearAltitud, indiceEtapa } from '@/domain/descenso';
 import { EnlaceBoton } from '@/ui/Boton';
 import { CURVA } from '@/ui/movimiento';
+import { SecuenciaCanvas } from './SecuenciaCanvas';
 
-/** Una foto por tramo: aparece al llegar a su cuarto del recorrido y se acerca lentamente. */
-function CapaFoto({ indice, progreso, reducido }: { indice: number; progreso: MotionValue<number>; reducido: boolean }) {
-  const total = FOTOS_DESCENSO.length;
-  const inicio = indice / total;
-  const fin = (indice + 1) / total;
-  const ultima = indice === total - 1;
-  // Los puntos del rango deben quedar entre 0 y 1: el navegador rechaza otros valores.
-  const r = (v: number) => Math.min(1, Math.max(0, v));
-  const opacidad = useTransform(
-    progreso,
-    indice === 0 ? [0, r(fin - 0.04), r(fin + 0.04)] : ultima ? [r(inicio - 0.04), r(inicio + 0.04), 1] : [r(inicio - 0.04), r(inicio + 0.04), r(fin - 0.04), r(fin + 0.04)],
-    indice === 0 ? [1, 1, 0] : ultima ? [0, 1, 1] : [0, 1, 1, 0],
-  );
-  const escala = useTransform(progreso, [r(inicio - 0.1), r(fin + 0.1)], reducido ? [1, 1] : [1.18, 1.02]);
-  const f = foto(FOTOS_DESCENSO[indice]);
-  return (
-    <motion.img
-      src={f.src}
-      alt={indice === 0 ? f.alt : ''}
-      aria-hidden={indice === 0 ? undefined : true}
-      loading={indice === 0 ? 'eager' : 'lazy'}
-      className="absolute inset-0 h-full w-full object-cover"
-      style={{ opacity: opacidad, scale: escala }}
-    />
-  );
-}
-
-/** Portada: 340 vh de scroll sobre fotos reales; el scroll es el descenso de la cumbre a la laguna. */
+/**
+ * Portada: 420 vh de scroll sobre un video del páramo convertido en cuadros.
+ * Cada posición del scroll muestra un cuadro: al bajar, la cámara gira sobre
+ * el paisaje mientras el altímetro desciende de la cumbre a la laguna.
+ */
 export function Descenso() {
   const ref = useRef<HTMLElement>(null);
   const reducido = useReducedMotion() ?? false;
@@ -41,16 +19,25 @@ export function Descenso() {
   const [progreso, setProgreso] = useState(0);
   useMotionValueEvent(scrollYProgress, 'change', (v) => setProgreso(v));
 
-  const textoY = useTransform(scrollYProgress, [0, 0.35], reducido ? [0, 0] : [0, -120]);
-  const textoOpacidad = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
+  const textoY = useTransform(scrollYProgress, [0, 0.25], reducido ? [0, 0] : [0, -140]);
+  const textoOpacidad = useTransform(scrollYProgress, [0, 0.22], [1, 0]);
   const etapa = indiceEtapa(progreso);
 
   return (
-    <section ref={ref} id="inicio" className="relative h-[340vh]" aria-label="Descenso por el páramo">
-      <div className="sticky top-[68px] h-[calc(100svh-68px)] overflow-hidden bg-bosque">
-        {FOTOS_DESCENSO.map((_, i) => (
-          <CapaFoto key={i} indice={i} progreso={scrollYProgress} reducido={reducido} />
-        ))}
+    <section ref={ref} id="inicio" className="relative h-[420vh]" aria-label="Descenso por el páramo">
+      <div className="sticky top-0 h-svh overflow-hidden bg-bosque">
+        <img
+          src={urlCuadro(0)}
+          alt=""
+          aria-hidden="true"
+          // Sin los medios generados, la portada muestra una foto del parque.
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = foto('desde-las-nubes').src;
+          }}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <SecuenciaCanvas progreso={scrollYProgress} etiqueta="Recorrido de 360 grados por el páramo de Chingaza que avanza al hacer scroll" />
 
         {/* Velo de marca para que el texto se lea sobre cualquier foto. */}
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgb(19_32_26/0.6)_0%,rgb(19_32_26/0.15)_45%,rgb(19_32_26/0.8)_100%)]" />
@@ -58,7 +45,7 @@ export function Descenso() {
 
         <motion.div
           style={{ y: textoY, opacity: textoOpacidad }}
-          className="relative z-10 mx-auto flex max-w-7xl flex-col items-start gap-6 px-4 pt-12 sm:px-8 md:pt-20 lg:px-12"
+          className="relative z-10 mx-auto flex max-w-7xl flex-col items-start gap-6 px-4 pt-32 sm:px-8 md:pt-40 lg:px-12"
         >
           <motion.span
             initial={{ opacity: 0, y: 12 }}

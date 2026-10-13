@@ -290,8 +290,6 @@ export function fotoDeSendero(senderoId: string): FotoConRuta {
   return foto(esIdFoto(senderoId) ? senderoId : 'paramo-panorama');
 }
 
-/** Las cuatro etapas del descenso de la portada, de la cumbre a la laguna. */
-export const FOTOS_DESCENSO: readonly IdFoto[] = ['desde-las-nubes', 'descenso-niebla', 'descenso-frailejonal', 'lagunas-de-siecha'];
 
 /** Galería de flora, fauna y paisajes para la portada y las fichas. */
 export const FOTOS_GALERIA: readonly IdFoto[] = [

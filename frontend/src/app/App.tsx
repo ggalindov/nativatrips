@@ -19,6 +19,7 @@ import { ReservaPage } from '@/features/reservas/ReservaPage';
 import { CatalogoPage } from '@/features/senderos/CatalogoPage';
 import { FichaSenderoPage } from '@/features/senderos/FichaSenderoPage';
 import { CreditosPage } from '@/features/sitio/CreditosPage';
+import { PantallaCarga } from '@/features/sitio/PantallaCarga';
 import { SitioLayout } from '@/features/sitio/SitioLayout';
 
 /** Vuelve arriba al cambiar de página, salvo que la URL apunte a una sección. */
@@ -77,6 +78,7 @@ export function App({ servicios }: { servicios?: Servicios }) {
     <ServiciosProvider servicios={instancia}>
       <SesionProvider>
         <BrowserRouter>
+          <PantallaCarga />
           <ScrollAlCambiar />
           <Rutas />
         </BrowserRouter>
