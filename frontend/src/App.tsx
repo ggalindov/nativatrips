@@ -8,6 +8,8 @@ import { ScrollToTop } from './components/ScrollToTop';
 
 // Pages
 import HomePage from './pages/HomePage';
+import TrailsPage from './pages/TrailsPage';
+import TrailDetailPage from './pages/TrailDetailPage';
 
 export const App: React.FC = () => {
   return (
@@ -21,6 +23,13 @@ export const App: React.FC = () => {
               <Routes>
                 {/* 1. Inicio: NativaTrips Landing */}
                 <Route path="/" element={<HomePage />} />
+
+                {/* 2. Panel Senderos: Catálogo completo de 13 senderos */}
+                <Route path="/senderos" element={<TrailsPage />} />
+
+                {/* 3. Panel Vista Senderos: Detalle del sendero */}
+                <Route path="/senderos/:id" element={<TrailDetailPage />} />
+                <Route path="/sendero" element={<TrailDetailPage />} />
 
                 {/* Sin inicio de sesión obligatorio: Redirecciones directas a reservas */}
                 <Route path="/autenticacion" element={<Navigate to="/reservas" replace />} />
