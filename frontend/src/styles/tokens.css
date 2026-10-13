@@ -1,0 +1,107 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/inter';
+@import '@fontsource/unbounded/800.css';
+@import '@fontsource/unbounded/900.css';
+
+/*
+ * Identidad NativaTrips (diseños de Figma del equipo, consolidados).
+ * Verde bosque para fondos oscuros y texto, lima pistacho para las acciones
+ * principales y arena cálida como fondo general. Antes había 134 tonos sueltos;
+ * todo color de la interfaz sale ahora de esta lista.
+ */
+@theme {
+  --color-bosque: #13201a;
+  --color-bosque-2: #1e312b;
+  --color-bosque-3: #2e4036;
+  --color-tinta: #33433a;
+  --color-tinta-suave: #56655c;
+  --color-salvia: #a9b7a6;
+  --color-salvia-clara: #cdd6c9;
+  --color-arena: #f5f1e7;
+  --color-arena-oscura: #e9e2d2;
+  --color-superficie: #ffffff;
+  --color-pino: #2e4036;
+  --color-lima: #dceb6b;
+  --color-lima-hover: #c9d870;
+  --color-lima-suave: #ddeb8a;
+  --color-ecosistema: #7ea56a;
+  --color-error: #9b1c1c;
+  --color-advertencia: #9a3412;
+
+  --font-display: 'Outfit Variable', 'Outfit', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  /* Datos cortos (códigos, horas, cupos): Inter con cifras tabulares. */
+  --font-mono: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  /* Cifras protagonistas (altímetro, indicadores): Unbounded. */
+  --font-cifras: 'Unbounded', 'Outfit Variable', system-ui, sans-serif;
+
+  --shadow-tarjeta: 0 12px 12px rgb(19 32 26 / 0.05);
+}
+
+@layer base {
+  html {
+    background: var(--color-arena);
+    color: var(--color-bosque);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  a {
+    color: var(--color-pino);
+    text-underline-offset: 3px;
+  }
+
+  a:hover {
+    color: var(--color-bosque);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-bosque);
+    outline-offset: 2px;
+  }
+
+  /* Las anclas no quedan tapadas por la barra superior fija. */
+  [id] {
+    scroll-margin-top: 88px;
+  }
+
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Etiquetas en mayúscula espaciada, como en los diseños de Figma. */
+  .etiqueta {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .linea {
+    border-color: rgb(19 32 26 / 0.1);
+  }
+
+  .tarjeta {
+    background: var(--color-superficie);
+    border-radius: 24px;
+    box-shadow: var(--shadow-tarjeta);
+  }
+}

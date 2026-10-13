@@ -25,3 +25,6 @@ dist-ssr
 
 # Cache de compilacion de TypeScript
 *.tsbuildinfo
+
+# Cache de Vite y Vitest
+.vite
