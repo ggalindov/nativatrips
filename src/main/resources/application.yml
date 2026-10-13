@@ -25,6 +25,21 @@ app:
     secret: ${APP_JWT_SECRET:}
     expiration-minutes: ${APP_JWT_EXPIRATION_MINUTES:60}
 
+# Sprint 2: integracion PayU WebCheckout. Los valores por defecto son las credenciales de
+# pruebas PUBLICAS que PayU LATAM publica en su documentacion para el sandbox de Colombia
+# (https://developers.payulatam.com) — sirven para probar el flujo completo sin cuenta real.
+# En produccion se sobreescriben con las variables de entorno (cuenta real de la empresa).
+payu:
+  api-key: ${PAYU_API_KEY:4Vj8eK4rloUd272L48hsrarnUA}
+  merchant-id: ${PAYU_MERCHANT_ID:508029}
+  account-id: ${PAYU_ACCOUNT_ID:512321}
+  test-mode: ${PAYU_TEST_MODE:true}
+  currency: ${PAYU_CURRENCY:COP}
+  checkout-url-sandbox: ${PAYU_CHECKOUT_URL_SANDBOX:https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/}
+  checkout-url-produccion: ${PAYU_CHECKOUT_URL_PRODUCCION:https://checkout.payulatam.com/ppp-web-gateway-payu/}
+  response-url: ${PAYU_RESPONSE_URL:http://localhost:3000/pagos/respuesta}
+  confirmation-url: ${PAYU_CONFIRMATION_URL:http://localhost:8080/api/v1/pagos/confirmacion}
+
 management:
   endpoints:
     web:

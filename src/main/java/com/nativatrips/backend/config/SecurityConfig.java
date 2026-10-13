@@ -39,6 +39,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/senderos/**").permitAll() // RF-01/02: catalogo publico
+                        // Webhook de PayU: no puede enviar JWT: la autenticidad se valida con la
+                        // firma MD5 de PayU dentro de PagoService, no con Spring Security.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/pagos/confirmacion").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
