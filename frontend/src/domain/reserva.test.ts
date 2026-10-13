@@ -11,7 +11,7 @@ const solicitud: SolicitudReserva = {
 
 const reserva: Reserva = {
   codigo: 'NT-7Q4K', senderoId: 'lagunas-de-siecha', senderoNombre: 'Lagunas de Siecha', fecha: '2026-10-16',
-  horaSalida: '07:00', personas: 3, titular: solicitud.titular, acompanantes: [], estado: 'CONFIRMADA', guia: null,
+  horaSalida: '07:00', personas: 3, titular: solicitud.titular, acompanantes: [], estado: 'CONFIRMADA', guia: null, puntoEncuentro: null,
 };
 
 describe('reserva', () => {

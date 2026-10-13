@@ -36,8 +36,8 @@ function Acompanantes({ reserva, token, onCambio }: { reserva: Reserva; token: s
   };
 
   return (
-    <section aria-labelledby="mr-acomp" className="flex flex-col gap-5">
-      <div className="flex items-baseline justify-between gap-4 border-t linea pt-5">
+    <section aria-labelledby="mr-acomp" className="tarjeta flex flex-col gap-5 p-6 md:p-8">
+      <div className="flex items-baseline justify-between gap-4">
         <h2 id="mr-acomp" className="m-0 font-display text-[26px] font-bold">
           Acompañantes
         </h2>
@@ -155,19 +155,19 @@ export function MiReservaPage() {
       <div className="grid items-start gap-14 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex flex-col gap-12">
           {r.estado === 'PENDIENTE_PAGO' && (
-            <section className="flex flex-col items-start gap-4 border-t linea pt-5">
+            <section className="flex flex-col items-start gap-4 rounded-[28px] bg-bosque p-6 text-white md:p-8">
               <h2 className="m-0 font-display text-[26px] font-bold">Falta el pago</h2>
-              <p className="m-0 text-[15px] text-tinta">Completa el pago para que revisemos y confirmemos la reserva.</p>
+              <p className="m-0 text-[15px] text-white/75">Completa el pago para que revisemos y confirmemos la reserva.</p>
               <Boton variante="primario" conFlecha disabled title="Se conecta con PayU en la integración con el backend">
                 Pagar con PayU
               </Boton>
             </section>
           )}
           <Acompanantes reserva={r} token={token} onCambio={actualizar} />
-          <section className="flex flex-col gap-3.5 border-t linea pt-5">
+          <section className="tarjeta flex flex-col gap-3.5 p-6 md:p-8">
             <h2 className="m-0 font-display text-[26px] font-bold">Antes de salir</h2>
             <a href="/#antes">Qué llevar y normas del parque →</a>
-            <span className="text-[15px] text-tinta">Punto de encuentro: [DIRECCIÓN]</span>
+            <span className="text-[15px] text-tinta">Punto de encuentro: <strong className="text-bosque">{r.puntoEncuentro ?? 'Se confirma por correo'}</strong> · salida {r.horaSalida}</span>
           </section>
         </div>
 

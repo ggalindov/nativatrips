@@ -35,6 +35,7 @@ export interface Reserva {
   acompanantes: Persona[];
   estado: EstadoReserva;
   guia: string | null;
+  puntoEncuentro: string | null;
 }
 
 export interface SolicitudReserva {

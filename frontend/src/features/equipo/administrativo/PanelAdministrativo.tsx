@@ -5,6 +5,8 @@ import { useServicios } from '@/services/ServiciosContext';
 import { mensajeDeError, useConsulta } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
+import { foto } from '@/contenido/fotos';
+import { FotoAnimada } from '@/ui/movimiento';
 
 function Titulo({ id, children, nota }: { id: string; children: string; nota?: string }) {
   return (
@@ -43,9 +45,13 @@ export function PanelAdministrativo() {
 
   return (
     <div className="flex flex-col gap-12">
-      <div className="flex flex-wrap items-end justify-between gap-6">
+      <div className="relative isolate flex flex-wrap items-end justify-between gap-6 overflow-hidden rounded-[32px] bg-bosque p-8 text-white md:p-10">
+        <div className="absolute inset-0 -z-10">
+          <FotoAnimada src={foto('embalse-chuza').src} alt="" kenBurns prioridad />
+          <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/75 to-bosque/30" />
+        </div>
         <div className="flex flex-col gap-2">
-          <span className="font-mono text-[13px] text-tinta-suave">{formatearFechaCorta(hoy)}</span>
+          <span className="etiqueta text-lima">{formatearFechaCorta(hoy)} · operación del día</span>
           <h1 className="m-0 font-display text-[44px] font-extrabold tracking-tight">Hoy</h1>
         </div>
         <dl className="m-0 flex gap-10">
@@ -55,8 +61,8 @@ export function PanelAdministrativo() {
             ['por revisar', pendientes],
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col-reverse gap-1">
-              <dt className="text-[13px] text-tinta-suave">{k}</dt>
-              <dd className={`m-0 font-cifras text-[28px] font-black ${k === 'por revisar' && Number(v) > 0 ? 'text-error' : ''}`}>{v}</dd>
+              <dt className="text-[13px] text-white/70">{k}</dt>
+              <dd className={`m-0 font-cifras text-[28px] font-black ${k === 'por revisar' && Number(v) > 0 ? 'text-lima' : 'text-white'}`}>{v}</dd>
             </div>
           ))}
         </dl>
