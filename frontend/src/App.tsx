@@ -14,6 +14,7 @@ import BookingPage from './pages/BookingPage';
 import PaymentPage from './pages/PaymentPage';
 import BookingConfirmationPage from './pages/BookingConfirmationPage';
 import PreTourInfoPage from './pages/PreTourInfoPage';
+import AdminCRMPage from './pages/AdminCRMPage';
 
 export const App: React.FC = () => {
   return (
@@ -46,6 +47,11 @@ export const App: React.FC = () => {
 
                 {/* 7. Información Pre-Tour: Preparación, checklist interactivo y recomendaciones */}
                 <Route path="/pre-tour" element={<PreTourInfoPage />} />
+
+                {/* 8. Consola Administrativa, Guías & CRM PNN (Acceso seguro con botón candadito) */}
+                <Route path="/admin" element={<AdminCRMPage />} />
+                <Route path="/staff" element={<AdminCRMPage />} />
+                <Route path="/crm" element={<AdminCRMPage />} />
 
                 {/* Sin inicio de sesión obligatorio: Redirecciones directas a reservas */}
                 <Route path="/autenticacion" element={<Navigate to="/reservas" replace />} />
