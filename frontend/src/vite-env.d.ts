@@ -1,13 +1,11 @@
 /// <reference types="vite/client" />
-declare module '*.png' {
-  const src: string;
-  export default src;
+
+interface ImportMetaEnv {
+  /** "mock" usa datos en memoria; "http" consume la API del backend. */
+  readonly VITE_FUENTE_DATOS?: 'mock' | 'http';
+  readonly VITE_API_URL?: string;
 }
-declare module '*.jpg' {
-  const src: string;
-  export default src;
-}
-declare module '*.svg' {
-  const src: string;
-  export default src;
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
 }
