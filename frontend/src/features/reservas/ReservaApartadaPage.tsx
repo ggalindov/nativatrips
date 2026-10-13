@@ -74,7 +74,7 @@ export function ReservaApartadaPage() {
   const mensaje = encodeURIComponent(`Reservé ${estado.senderoNombre ?? 'un sendero'} en el páramo de Chingaza con NativaTrips. Código ${estado.codigo}.`);
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-14 sm:px-8">
+    <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 pt-32 pb-14 sm:px-8">
       <div className="flex flex-col items-center gap-4 text-center">
         <motion.div
           initial={{ scale: 0, rotate: -40 }}

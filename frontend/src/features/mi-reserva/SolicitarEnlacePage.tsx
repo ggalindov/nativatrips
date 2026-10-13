@@ -25,7 +25,7 @@ export function SolicitarEnlacePage() {
   };
 
   return (
-    <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-8 lg:grid-cols-2 lg:px-12">
+    <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pt-32 pb-16 sm:px-8 lg:grid-cols-2 lg:px-12">
       <Aparecer className="relative hidden h-[560px] overflow-hidden rounded-[40px] shadow-2xl lg:block">
         <FotoAnimada src={foto('laguna-chingaza').src} alt={foto('laguna-chingaza').alt} kenBurns />
         <div className="absolute inset-0 bg-gradient-to-t from-bosque/80 to-transparent" />

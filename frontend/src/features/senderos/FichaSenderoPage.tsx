@@ -131,7 +131,7 @@ export function FichaSenderoPage() {
 
   return (
     <div className="pb-32">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-8 sm:px-8 lg:px-12">
+      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-28 sm:px-8 lg:px-12">
         <nav aria-label="Ruta de navegación" className="text-sm text-tinta-suave">
           <Link to="/">Inicio</Link> <span aria-hidden="true">/</span> <Link to="/senderos">Senderos</Link> <span aria-hidden="true">/</span>{' '}
           <span aria-current="page" className="font-semibold text-bosque">{s.nombre}</span>

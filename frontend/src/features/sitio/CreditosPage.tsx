@@ -6,7 +6,7 @@ import { Aparecer, Escalonado, itemEscalonado } from '@/ui/movimiento';
 export function CreditosPage() {
   const fotos = todasLasFotos();
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-20 sm:px-8 lg:px-12">
+    <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-32 pb-20 sm:px-8 lg:px-12">
       <Aparecer className="flex max-w-3xl flex-col gap-4">
         <span className="etiqueta text-tinta-suave">Créditos</span>
         <h1 className="m-0 font-display text-5xl font-extrabold tracking-tight">Fotografías del páramo</h1>
