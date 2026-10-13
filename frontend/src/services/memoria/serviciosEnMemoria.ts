@@ -95,7 +95,7 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
         const codigo = codigoReserva();
         reservas.set(codigo, {
           codigo, senderoId: sendero.id, senderoNombre: sendero.nombre, fecha: s.fecha, horaSalida: sendero.horaSalida,
-          personas: s.personas, titular: s.titular, acompanantes: [], estado: 'PENDIENTE_PAGO', guia: null,
+          personas: s.personas, titular: s.titular, acompanantes: [], estado: 'PENDIENTE_PAGO', guia: null, puntoEncuentro: sendero.puntoEncuentro,
         });
         const clave = `${s.senderoId}|${s.fecha}`;
         ocupacionExtra.set(clave, (ocupacionExtra.get(clave) ?? 0) + s.personas);

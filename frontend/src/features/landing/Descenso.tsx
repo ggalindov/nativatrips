@@ -101,8 +101,8 @@ export function Descenso() {
           </motion.div>
         </motion.div>
 
-        <div className="absolute inset-x-4 bottom-6 z-10 mx-auto flex max-w-7xl flex-wrap items-end justify-between gap-4 sm:inset-x-8 lg:inset-x-12">
-          <div aria-live="polite" className="flex max-w-[400px] flex-col gap-2 rounded-3xl border border-white/15 bg-bosque/70 px-5 py-4 text-white backdrop-blur-md">
+        <div className="absolute inset-x-4 bottom-4 z-10 mx-auto flex max-w-7xl items-end justify-between gap-3 sm:inset-x-8 sm:bottom-6 sm:gap-4 lg:inset-x-12">
+          <div aria-live="polite" className="flex max-w-[400px] flex-1 flex-col gap-2 rounded-3xl border border-white/15 bg-bosque/70 px-4 py-3 text-white backdrop-blur-md sm:flex-none sm:px-5 sm:py-4">
             <div className="flex items-center gap-2">
               {ETAPAS.map((e, i) => (
                 <span key={e.nombre} aria-hidden="true" className={`h-1 rounded-full transition-all duration-500 ${i === etapa ? 'w-8 bg-lima' : 'w-3 bg-white/30'}`} />
@@ -118,17 +118,17 @@ export function Descenso() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: CURVA }}
-                className="text-[15px] leading-snug text-white/90"
+                className="hidden text-[15px] leading-snug text-white/90 sm:block"
               >
                 {ETAPAS[etapa].texto}
               </motion.span>
             </AnimatePresence>
           </div>
-          <div className="flex flex-col items-end gap-1 rounded-3xl border border-white/15 bg-bosque/70 px-6 py-4 backdrop-blur-md">
-            <span className="font-cifras text-4xl leading-none font-black text-lima-suave tabular-nums md:text-5xl" data-testid="altimetro">
+          <div className="flex flex-col items-end gap-1 rounded-3xl border border-white/15 bg-bosque/70 px-4 py-3 backdrop-blur-md sm:px-6 sm:py-4">
+            <span className="font-cifras text-2xl leading-none font-black text-lima-suave tabular-nums sm:text-4xl md:text-5xl" data-testid="altimetro">
               {formatearAltitud(altitudPorProgreso(progreso))}
             </span>
-            <span className="etiqueta text-white/70">m s. n. m. · desliza para descender</span>
+            <span className="etiqueta text-white/70">m s. n. m.<span className="hidden sm:inline"> · desliza para descender</span></span>
           </div>
         </div>
       </div>

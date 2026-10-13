@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
+import { foto } from '@/contenido/fotos';
+import { FotoAnimada } from '@/ui/movimiento';
 
 const SEMANA = ['jue', 'vie', 'sáb', 'dom', 'lun', 'mar', 'mié'];
 
@@ -73,8 +75,12 @@ export function PanelGerencia() {
 
   return (
     <div className="flex flex-col gap-11">
-      <div className="flex flex-col gap-2">
-        <span className="font-mono text-[13px] text-tinta-suave">Datos de ejemplo</span>
+      <div className="relative isolate flex flex-col gap-2 overflow-hidden rounded-[32px] bg-bosque p-8 text-white md:p-10">
+        <div className="absolute inset-0 -z-10">
+          <FotoAnimada src={foto('desde-las-nubes').src} alt="" kenBurns prioridad />
+          <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-bosque/20" />
+        </div>
+        <span className="etiqueta text-lima">Gerencia · datos de ejemplo</span>
         <h1 className="m-0 font-display text-[44px] font-extrabold tracking-tight">Resumen de octubre</h1>
       </div>
 
