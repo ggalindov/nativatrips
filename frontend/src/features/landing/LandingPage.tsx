@@ -14,6 +14,7 @@ import { Contornos } from '@/ui/Contornos';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { Aparecer, Contador, Escalonado, FotoAnimada, Marquesina, itemEscalonado } from '@/ui/movimiento';
 import { Descenso } from './Descenso';
+import { VideoPaisajes } from './VideoPaisajes';
 
 function Encabezado({ antetitulo, titulo, oscuro = false, centrado = false }: { antetitulo: string; titulo: string; oscuro?: boolean; centrado?: boolean }) {
   return (
@@ -233,6 +234,7 @@ export function LandingPage() {
     <>
       <Descenso />
       <Cifras />
+      <VideoPaisajes />
 
       <section id="senderos" aria-label="Rutas para conectar con el páramo" className="mx-auto flex max-w-7xl flex-col gap-12 px-4 pt-28 pb-16 sm:px-8 lg:px-12">
         <div className="grid items-end gap-8 md:grid-cols-[1.2fr_1fr]">

@@ -28,3 +28,7 @@ dist-ssr
 
 # Cache de Vite y Vitest
 .vite
+
+# Medios de video generados con scripts/preparar-medios.sh.
+# No se versionan hasta confirmar los derechos de uso de los videos fuente.
+public/media/
