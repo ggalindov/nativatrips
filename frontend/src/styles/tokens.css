@@ -39,6 +39,27 @@
   --shadow-tarjeta: 0 12px 12px rgb(19 32 26 / 0.05);
 }
 
+@keyframes marquesina {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - 8px));
+  }
+}
+
+@keyframes bruma {
+  0%,
+  100% {
+    transform: translateX(-4%);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateX(4%);
+    opacity: 0.85;
+  }
+}
+
 @layer base {
   html {
     background: var(--color-arena);
