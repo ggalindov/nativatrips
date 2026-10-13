@@ -41,6 +41,13 @@ services:
       PAYU_CURRENCY: ${PAYU_CURRENCY:-COP}
       PAYU_RESPONSE_URL: ${PAYU_RESPONSE_URL:-http://localhost:3000/pagos/respuesta}
       PAYU_CONFIRMATION_URL: ${PAYU_CONFIRMATION_URL:-http://localhost:8080/api/v1/pagos/confirmacion}
+      # Sprint 3 - asistente conversacional. Sin ANTHROPIC_API_KEY el chat responde 503, el
+      # resto de la app funciona igual.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-haiku-4-5}
+      ANTHROPIC_API_VERSION: ${ANTHROPIC_API_VERSION:-2023-06-01}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-https://api.anthropic.com}
+      ANTHROPIC_MAX_TOKENS: ${ANTHROPIC_MAX_TOKENS:-1024}
     ports:
       - "8080:8080"
 

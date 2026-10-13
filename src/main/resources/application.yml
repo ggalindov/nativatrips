@@ -40,6 +40,17 @@ payu:
   response-url: ${PAYU_RESPONSE_URL:http://localhost:3000/pagos/respuesta}
   confirmation-url: ${PAYU_CONFIRMATION_URL:http://localhost:8080/api/v1/pagos/confirmacion}
 
+# Sprint 3: asistente conversacional. No hay credenciales de prueba publicas para Anthropic
+# (a diferencia de PayU) — ANTHROPIC_API_KEY debe venir de una clave real para que el chat
+# funcione; sin ella, el endpoint responde 503 con un mensaje claro, el resto de la app sigue
+# funcionando con normalidad.
+anthropic:
+  api-key: ${ANTHROPIC_API_KEY:}
+  model: ${ANTHROPIC_MODEL:claude-haiku-4-5}
+  api-version: ${ANTHROPIC_API_VERSION:2023-06-01}
+  base-url: ${ANTHROPIC_BASE_URL:https://api.anthropic.com}
+  max-tokens: ${ANTHROPIC_MAX_TOKENS:1024}
+
 management:
   endpoints:
     web:
