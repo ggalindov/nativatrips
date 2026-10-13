@@ -3,6 +3,10 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import type { Servicios } from '@/services/puertos';
 import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
 import { LandingPage } from '@/features/landing/LandingPage';
+import { MiReservaPage } from '@/features/mi-reserva/MiReservaPage';
+import { SolicitarEnlacePage } from '@/features/mi-reserva/SolicitarEnlacePage';
+import { ReservaApartadaPage } from '@/features/reservas/ReservaApartadaPage';
+import { ReservaPage } from '@/features/reservas/ReservaPage';
 import { SitioLayout } from '@/features/sitio/SitioLayout';
 
 /** Vuelve arriba al cambiar de página, salvo que la URL apunte a una sección. */
@@ -20,6 +24,11 @@ export function Rutas() {
     <Routes>
       <Route element={<SitioLayout />}>
         <Route index element={<LandingPage />} />
+        <Route path="reservar" element={<ReservaPage />} />
+        <Route path="reservar/:senderoId" element={<ReservaPage />} />
+        <Route path="reserva/apartada" element={<ReservaApartadaPage />} />
+        <Route path="mi-reserva" element={<SolicitarEnlacePage />} />
+        <Route path="mi-reserva/:token" element={<MiReservaPage />} />
       </Route>
 
 
