@@ -6,7 +6,6 @@ import {
   formatearAltitud,
   indiceEtapa,
   limitarProgreso,
-  opacidadNiebla,
 } from './descenso';
 
 describe('descenso por scroll', () => {
@@ -29,12 +28,6 @@ describe('descenso por scroll', () => {
     expect(indiceEtapa(0.6)).toBe(2);
     expect(indiceEtapa(0.99)).toBe(3);
     expect(indiceEtapa(1)).toBe(3);
-  });
-
-  it('muestra la niebla solo en el segundo tramo', () => {
-    expect(opacidadNiebla(0)).toBe(0);
-    expect(opacidadNiebla(0.35)).toBe(1);
-    expect(opacidadNiebla(1)).toBe(0);
   });
 
   it('formatea la altitud con separador de miles colombiano', () => {

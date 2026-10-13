@@ -28,7 +28,7 @@ export function Logo({ lema = 'PNN Chingaza', tono = 'oscuro' }: LogoProps) {
         >
           NativaTrips
         </span>
-        <span className="mt-1 flex items-center gap-1 text-[10px] font-bold tracking-widest text-lima uppercase">
+        <span className="mt-1 hidden items-center gap-1 text-[10px] font-bold tracking-widest text-lima uppercase min-[420px]:flex">
           {lema}
           <span aria-hidden="true" className="size-1 rounded-full bg-lima" />
           <span className={tono === 'oscuro' ? 'text-white/60' : 'text-tinta-suave'}>Colombia</span>
