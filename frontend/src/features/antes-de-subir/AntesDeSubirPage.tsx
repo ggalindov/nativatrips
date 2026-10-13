@@ -195,7 +195,7 @@ export function AntesDeSubirPage() {
           <FotoAnimada src={portada.src} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-transparent" />
         </div>
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-24 sm:px-8 md:py-32 lg:px-12">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-36 pb-24 sm:px-8 md:pt-44 md:pb-32 lg:px-12">
           <Aparecer>
             <span className="etiqueta text-lima">Guía pre-tour de alta montaña</span>
           </Aparecer>

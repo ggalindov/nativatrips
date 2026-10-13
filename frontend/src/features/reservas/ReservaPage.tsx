@@ -118,7 +118,7 @@ export function ReservaPage() {
 
   if (!sendero) {
     return (
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-16 sm:px-8 lg:px-12">
+      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-32 pb-16 sm:px-8 lg:px-12">
         <Aparecer>
           <span className="etiqueta text-tinta-suave">Reservar</span>
           <h1 className="m-0 mt-2 font-display text-5xl font-extrabold tracking-tight">¿Qué sendero quieres recorrer?</h1>
@@ -157,7 +157,7 @@ export function ReservaPage() {
           <FotoAnimada src={portada.src} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/80 to-bosque/30" />
         </div>
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-14 sm:px-8 md:py-20 lg:px-12">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-32 pb-14 sm:px-8 md:pt-36 md:pb-20 lg:px-12">
           <Pasos />
           <span className="etiqueta text-lima">
             {sendero.dificultad} · {formatearDuracion(sendero.duracionHoras)} · {formatearDistancia(sendero.distanciaKm)}

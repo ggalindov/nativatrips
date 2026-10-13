@@ -118,7 +118,7 @@ export function CatalogoPage() {
           <FotoAnimada src={portada.src} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-bosque/20" />
         </div>
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-24 sm:px-8 md:py-32 lg:px-12">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-36 pb-24 sm:px-8 md:pt-44 md:pb-32 lg:px-12">
           <Aparecer>
             <span className="etiqueta text-lima">Explora Chingaza · Catálogo oficial</span>
           </Aparecer>
@@ -135,7 +135,7 @@ export function CatalogoPage() {
         </div>
       </section>
 
-      <div className="sticky top-[68px] z-20 border-b linea bg-arena/90 backdrop-blur-md">
+      <div className="sticky top-0 z-20 border-b linea bg-arena/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-4 sm:px-8 lg:px-12">
           <label className="relative min-w-[220px] flex-1">
             <span className="sr-only">Buscar sendero</span>
