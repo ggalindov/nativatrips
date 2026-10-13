@@ -1,7 +1,9 @@
 import { useEffect, useMemo } from 'react';
+import { MotionConfig } from 'motion/react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import type { Servicios } from '@/services/puertos';
 import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
+import { AntesDeSubirPage } from '@/features/antes-de-subir/AntesDeSubirPage';
 import { AccesoPage } from '@/features/equipo/AccesoPage';
 import { EquipoLayout } from '@/features/equipo/EquipoLayout';
 import { RutaProtegida } from '@/features/equipo/RutaProtegida';
@@ -14,6 +16,9 @@ import { MiReservaPage } from '@/features/mi-reserva/MiReservaPage';
 import { SolicitarEnlacePage } from '@/features/mi-reserva/SolicitarEnlacePage';
 import { ReservaApartadaPage } from '@/features/reservas/ReservaApartadaPage';
 import { ReservaPage } from '@/features/reservas/ReservaPage';
+import { CatalogoPage } from '@/features/senderos/CatalogoPage';
+import { FichaSenderoPage } from '@/features/senderos/FichaSenderoPage';
+import { CreditosPage } from '@/features/sitio/CreditosPage';
 import { SitioLayout } from '@/features/sitio/SitioLayout';
 
 /** Vuelve arriba al cambiar de página, salvo que la URL apunte a una sección. */
@@ -31,6 +36,10 @@ export function Rutas() {
     <Routes>
       <Route element={<SitioLayout />}>
         <Route index element={<LandingPage />} />
+        <Route path="senderos" element={<CatalogoPage />} />
+        <Route path="senderos/:senderoId" element={<FichaSenderoPage />} />
+        <Route path="antes-de-subir" element={<AntesDeSubirPage />} />
+        <Route path="creditos" element={<CreditosPage />} />
         <Route path="reservar" element={<ReservaPage />} />
         <Route path="reservar/:senderoId" element={<ReservaPage />} />
         <Route path="reserva/apartada" element={<ReservaApartadaPage />} />
@@ -64,6 +73,7 @@ export function Rutas() {
 export function App({ servicios }: { servicios?: Servicios }) {
   const instancia = useMemo(() => servicios ?? crearServicios(), [servicios]);
   return (
+    <MotionConfig reducedMotion="user">
     <ServiciosProvider servicios={instancia}>
       <SesionProvider>
         <BrowserRouter>
@@ -72,5 +82,6 @@ export function App({ servicios }: { servicios?: Servicios }) {
         </BrowserRouter>
       </SesionProvider>
     </ServiciosProvider>
+    </MotionConfig>
   );
 }
