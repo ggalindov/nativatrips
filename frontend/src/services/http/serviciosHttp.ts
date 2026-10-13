@@ -9,6 +9,8 @@ interface SenderoApi {
   nombre: string;
   nivelDificultad: 'FACIL' | 'MODERADO' | 'DIFICIL';
   duracionMinutos: number;
+  descripcion: string | null;
+  precio: number | null;
 }
 
 interface DisponibilidadApi {
@@ -36,6 +38,13 @@ function aSendero(s: SenderoApi): Sendero {
     duracionHoras: s.duracionMinutos / 60,
     distanciaKm: null,
     horaSalida: '07:00',
+    sector: null,
+    desnivelM: null,
+    altitudMaxM: null,
+    precioPorPersona: s.precio,
+    descripcion: s.descripcion ?? '',
+    destacados: [],
+    puntoEncuentro: null,
   };
 }
 
