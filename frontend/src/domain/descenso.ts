@@ -32,12 +32,6 @@ export function indiceEtapa(progreso: number): number {
   return Math.min(ETAPAS.length - 1, Math.floor(p * ETAPAS.length));
 }
 
-/** Opacidad de la niebla: máxima en el segundo tramo y nula en los extremos. */
-export function opacidadNiebla(progreso: number): number {
-  const p = limitarProgreso(progreso);
-  return Math.max(0, 1 - Math.abs(p - 0.35) / 0.3);
-}
-
 const enteros = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
 
 export function formatearAltitud(metros: number): string {
