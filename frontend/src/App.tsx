@@ -7,6 +7,7 @@ import { FooterGlobal } from './components/FooterGlobal';
 import { ScrollToTop } from './components/ScrollToTop';
 
 // Pages
+import HomePage from './pages/HomePage';
 
 export const App: React.FC = () => {
   return (
@@ -18,6 +19,8 @@ export const App: React.FC = () => {
             <NavbarGlobal />
             <main className="flex-1 flex flex-col w-full">
               <Routes>
+                {/* 1. Inicio: NativaTrips Landing */}
+                <Route path="/" element={<HomePage />} />
 
                 {/* Sin inicio de sesión obligatorio: Redirecciones directas a reservas */}
                 <Route path="/autenticacion" element={<Navigate to="/reservas" replace />} />
