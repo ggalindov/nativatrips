@@ -4,6 +4,8 @@ import { useServicios } from '@/services/ServiciosContext';
 import { mensajeDeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Campo } from '@/ui/Campo';
+import { foto } from '@/contenido/fotos';
+import { Aparecer, FotoAnimada } from '@/ui/movimiento';
 
 export function SolicitarEnlacePage() {
   const { reservas } = useServicios();
@@ -23,7 +25,13 @@ export function SolicitarEnlacePage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-8 px-6 pt-20 pb-28">
+    <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-8 lg:grid-cols-2 lg:px-12">
+      <Aparecer className="relative hidden h-[560px] overflow-hidden rounded-[40px] shadow-2xl lg:block">
+        <FotoAnimada src={foto('laguna-chingaza').src} alt={foto('laguna-chingaza').alt} kenBurns />
+        <div className="absolute inset-0 bg-gradient-to-t from-bosque/80 to-transparent" />
+        <p className="absolute inset-x-8 bottom-8 m-0 font-display text-3xl font-extrabold text-white">Tu reserva, a un enlace de distancia.</p>
+      </Aparecer>
+    <div className="flex max-w-xl flex-col gap-8">
       <div className="flex flex-col gap-3">
         <span className="etiqueta text-tinta-suave">Mi reserva</span>
         <h1 className="m-0 font-display text-5xl leading-none font-extrabold tracking-tight">Te enviamos un enlace.</h1>
@@ -51,6 +59,7 @@ export function SolicitarEnlacePage() {
           </Boton>
         </form>
       )}
+    </div>
     </div>
   );
 }
