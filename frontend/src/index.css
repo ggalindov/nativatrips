@@ -1,0 +1,445 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   NativaTrips Design System Fonts (Matching Figma Exports Exactly)
+   ========================================================================== */
+
+/* Inter Fonts */
+@font-face {
+  font-family: 'Inter:Regular';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Inter:Medium';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Inter:Semi Bold';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'Inter:Semi_Bold';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'Inter:Bold';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Inter:Extra Bold';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 800;
+}
+@font-face {
+  font-family: 'Inter:Extra_Bold';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 800;
+}
+@font-face {
+  font-family: 'Inter:Black';
+  src: url('https://static.figma.com/font/Inter_1') format('woff2');
+  font-style: normal;
+  font-weight: 900;
+}
+
+/* Outfit Fonts */
+@font-face {
+  font-family: 'Outfit:Medium';
+  src: url('https://static.figma.com/font/Outfit_wght__2') format('woff2');
+  font-style: normal;
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Outfit:Bold';
+  src: url('https://static.figma.com/font/Outfit_wght__2') format('woff2');
+  font-style: normal;
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Outfit:ExtraBold';
+  src: url('https://static.figma.com/font/Outfit_wght__2') format('woff2');
+  font-style: normal;
+  font-weight: 800;
+}
+@font-face {
+  font-family: 'Outfit:Black';
+  src: url('https://static.figma.com/font/Outfit_wght__2') format('woff2');
+  font-style: normal;
+  font-weight: 900;
+}
+
+/* Archivo Fonts */
+@font-face {
+  font-family: 'Archivo:Bold';
+  src: url('https://static.figma.com/font/Archivo_wdth_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Archivo:ExtraBold';
+  src: url('https://static.figma.com/font/Archivo_wdth_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 800;
+}
+@font-face {
+  font-family: 'Archivo:Black';
+  src: url('https://static.figma.com/font/Archivo_wdth_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 900;
+}
+
+/* Geist Fonts */
+@font-face {
+  font-family: 'Geist:Regular';
+  src: url('https://static.figma.com/font/Geist_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Geist:Medium';
+  src: url('https://static.figma.com/font/Geist_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Geist:SemiBold';
+  src: url('https://static.figma.com/font/Geist_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 600;
+}
+@font-face {
+  font-family: 'Geist:Bold';
+  src: url('https://static.figma.com/font/Geist_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* Unbounded Fonts */
+@font-face {
+  font-family: 'Unbounded:Bold';
+  src: url('https://static.figma.com/font/Unbounded_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 700;
+}
+@font-face {
+  font-family: 'Unbounded:ExtraBold';
+  src: url('https://static.figma.com/font/Unbounded_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 800;
+}
+@font-face {
+  font-family: 'Unbounded:Black';
+  src: url('https://static.figma.com/font/Unbounded_wght__1') format('woff2');
+  font-style: normal;
+  font-weight: 900;
+}
+
+/* Base resets */
+/* Base resets */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter:Regular', system-ui, -apple-system, sans-serif;
+  color: #13201a;
+  background-color: #f5f1e7;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
+
+/* Custom Andean Paramuno Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ede8dc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #173f35;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #0c2b25;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Animations and Microinteractions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 235, 107, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(220, 235, 107, 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes mistDrift {
+  0% {
+    transform: translateX(-3%) translateY(0) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateX(3%) translateY(-8px) scale(1.04);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateX(-3%) translateY(0) scale(1);
+    opacity: 0.2;
+  }
+}
+
+.animate-mist {
+  animation: mistDrift 20s ease-in-out infinite;
+}
+
+.glass-paramo {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.glass-paramo-dark {
+  background: rgba(19, 32, 26, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(220, 235, 107, 0.15);
+}
+
+.animate-float {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(220,235,107,0.15) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Topographic Contour Background Patterns */
+.bg-topo-light {
+  background-image: radial-gradient(rgba(19, 32, 26, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.bg-topo-dark {
+  background-image: radial-gradient(rgba(220, 235, 107, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Brand Card Elevation and Glows */
+.brand-card {
+  background: #ffffff;
+  border: 1px solid #e5dfd2;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px -10px rgba(19, 32, 26, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brand-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -15px rgba(19, 32, 26, 0.12);
+  border-color: #cfcebf;
+}
+
+.brand-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Custom Interactive Input Classes */
+.native-input {
+  width: 100%;
+  background: transparent;
+  color: #0e1c15;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  outline: none;
+  padding: 4px 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.native-input::placeholder {
+  color: rgba(19, 32, 26, 0.35);
+  font-weight: 400;
+}
+
+.native-input:focus {
+  outline: none;
+}
+
+.native-input-box {
+  width: 100%;
+  background: #ffffff;
+  color: #0e1c15;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1.5px solid #e1dcd0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  outline: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.native-input-box:focus {
+  border-color: #13201a;
+  box-shadow: 0 0 0 3px rgba(220, 235, 107, 0.45);
+}
+
+.native-input-box::placeholder {
+  color: rgba(19, 32, 26, 0.35);
+}
+
+/* Boarding Pass Ticket Cutout Style */
+.ticket-edge {
+  position: relative;
+  background: #ffffff;
+}
+
+.ticket-edge::before, .ticket-edge::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background-color: #f5f1e7;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.ticket-edge::before {
+  left: -12px;
+}
+
+.ticket-edge::after {
+  right: -12px;
+}
+
+/* Smooth button transitions */
+button, [role="button"] {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:active:not(:disabled), [role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* Print styles for voucher printing */
+@media print {
+  aside, nav, header, footer, .no-print {
+    display: none !important;
+  }
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+}
+
+
