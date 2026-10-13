@@ -10,6 +10,10 @@ import { ScrollToTop } from './components/ScrollToTop';
 import HomePage from './pages/HomePage';
 import TrailsPage from './pages/TrailsPage';
 import TrailDetailPage from './pages/TrailDetailPage';
+import BookingPage from './pages/BookingPage';
+import PaymentPage from './pages/PaymentPage';
+import BookingConfirmationPage from './pages/BookingConfirmationPage';
+import PreTourInfoPage from './pages/PreTourInfoPage';
 
 export const App: React.FC = () => {
   return (
@@ -30,6 +34,18 @@ export const App: React.FC = () => {
                 {/* 3. Panel Vista Senderos: Detalle del sendero */}
                 <Route path="/senderos/:id" element={<TrailDetailPage />} />
                 <Route path="/sendero" element={<TrailDetailPage />} />
+
+                {/* 4. Reservas: Flujo directo sin inicio de sesión (Guest Checkout) */}
+                <Route path="/reservas" element={<BookingPage />} />
+
+                {/* 5. Proceso Pago: Pasarela PayU / Wompi y simulación de estados */}
+                <Route path="/pago" element={<PaymentPage />} />
+
+                {/* 6. Confirmación Reserva: Voucher y pase de abordaje oficial */}
+                <Route path="/confirmacion" element={<BookingConfirmationPage />} />
+
+                {/* 7. Información Pre-Tour: Preparación, checklist interactivo y recomendaciones */}
+                <Route path="/pre-tour" element={<PreTourInfoPage />} />
 
                 {/* Sin inicio de sesión obligatorio: Redirecciones directas a reservas */}
                 <Route path="/autenticacion" element={<Navigate to="/reservas" replace />} />
