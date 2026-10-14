@@ -115,8 +115,7 @@ export const pt: Diccionario = {
     galeria: {
       antetitulo: 'Vida no páramo',
       titulo: 'O que cada vaga não vendida protege.',
-      texto: 'Deslize, toque para ampliar ou abra a galeria completa de fotos e vídeos.',
-      abrir: 'Abrir a galeria',
+      texto: 'Toque em uma foto para ampliá-la ou abra a galeria completa de fotos e vídeos.',
       creditos: 'Fotos da Eco Palacio Tur e do Wikimedia Commons com licença livre',
       verCreditos: 'Ver créditos',
     },
