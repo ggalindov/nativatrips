@@ -64,7 +64,7 @@ Las fotos de `public/fotos/` son fotografías reales del PNN Chingaza publicadas
 
 ## Portada y video
 
-- **Ascenso ilustrado:** la portada es una ilustración propia en SVG del páramo de Chingaza. Al hacer scroll, una persona sube el sendero del bosque altoandino a la cumbre, la cámara la sigue y en cada tramo aparece un dato del parque (`src/domain/ascenso.ts`). No usa archivos externos.
+- **Páramo vivo:** la portada es una ilustración propia en SVG del páramo de Chingaza en una sola pantalla: oso andino, venado, cóndor, colibrí, pato de páramo y rana con movimiento propio, frailejones que se mecen, niebla y capas con paralaje según el puntero. Los datos del parque rotan en una tarjeta (`src/domain/paramo.ts`) y la animación se puede pausar; con movimiento reducido queda quieta. No usa archivos externos.
 - **Video en bucle:** tomas de paisaje del video institucional de Parques Nacionales Naturales de Colombia, sin audio, en `public/media/` (ignorada por git hasta confirmar el permiso de uso). Se genera con:
 
 ```bash

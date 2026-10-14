@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { foto } from '@/contenido/fotos';
 import type { ElementoEquipaje } from '@/domain/clima';
 import { EQUIPAJE, capasRecomendadas, progresoEquipaje, temperaturaEstimada } from '@/domain/clima';
-import { formatearAltitud } from '@/domain/ascenso';
+import { formatearAltitud } from '@/domain/paramo';
 import { EnlaceBoton } from '@/ui/Boton';
 import { Aparecer, CURVA, Escalonado, FotoAnimada, itemEscalonado } from '@/ui/movimiento';
 
