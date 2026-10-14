@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Reserva, SolicitudReserva } from './reserva';
+import type { Persona, Reserva, SolicitudReserva } from './reserva';
 import { acompanantesPendientes, celularValido, extranjerosEn, pasosRecorrido, puedeCancelarse, validarPersona, validarSolicitud } from './reserva';
 
 const solicitud: SolicitudReserva = {
@@ -31,7 +31,8 @@ describe('reserva', () => {
   it('admite visitantes extranjeros con pasaporte y celular internacional', () => {
     const turista = { ...solicitud.titular, nombre: 'Claire Martin', nacionalidad: 'FR', tipoDocumento: 'PASAPORTE' as const, documento: '19AB12345', indicativo: '33', celular: '612345678' };
     expect(validarSolicitud({ ...solicitud, titular: turista })).toEqual([]);
-    expect(extranjerosEn({ titular: turista, acompanantes: [{ nombre: 'Ana Ruiz', tipoDocumento: 'CC', documento: '52123456', nacionalidad: 'CO' }] })).toBe(1);
+    const acompanantes: Persona[] = [{ nombre: 'Ana Ruiz', tipoDocumento: 'CC', documento: '52123456', nacionalidad: 'CO' }];
+    expect(extranjerosEn({ titular: turista, acompanantes })).toBe(1);
   });
 
   it('exige un documento acorde a la nacionalidad', () => {

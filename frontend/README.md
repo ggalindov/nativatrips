@@ -101,6 +101,22 @@ Cada visitante (titular y acompañantes) registra su procedencia. Para extranjer
 
 Pendiente en el backend: `IntegranteRequest` solo guarda `nombreCompleto` y `documentoIdentidad`; hay que agregar `tipoDocumento`, `nacionalidad` (ISO 3166-1 alfa-2) y, para el titular, el indicativo del celular.
 
+## Asistente Frailín
+
+Frailín, un frailejón con carita, es el asistente del sitio público (`src/features/asistente/`): lanzador flotante, invitación una vez por sesión, panel de chat (pantalla completa en celular), preguntas sugeridas, indicador de escritura y opción de hablar con una persona. Por ahora es solo la interfaz y responde con un mensaje de demostración; falta conectarlo con `POST /api/v1/asistente/mensajes`, que hoy exige sesión de turista.
+
+## Paneles del personal
+
+Solo interfaz, con datos de ejemplo (`src/features/equipo/ejemplo.ts`); falta conectar los servicios del backend.
+
+| Rol | Pantallas |
+| --- | --- |
+| Personal administrativo | Hoy · Reservas (filtros, detalle con visitantes, pagos e historial) · Salidas y guías · Capacidad por temporada y alertas al 80 % · Catálogo de senderos · Conversaciones derivadas del chat · Reporte ambiental (PDF/CSV) · Reglas de recomendación |
+| Guía (celular) | Lista del grupo con país, visitas y requerimientos especiales · Novedades · Cierre del tour con encuesta · Agenda de 7 días |
+| Gerencia | Tablero con ingresos, conversión, NPS, ocupación y procedencia · Reporte ambiental · Capacidad · Cuentas del equipo |
+
+Todos los roles pueden recuperar la contraseña desde el acceso.
+
 ## Pendientes
 
 - Validar con el operador las tarifas, sectores, altitudes, desniveles, textos y puntos de encuentro de cada sendero (vienen del prototipo de Figma).

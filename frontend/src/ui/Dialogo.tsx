@@ -23,8 +23,15 @@ export function Dialogo({ abierto, onCerrar, titulo, children, ancho = 'max-w-3x
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (abierto && !d.open) d.showModal?.();
-    if (!abierto && d.open) d.close?.();
+    // Respaldo para entornos sin showModal (pruebas, navegadores antiguos).
+    if (abierto && !d.open) {
+      if (typeof d.showModal === 'function') d.showModal();
+      else d.setAttribute('open', '');
+    }
+    if (!abierto && d.open) {
+      if (typeof d.close === 'function') d.close();
+      else d.removeAttribute('open');
+    }
   }, [abierto]);
 
   return (
