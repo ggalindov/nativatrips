@@ -77,7 +77,7 @@ export const es = {
   paramo: {
     aria: 'El páramo de Chingaza',
     ilustracion: 'Ilustración del páramo de Chingaza con frailejones, una laguna, un oso andino, un venado, un cóndor, un colibrí, un pato y una rana',
-    titulo: 'Un páramo',
+    titulo: 'un páramo',
     tituloDestacado: 'que respira.',
     subtitulo: 'Trece senderos entre frailejones, lagunas y la casa del oso andino. Cupos limitados para cuidarlo.',
     explorar: 'Explorar senderos',
