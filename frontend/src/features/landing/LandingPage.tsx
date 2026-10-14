@@ -2,17 +2,18 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FOTOS_GALERIA, foto } from '@/contenido/fotos';
+import { foto } from '@/contenido/fotos';
 import { hoyIso, sumarDias } from '@/domain/fechas';
 import type { Dificultad, Sendero } from '@/domain/sendero';
 import { DIFICULTADES, filtrarPorDificultad, ordenarPorExigencia } from '@/domain/sendero';
+import { Carrusel } from '@/features/biblioteca/Carrusel';
 import { TarjetaSendero } from '@/features/senderos/TarjetaSendero';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
 import { Boton, EnlaceBoton, FlechaAccion } from '@/ui/Boton';
 import { Contornos } from '@/ui/Contornos';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
-import { Aparecer, Contador, Escalonado, FotoAnimada, Marquesina, itemEscalonado } from '@/ui/movimiento';
+import { Aparecer, Contador, Escalonado, FotoAnimada, itemEscalonado } from '@/ui/movimiento';
 import { Descenso } from './Descenso';
 import { VideoPaisajes } from './VideoPaisajes';
 
@@ -200,26 +201,24 @@ function ReservaRapida({ senderos }: { senderos: readonly Sendero[] }) {
 
 function Galeria() {
   return (
-    <section aria-labelledby="galeria" className="flex flex-col gap-10 py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 lg:px-12">
-        <Encabezado antetitulo="Vida en el páramo" titulo="Lo que cuida cada cupo que no se vende." />
-        <span id="galeria" className="sr-only">Galería de flora y fauna</span>
+    <section aria-labelledby="galeria-titulo" className="flex flex-col gap-10 py-24">
+      <div className="mx-auto grid w-full max-w-7xl items-end gap-6 px-4 sm:px-8 md:grid-cols-[1.3fr_1fr] lg:px-12">
+        <Aparecer className="flex flex-col gap-3">
+          <span className="etiqueta text-tinta-suave">Vida en el páramo</span>
+          <h2 id="galeria-titulo" className="m-0 font-display text-4xl leading-none font-extrabold tracking-tight md:text-[56px]">
+            Lo que cuida cada cupo que no se vende.
+          </h2>
+        </Aparecer>
+        <Aparecer retraso={0.1} className="flex flex-col items-start gap-3">
+          <p className="m-0 text-[17px] leading-relaxed text-tinta">Desliza, toca para ampliar o abre la biblioteca completa de fotos y videos.</p>
+          <EnlaceBoton to="/biblioteca" variante="oscuro" conFlecha>
+            Abrir la biblioteca
+          </EnlaceBoton>
+        </Aparecer>
       </div>
-      <Marquesina segundos={60}>
-        {FOTOS_GALERIA.map((id) => {
-          const f = foto(id);
-          return (
-            <figure key={id} className="group relative m-0 h-72 w-64 flex-none overflow-hidden rounded-[28px] md:h-80 md:w-72">
-              <img src={f.srcPequena} alt={f.alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-              <figcaption className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-bosque/90 to-transparent p-4 pt-10 text-sm font-semibold text-white transition-transform duration-500 group-hover:translate-y-0">
-                {f.alt}
-              </figcaption>
-            </figure>
-          );
-        })}
-      </Marquesina>
+      <Carrusel />
       <p className="mx-auto m-0 text-xs text-tinta-suave">
-        Fotografías de Wikimedia Commons con licencia libre · <Link to="/creditos">Ver créditos</Link>
+        Fotografías de Eco Palacio Tur y de Wikimedia Commons con licencia libre · <Link to="/creditos">Ver créditos</Link>
       </p>
     </section>
   );

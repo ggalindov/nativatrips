@@ -3,6 +3,7 @@ import { MotionConfig } from 'motion/react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import type { Servicios } from '@/services/puertos';
 import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
+import { BibliotecaPage } from '@/features/biblioteca/BibliotecaPage';
 import { AntesDeSubirPage } from '@/features/antes-de-subir/AntesDeSubirPage';
 import { AccesoPage } from '@/features/equipo/AccesoPage';
 import { EquipoLayout } from '@/features/equipo/EquipoLayout';
@@ -40,6 +41,7 @@ export function Rutas() {
         <Route path="senderos" element={<CatalogoPage />} />
         <Route path="senderos/:senderoId" element={<FichaSenderoPage />} />
         <Route path="antes-de-subir" element={<AntesDeSubirPage />} />
+        <Route path="biblioteca" element={<BibliotecaPage />} />
         <Route path="creditos" element={<CreditosPage />} />
         <Route path="reservar" element={<ReservaPage />} />
         <Route path="reservar/:senderoId" element={<ReservaPage />} />

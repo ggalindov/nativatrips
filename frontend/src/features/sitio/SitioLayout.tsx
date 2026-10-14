@@ -42,6 +42,7 @@ export function SitioLayout() {
           <div className="flex flex-col gap-2">
             <span className="etiqueta text-lima">Explora</span>
             <Link className="text-white/80 no-underline hover:text-white" to="/senderos">Senderos</Link>
+            <Link className="text-white/80 no-underline hover:text-white" to="/biblioteca">Biblioteca</Link>
             <Link className="text-white/80 no-underline hover:text-white" to="/antes-de-subir">Antes de subir</Link>
             <Link className="text-white/80 no-underline hover:text-white" to="/mi-reserva">Mi reserva</Link>
             <Link className="text-white/80 no-underline hover:text-white" to="/creditos">Créditos fotográficos</Link>

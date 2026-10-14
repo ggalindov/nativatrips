@@ -8,6 +8,7 @@ import { CURVA } from '@/ui/movimiento';
 
 const ENLACES = [
   { a: '/senderos', texto: 'Senderos', detalle: '13 rutas en el páramo' },
+  { a: '/biblioteca', texto: 'Biblioteca', detalle: 'El páramo en fotos y videos' },
   { a: '/antes-de-subir', texto: 'Antes de subir', detalle: 'Equipaje, altura y normas' },
   { a: '/mi-reserva', texto: 'Mi reserva', detalle: 'Gestiona tu reserva por enlace' },
 ];

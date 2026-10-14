@@ -1,6 +1,7 @@
 import type { Dificultad, Sendero } from '@/domain/sendero';
 import { esRolEquipo } from '@/domain/equipo';
 import { sumarDias } from '@/domain/fechas';
+import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
 import type { Servicios } from '../puertos';
 
@@ -106,6 +107,7 @@ export function crearServiciosHttp(baseUrl: string): Servicios {
       marcarAsistencia: async () => pendiente(),
       resumenGerencia: async () => pendiente(),
     },
+    biblioteca: { listar: cargarBiblioteca },
     autenticacion: {
       iniciarSesion: async (correo, clave) => {
         const r = await pedir<LoginApi>('/api/v1/auth/login', {

@@ -3,6 +3,7 @@ import { cuposLibres } from '@/domain/aforo';
 import type { Persona, Reserva } from '@/domain/reserva';
 import { validarSolicitud } from '@/domain/reserva';
 import { sumarDias } from '@/domain/fechas';
+import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
 import type {
   OcupacionSendero,
@@ -164,6 +165,7 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
       }),
     },
 
+    biblioteca: { listar: cargarBiblioteca },
     autenticacion: {
       iniciarSesion: async (correo, clave) => {
         const cuenta = CUENTAS_DEMO.find((c) => c.correo === correo.trim().toLowerCase());
