@@ -6,13 +6,11 @@ import { Aparecer } from '@/ui/movimiento';
 
 /**
  * Video de paisajes del parque en bucle, sin sonido, que arranca solo al
- * cargar la página. Tiene botón de pausa: el movimiento que dura más de cinco
- * segundos debe poder detenerse.
+ * cargar la página.
  */
 export function VideoPaisajes() {
   const seccion = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
-  const [pausado, setPausado] = useState(false);
   const [sinVideo, setSinVideo] = useState(false);
   const { scrollYProgress } = useScroll({ target: seccion, offset: ['start end', 'end start'] });
   const escala = useTransform(scrollYProgress, [0, 0.5, 1], [1.15, 1, 1.08]);
@@ -22,20 +20,8 @@ export function VideoPaisajes() {
     const v = video.current;
     if (!v) return;
     v.muted = true;
-    v.play?.()?.catch(() => setPausado(true));
+    v.play?.()?.catch(() => undefined);
   }, []);
-
-  const alternar = () => {
-    const v = video.current;
-    if (!v) return;
-    if (v.paused) {
-      void v.play();
-      setPausado(false);
-    } else {
-      v.pause();
-      setPausado(true);
-    }
-  };
 
   return (
     <section ref={seccion} aria-labelledby="video-titulo" className="relative h-[110svh] bg-bosque">
@@ -61,7 +47,10 @@ export function VideoPaisajes() {
             <span className="etiqueta text-lima">Chingaza en movimiento</span>
           </Aparecer>
           <Aparecer retraso={0.1}>
-            <h2 id="video-titulo" className="m-0 max-w-4xl font-display text-4xl leading-[0.95] font-extrabold tracking-tight text-white sm:text-5xl md:text-[80px]">
+            <h2
+              id="video-titulo"
+              className="m-0 max-w-4xl font-display text-4xl leading-[0.95] font-extrabold tracking-tight text-white sm:text-5xl md:text-[80px]"
+            >
               El agua de Bogotá nace aquí.
             </h2>
           </Aparecer>
@@ -69,17 +58,6 @@ export function VideoPaisajes() {
             <EnlaceBoton to="/senderos" conFlecha>
               Elegir mi sendero
             </EnlaceBoton>
-            {!sinVideo && <button
-              type="button"
-              onClick={alternar}
-              aria-pressed={pausado}
-              className="flex h-12 items-center gap-2 rounded-full border border-white/30 px-5 font-display text-sm font-bold text-white backdrop-blur transition-colors hover:bg-white hover:text-bosque"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                {pausado ? <path d="M7 4v16l13-8z" /> : <path d="M6 4h4v16H6zM14 4h4v16h-4z" />}
-              </svg>
-              {pausado ? 'Reproducir video' : 'Pausar video'}
-            </button>}
           </Aparecer>
           <span className="text-xs text-white/50">Video: Parques Nacionales Naturales de Colombia</span>
         </div>

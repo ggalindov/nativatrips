@@ -64,7 +64,7 @@ Las fotos de `public/fotos/` son fotografías reales del PNN Chingaza publicadas
 
 ## Portada y video
 
-- **Páramo vivo:** la portada es una ilustración propia en SVG del páramo de Chingaza: oso andino, venado, cóndor, colibrí, pato de páramo y rana con movimiento propio, frailejones que se mecen, niebla y capas con paralaje según el puntero. Un scroll corto (media pantalla) acerca la cámara a la laguna, cae la tarde y avanzan los datos del parque (`src/domain/paramo.ts`). La fauna se mueve aunque el sistema pida movimiento reducido, porque es el contenido de la portada, y se puede pausar con un botón. No usa archivos externos.
+- **Páramo vivo:** la portada es una ilustración propia en SVG del páramo de Chingaza: oso andino, venado, cóndor, colibrí, pato de páramo y rana con movimiento propio, frailejones que se mecen, niebla y capas con paralaje según el puntero. Un scroll corto (media pantalla) acerca la cámara a la laguna, cae la tarde y avanzan los datos del parque (`src/domain/paramo.ts`). La fauna se mueve aunque el sistema pida movimiento reducido, porque es el contenido de la portada. No usa archivos externos.
 - **Video en bucle:** tomas de paisaje del video institucional de Parques Nacionales Naturales de Colombia, sin audio, en `public/media/` (ignorada por git hasta confirmar el permiso de uso). Se genera con:
 
 ```bash

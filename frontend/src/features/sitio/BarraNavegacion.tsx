@@ -15,23 +15,17 @@ const ENLACES = [
 
 /**
  * Barra flotante en forma de cápsula. Transparente sobre la portada, sólida al
- * bajar; se oculta al hacer scroll hacia abajo y reaparece al subir.
+ * bajar; siempre visible mientras se hace scroll.
  */
 export function BarraNavegacion() {
   const { pathname } = useLocation();
   const { scrollY, scrollYProgress } = useScroll();
   const progreso = useSpring(scrollYProgress, { stiffness: 140, damping: 30 });
   const [arriba, setArriba] = useState(true);
-  const [oculta, setOculta] = useState(false);
   const [menu, setMenu] = useState(false);
   const [sobre, setSobre] = useState<string | null>(null);
 
-  useMotionValueEvent(scrollY, 'change', (y) => {
-    const anterior = scrollY.getPrevious() ?? 0;
-    setArriba(y < 40);
-    setOculta(y > 320 && y > anterior + 4);
-    if (y < anterior - 4) setOculta(false);
-  });
+  useMotionValueEvent(scrollY, 'change', (y) => setArriba(y < 40));
 
   useEffect(() => setMenu(false), [pathname]);
   useEffect(() => {
@@ -44,7 +38,7 @@ export function BarraNavegacion() {
     <>
       <motion.header
         initial={{ y: -100, opacity: 0 }}
-        animate={{ y: oculta && !menu ? -110 : 0, opacity: 1 }}
+        animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: CURVA }}
         className="fixed inset-x-0 top-3 z-50 flex justify-center px-3"
       >

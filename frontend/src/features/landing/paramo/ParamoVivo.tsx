@@ -24,13 +24,13 @@ function useAngosta() {
 }
 
 /** Frailejón del primer plano que se mece con el viento. */
-function Frailejon({ x, y, s, animar, retraso }: { x: number; y: number; s: number; animar: boolean; retraso: number }) {
+function Frailejon({ x, y, s, retraso }: { x: number; y: number; s: number; retraso: number }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
       <path d="M-7 0 L-6 -110 L6 -110 L7 0 Z" fill="#5b4c3c" />
       <path d="M-7 -20 L7 -28 M-7 -50 L7 -58 M-7 -80 L7 -88" stroke="#776652" strokeWidth="3" />
       <motion.g
-        animate={animar ? { rotate: [-3, 3, -3] } : undefined}
+        animate={{ rotate: [-3, 3, -3] }}
         transition={{
           duration: 5 + retraso,
           repeat: Infinity,
@@ -52,11 +52,11 @@ function Frailejon({ x, y, s, animar, retraso }: { x: number; y: number; s: numb
   );
 }
 
-function Nube({ y, s, duracion, retraso, animar }: { y: number; s: number; duracion: number; retraso: number; animar: boolean }) {
+function Nube({ y, s, duracion, retraso }: { y: number; s: number; duracion: number; retraso: number }) {
   return (
     <motion.g
       initial={{ x: -400 }}
-      animate={animar ? { x: [-400, 2000] } : { x: 400 + retraso * 40 }}
+      animate={{ x: [-400, 2000] }}
       transition={{
         duration: duracion,
         repeat: Infinity,
@@ -101,12 +101,10 @@ function Capa({
  * de recorrido) acerca la cámara a la laguna, cae la tarde, el cóndor cruza
  * el cielo y avanzan los datos del parque; las capas tienen paralaje según
  * el puntero. La fauna se mueve aunque el sistema pida movimiento reducido,
- * porque es el contenido de la portada, y se puede pausar con un botón.
+ * porque es el contenido de la portada.
  */
 export function ParamoVivo() {
   const seccion = useRef<HTMLElement>(null);
-  const [pausado, setPausado] = useState(false);
-  const animar = !pausado;
   const [dato, setDato] = useState(0);
   const angosta = useAngosta();
 
@@ -145,13 +143,12 @@ export function ParamoVivo() {
   });
 
   useEffect(() => {
-    if (pausado) return;
     const t = setInterval(() => setDato((d) => siguienteDato(d)), ROTACION_MS);
     return () => clearInterval(t);
-  }, [pausado]);
+  }, []);
 
   const mover = (e: PointerEvent<HTMLElement>) => {
-    if (!animar || e.pointerType !== 'mouse') return;
+    if (e.pointerType !== 'mouse') return;
     const r = e.currentTarget.getBoundingClientRect();
     px.set(((e.clientX - r.left) / r.width - 0.5) * -2);
     py.set(((e.clientY - r.top) / r.height - 0.5) * -2);
@@ -189,10 +186,10 @@ export function ParamoVivo() {
             <g ref={camara}>
               <Capa profundidad={4} px={px} py={py} scroll={scrollYProgress}>
                 <motion.circle cx="1240" cy="180" r="150" fill="url(#pv-sol)" style={{ y: solY }} />
-                <Nube y={150} s={1.2} duracion={90} retraso={20} animar={animar} />
-                <Nube y={250} s={0.8} duracion={70} retraso={45} animar={animar} />
+                <Nube y={150} s={1.2} duracion={90} retraso={20} />
+                <Nube y={250} s={0.8} duracion={70} retraso={45} />
                 <motion.g style={{ x: vueloCondor }}>
-                  <Condor animar={animar} x={260} y={200} s={1.1} />
+                  <Condor x={260} y={200} s={1.1} />
                 </motion.g>
               </Capa>
 
@@ -216,15 +213,11 @@ export function ParamoVivo() {
                   opacity="0.8"
                 />
                 <motion.g
-                  animate={
-                    animar
-                      ? {
-                          x: [0, 130, 260],
-                          y: [0, -80, -144],
-                          opacity: [0, 1, 0],
-                        }
-                      : { x: 130, y: -80 }
-                  }
+                  animate={{
+                    x: [0, 130, 260],
+                    y: [0, -80, -144],
+                    opacity: [0, 1, 0],
+                  }}
                   transition={{
                     duration: 24,
                     repeat: Infinity,
@@ -241,7 +234,7 @@ export function ParamoVivo() {
 
               {/* Niebla que cruza a media altura */}
               <motion.g
-                animate={animar ? { x: [-200, 200, -200] } : undefined}
+                animate={{ x: [-200, 200, -200] }}
                 transition={{
                   duration: 30,
                   repeat: Infinity,
@@ -256,10 +249,10 @@ export function ParamoVivo() {
               <Capa profundidad={20} px={px} py={py} scroll={scrollYProgress}>
                 <path d="M-100 660 C 200 600 420 640 640 630 C 900 618 1100 600 1320 620 C 1480 634 1600 620 1700 630 L1700 900 L-100 900 Z" fill="#6f8557" />
                 {[90, 230, 380, 500, 1180, 1300, 1420, 1540].map((x, i) => (
-                  <Frailejon key={x} x={x} y={664 + (i % 3) * 8} s={0.44 + (i % 3) * 0.07} animar={animar} retraso={i * 0.7} />
+                  <Frailejon key={x} x={x} y={664 + (i % 3) * 8} s={0.44 + (i % 3) * 0.07} retraso={i * 0.7} />
                 ))}
-                <Venado animar={animar} x={560} y={636} s={1.15} />
-                <OsoAndino animar={animar} x={1000} y={616} />
+                <Venado x={560} y={636} s={1.15} />
+                <OsoAndino x={1000} y={616} />
                 {/* arbustos donde se esconde el oso */}
                 <g>
                   <ellipse cx="1120" cy="596" rx="84" ry="48" fill="#2f4d36" />
@@ -279,7 +272,7 @@ export function ParamoVivo() {
                     stroke="#e2eef0"
                     strokeWidth="3"
                     strokeLinecap="round"
-                    animate={animar ? { opacity: [0.2, 0.8, 0.2], x: [0, 14, 0] } : { opacity: 0.5 }}
+                    animate={{ opacity: [0.2, 0.8, 0.2], x: [0, 14, 0] }}
                     transition={{
                       duration: 4 + i,
                       repeat: Infinity,
@@ -288,8 +281,8 @@ export function ParamoVivo() {
                     }}
                   />
                 ))}
-                <PatoParamo animar={animar} x={690} y={700} s={1.3} />
-                <Rana animar={animar} x={990} y={748} s={1.1} />
+                <PatoParamo x={690} y={700} s={1.3} />
+                <Rana x={990} y={748} s={1.1} />
               </Capa>
 
               <Capa profundidad={32} px={px} py={py} scroll={scrollYProgress}>
@@ -304,12 +297,11 @@ export function ParamoVivo() {
                     strokeLinecap="round"
                   />
                 ))}
-                <Frailejon x={210} y={800} s={1.25} animar={animar} retraso={0} />
-                <Frailejon x={390} y={820} s={0.85} animar={animar} retraso={1.2} />
-                <Frailejon x={1290} y={800} s={1.15} animar={animar} retraso={0.6} />
-                <Frailejon x={1450} y={820} s={0.9} animar={animar} retraso={1.8} />
+                <Frailejon x={210} y={800} s={1.25} retraso={0} />
+                <Frailejon x={390} y={820} s={0.85} retraso={1.2} />
+                <Frailejon x={1290} y={800} s={1.15} retraso={0.6} />
+                <Frailejon x={1450} y={820} s={0.9} retraso={1.8} />
                 <Colibri
-                  animar={animar}
                   puntos={[
                     [170, 572],
                     [352, 654],
@@ -332,15 +324,6 @@ export function ParamoVivo() {
             style={{ y: textoY, opacity: textoOpacidad }}
             className="relative z-10 mx-auto flex max-w-7xl flex-col items-start gap-4 px-4 pt-24 sm:gap-5 sm:px-8 sm:pt-28 md:pt-36 lg:px-12"
           >
-            <motion.span
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: CURVA }}
-              className="inline-flex items-center gap-2 rounded-full border border-bosque/15 bg-white/70 px-4 py-1.5 text-[11px] font-bold tracking-widest text-bosque uppercase backdrop-blur"
-            >
-              <span aria-hidden="true" className="size-1.5 animate-pulse rounded-full bg-ecosistema" />
-              PNN Chingaza · La Calera · Cundinamarca
-            </motion.span>
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -370,14 +353,17 @@ export function ParamoVivo() {
                 Reservar
               </EnlaceBoton>
             </motion.div>
-            <motion.span style={{ opacity: pistaOpacidad }} className="hidden items-center gap-2 text-xs font-bold tracking-widest text-bosque/70 uppercase sm:flex">
+            <motion.span
+              style={{ opacity: pistaOpacidad }}
+              className="hidden items-center gap-2 text-xs font-bold tracking-widest text-bosque/70 uppercase sm:flex"
+            >
               Desliza
               <motion.svg
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
-                animate={animar ? { y: [0, 4, 0] } : undefined}
+                animate={{ y: [0, 4, 0] }}
                 transition={{ duration: 1.4, repeat: Infinity }}
               >
                 <path d="M12 5v14M6 13l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -402,18 +388,13 @@ export function ParamoVivo() {
                   <h2 className="m-0 mt-1.5 font-display text-lg leading-tight font-extrabold sm:text-2xl">{actual.titulo}</h2>
                   <p className="m-0 mt-1.5 font-cifras text-lg leading-tight font-black text-lima-suave sm:mt-2 sm:text-3xl">{actual.cifra}</p>
                   <p className="m-0 mt-2 hidden text-sm leading-relaxed text-white/80 sm:block">{actual.detalle}</p>
-                  {!pausado && (
-                    <motion.span
-                      aria-hidden="true"
-                      className="absolute bottom-0 left-0 h-1 bg-lima"
-                      initial={{ width: '0%' }}
-                      animate={{ width: '100%' }}
-                      transition={{
-                        duration: ROTACION_MS / 1000,
-                        ease: 'linear',
-                      }}
-                    />
-                  )}
+                  <motion.span
+                    aria-hidden="true"
+                    className="absolute bottom-0 left-0 h-1 bg-lima"
+                    initial={{ width: '0%' }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: ROTACION_MS / 1000, ease: 'linear' }}
+                  />
                 </motion.article>
               </AnimatePresence>
             </div>
@@ -428,21 +409,12 @@ export function ParamoVivo() {
                     onClick={() => setDato(i)}
                     className="group flex h-8 min-w-6 items-center justify-center px-[3px]"
                   >
-                    <span className={`h-2.5 rounded-full transition-all duration-500 ${i === dato ? 'w-7 bg-lima' : 'w-2.5 bg-white/60 group-hover:bg-white'}`} />
+                    <span
+                      className={`h-2.5 rounded-full transition-all duration-500 ${i === dato ? 'w-7 bg-lima' : 'w-2.5 bg-white/60 group-hover:bg-white'}`}
+                    />
                   </button>
                 ))}
               </div>
-              <button
-                type="button"
-                onClick={() => setPausado((p) => !p)}
-                aria-pressed={pausado}
-                className="flex h-10 items-center gap-2 rounded-full border border-white/25 bg-bosque/70 px-4 text-xs font-bold text-white backdrop-blur hover:bg-bosque"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                  {pausado ? <path d="M7 4v16l13-8z" /> : <path d="M6 4h4v16H6zM14 4h4v16h-4z" />}
-                </svg>
-                {pausado ? 'Reanudar' : 'Pausar'}
-              </button>
             </div>
           </div>
         </div>
