@@ -7,7 +7,7 @@ describe('portada', () => {
   it('abre con el páramo vivo y rota los datos del parque', async () => {
     const usuario = userEvent.setup();
     renderizarEn();
-    expect(screen.getByRole('heading', { level: 1, name: 'Un páramo que respira.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Chingaza un páramo que respira.' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /oso andino/ })).toBeInTheDocument();
     expect(screen.getByText('+1.000 especies de flora')).toBeInTheDocument();
 
@@ -23,7 +23,7 @@ describe('portada', () => {
     const usuario = userEvent.setup();
     renderizarEn();
     await usuario.click(screen.getAllByRole('button', { name: /English/ })[0]);
-    expect(screen.getByRole('heading', { level: 1, name: 'A páramo that breathes.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Chingaza a páramo that breathes.' })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe('en');
     expect(localStorage.getItem('nativatrips.idioma')).toBe('en');
     expect(await screen.findByRole('region', { name: 'Trails to connect with the páramo' })).toBeInTheDocument();
@@ -32,10 +32,10 @@ describe('portada', () => {
 
   it('muestra el sitio en francés y portugués', () => {
     const { unmount } = renderizarEn({ idioma: 'fr' });
-    expect(screen.getByRole('heading', { level: 1, name: 'Un páramo qui respire.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Chingaza un páramo qui respire.' })).toBeInTheDocument();
     unmount();
     renderizarEn({ idioma: 'pt' });
-    expect(screen.getByRole('heading', { level: 1, name: 'Um páramo que respira.' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Chingaza um páramo que respira.' })).toBeInTheDocument();
   });
 
   it('destaca seis senderos con foto y filtra por dificultad', async () => {

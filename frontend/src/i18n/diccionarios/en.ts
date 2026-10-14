@@ -54,7 +54,7 @@ export const en: Diccionario = {
   paramo: {
     aria: 'The Chingaza páramo',
     ilustracion: 'Illustration of the Chingaza páramo with frailejones, a lagoon, an Andean bear, a deer, a condor, a hummingbird, a duck and a frog',
-    titulo: 'A páramo',
+    titulo: 'a páramo',
     tituloDestacado: 'that breathes.',
     subtitulo: 'Thirteen trails among frailejones, lagoons and the home of the Andean bear. Limited spots to protect it.',
     explorar: 'Explore trails',
