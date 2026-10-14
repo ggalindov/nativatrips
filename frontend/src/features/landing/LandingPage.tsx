@@ -29,27 +29,30 @@ function Encabezado({ antetitulo, titulo, oscuro = false, centrado = false }: { 
 }
 
 function Cifras() {
-  const cifras = [
-    { valor: 13, sufijo: '', titulo: 'Rutas habilitadas', texto: 'Páramo y bosque andino' },
-    { valor: 3820, sufijo: ' m', titulo: 'Altitud máxima', texto: 'Cuchilla el Zaque' },
-    { valor: 100, sufijo: ' %', titulo: 'Confirmación digital', texto: 'Sin papeles ni filas' },
-    { valor: 0, sufijo: '', titulo: 'Cuentas que crear', texto: 'Reservas como invitado' },
-  ];
   return (
-    <section aria-label="NativaTrips en cifras" className="relative z-10 -mt-px bg-bosque">
-      <Escalonado como="dl" className="mx-auto m-0 grid max-w-7xl grid-cols-2 gap-x-px gap-y-8 overflow-hidden px-4 py-14 sm:px-8 md:grid-cols-4 lg:px-12">
-        {cifras.map((c) => (
-          <motion.div key={c.titulo} variants={itemEscalonado} className="flex min-w-0 flex-col-reverse gap-1.5 border-l border-bosque-3 px-3 py-2 sm:px-5">
+    <section aria-label="Eco Palacio Chingaza" className="relative z-10 -mt-px overflow-hidden bg-bosque">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-14 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:gap-12 lg:px-12">
+        <Aparecer>
+          <dl className="m-0 flex flex-col-reverse gap-1.5 border-l border-bosque-3 px-3 py-2 sm:px-5">
             <dt className="flex flex-col">
-              <span className="font-display text-base font-bold text-white">{c.titulo}</span>
-              <span className="text-sm text-white/60">{c.texto}</span>
+              <span className="font-display text-base font-bold text-white">Rutas habilitadas</span>
+              <span className="text-sm text-white/60">Páramo y bosque andino</span>
             </dt>
-            <dd className="m-0 font-cifras text-xl font-black whitespace-nowrap text-lima-suave min-[360px]:text-2xl sm:text-3xl md:text-2xl lg:text-3xl xl:text-4xl">
-              <Contador valor={c.valor} sufijo={c.sufijo} />
+            <dd className="m-0 font-cifras text-4xl font-black text-lima-suave lg:text-5xl">
+              <Contador valor={13} />
             </dd>
-          </motion.div>
-        ))}
-      </Escalonado>
+          </dl>
+        </Aparecer>
+        <Aparecer retraso={0.15}>
+          <p
+            data-testid="marca-franja"
+            className="m-0 flex items-baseline gap-[0.25em] font-cifras text-[7.4vw] leading-none font-black tracking-tight whitespace-nowrap uppercase lg:justify-end lg:text-[5.6vw] xl:text-[min(6.2vw,82px)]"
+          >
+            <span className="text-[0.48em] text-white">Ecopalacio</span>
+            <span className="text-lima-suave">Chingaza</span>
+          </p>
+        </Aparecer>
+      </div>
     </section>
   );
 }

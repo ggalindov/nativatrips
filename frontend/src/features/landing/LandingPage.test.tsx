@@ -15,9 +15,8 @@ describe('portada', () => {
     await usuario.click(within(datos).getByRole('button', { name: 'Ver dato: Fauna' }));
     expect(await screen.findByText('167 especies de mamíferos')).toBeInTheDocument();
 
-    const pausa = screen.getByRole('button', { name: 'Pausar' });
-    await usuario.click(pausa);
-    expect(pausa).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText(/PNN Chingaza · La Calera/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Pausar|Reanudar|Reproducir video/ })).not.toBeInTheDocument();
   });
 
   it('destaca seis senderos con foto y filtra por dificultad', async () => {
