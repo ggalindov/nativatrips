@@ -49,11 +49,11 @@ function Galeria({ fotos, nombre }: { fotos: FotoConRuta[]; nombre: string }) {
         <button
           type="button"
           onClick={() => setVisor(true)}
-          className="absolute right-5 bottom-5 rounded-full bg-white/90 px-5 py-2.5 text-sm font-bold text-bosque shadow-lg transition-transform hover:scale-105"
+          className="absolute right-4 bottom-4 rounded-full bg-white/90 px-4 py-2.5 text-sm font-bold text-bosque shadow-lg transition-transform hover:scale-105 sm:right-5 sm:bottom-5 sm:px-5"
         >
           Ver foto completa
         </button>
-        <span className="absolute bottom-5 left-5 max-w-[60%] text-xs text-white/80">
+        <span className="absolute top-4 left-4 max-w-[80%] rounded-full bg-bosque/50 px-3 py-1 text-[11px] text-white/90 backdrop-blur sm:top-auto sm:bottom-5 sm:left-5 sm:max-w-[55%] sm:bg-transparent sm:p-0 sm:text-xs sm:backdrop-blur-none">
           Foto: {f.autor} · {f.licencia}
         </span>
       </div>
@@ -93,9 +93,9 @@ function Galeria({ fotos, nombre }: { fotos: FotoConRuta[]; nombre: string }) {
 
 function Cifra({ titulo, valor, sufijo, texto }: { titulo: string; valor: number | null; sufijo: string; texto?: string }) {
   return (
-    <motion.div variants={itemEscalonado} className="tarjeta flex flex-col gap-1 p-6">
+    <motion.div variants={itemEscalonado} className="tarjeta flex min-w-0 flex-col gap-1 p-4 sm:p-6">
       <span className="text-sm text-tinta-suave">{titulo}</span>
-      <span className="font-cifras text-3xl font-black">
+      <span className="font-cifras text-lg font-black whitespace-nowrap min-[360px]:text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl">
         {valor === null ? '—' : Number.isInteger(valor) ? <Contador valor={valor} sufijo={sufijo} /> : `${String(valor).replace('.', ',')}${sufijo}`}
       </span>
       {texto && <span className="text-xs text-tinta-suave">{texto}</span>}
@@ -137,7 +137,7 @@ export function FichaSenderoPage() {
           <span aria-current="page" className="font-semibold text-bosque">{s.nombre}</span>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[1.4fr_1fr]">
           <Aparecer>
             <Galeria fotos={fotosDe(s, indice)} nombre={s.nombre} />
           </Aparecer>
@@ -170,7 +170,7 @@ export function FichaSenderoPage() {
           <Cifra titulo="Altitud máxima" valor={s.altitudMaxM} sufijo=" m" texto="sobre el nivel del mar" />
         </Escalonado>
 
-        <section aria-labelledby="agenda" className="grid gap-8 rounded-[40px] bg-superficie p-6 shadow-[var(--shadow-tarjeta)] md:p-10 lg:grid-cols-[1.5fr_1fr]">
+        <section aria-labelledby="agenda" className="grid grid-cols-[minmax(0,1fr)] gap-8 rounded-[40px] bg-superficie p-6 shadow-[var(--shadow-tarjeta)] md:p-10 lg:grid-cols-[1.5fr_1fr]">
           <div className="flex flex-col gap-5">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
               <h2 id="agenda" className="m-0 font-display text-3xl font-extrabold">Agenda tu visita</h2>

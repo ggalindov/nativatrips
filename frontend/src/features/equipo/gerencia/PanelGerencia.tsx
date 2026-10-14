@@ -30,7 +30,9 @@ function OcupacionDiaria({ valores }: { valores: number[] }) {
           {activo === null ? 'Pasa el cursor o enfoca una barra' : `${SEMANA[activo % 7]} ${activo + 1}/10 · ${valores[activo]} % del aforo`}
         </span>
       </div>
-      <div className="relative flex h-60 flex-col">
+      {/* En pantallas angostas la gráfica se desliza de lado para que cada barra se pueda tocar. */}
+      <div className="-mx-4 overflow-x-auto px-4 pt-5 sm:mx-0 sm:px-0 xl:overflow-visible">
+      <div className="relative flex h-60 min-w-[840px] flex-col xl:min-w-0">
         <div aria-hidden="true" className="absolute inset-x-0 top-0 border-t border-dashed border-bosque/20" />
         <span aria-hidden="true" className="absolute -top-[18px] right-0 font-mono text-[11px] text-tinta-suave">
           100 % aforo
@@ -60,6 +62,7 @@ function OcupacionDiaria({ valores }: { valores: number[] }) {
           <span>31 oct</span>
         </div>
       </div>
+      </div>
     </section>
   );
 }
@@ -81,10 +84,10 @@ export function PanelGerencia() {
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-bosque/20" />
         </div>
         <span className="etiqueta text-lima">Gerencia · datos de ejemplo</span>
-        <h1 className="m-0 font-display text-[44px] font-extrabold tracking-tight">Resumen de octubre</h1>
+        <h1 className="m-0 font-display text-4xl font-extrabold tracking-tight sm:text-[44px]">Resumen de octubre</h1>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Indicador titulo="Ocupación promedio" valor={`${r.ocupacionPromedioPct} %`} nota="del aforo autorizado" />
         <Indicador titulo="Visitantes" valor={miles.format(r.visitantes)} nota={`en ${miles.format(r.reservas)} reservas`} />
         <Indicador titulo="Ingresos" valor="[VALOR]" nota="pagos aprobados por PayU" />
@@ -93,7 +96,7 @@ export function PanelGerencia() {
 
       <OcupacionDiaria valores={r.ocupacionDiariaPct} />
 
-      <div className="grid gap-12 xl:grid-cols-[1.3fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-12 xl:grid-cols-[1.3fr_1fr]">
         <section aria-labelledby="pg-send" className="flex flex-col">
           <h2 id="pg-send" className="m-0 mb-3 font-display text-2xl font-bold">
             Senderos más reservados

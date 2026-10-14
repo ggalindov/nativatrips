@@ -51,7 +51,7 @@ function Equipaje() {
     });
 
   return (
-    <section aria-labelledby="equipaje" className="grid gap-8 overflow-hidden rounded-[40px] bg-bosque p-6 text-white md:p-10 lg:grid-cols-[auto_1fr]">
+    <section aria-labelledby="equipaje" className="grid grid-cols-[minmax(0,1fr)] gap-8 overflow-hidden rounded-[40px] bg-bosque p-6 text-white md:p-10 lg:grid-cols-[auto_1fr]">
       <div className="flex flex-col items-center gap-5 lg:items-start">
         <AnilloProgreso pct={p.pct} />
         <h2 id="equipaje" className="m-0 font-display text-3xl font-extrabold">Tu morral</h2>
@@ -140,7 +140,7 @@ function SimuladorAltitud() {
             step={50}
             value={altitud}
             onChange={(e) => setAltitud(Number(e.target.value))}
-            className="h-2 w-full cursor-pointer accent-[var(--color-bosque)]"
+            className="h-8 w-full cursor-pointer accent-[var(--color-bosque)]"
           />
           <span className="flex justify-between text-xs text-tinta-suave">
             <span>Bogotá · 2.600 m</span>
@@ -216,7 +216,7 @@ export function AntesDeSubirPage() {
           <SimuladorAltitud />
         </Aparecer>
 
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-2">
           <section aria-labelledby="soroche" className="flex flex-col gap-5">
             <Aparecer>
               <span className="etiqueta text-tinta-suave">Mal de altura</span>

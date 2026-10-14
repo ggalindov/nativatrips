@@ -88,7 +88,7 @@ export function ReservaApartadaPage() {
         </motion.div>
         <Aparecer>
           <span className="font-mono text-sm text-tinta-suave">Reserva {estado.codigo}</span>
-          <h1 className="m-0 mt-2 font-display text-5xl leading-none font-extrabold tracking-tight">Tu cupo está apartado.</h1>
+          <h1 className="m-0 mt-2 font-display text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">Tu cupo está apartado.</h1>
         </Aparecer>
         <Aparecer retraso={0.1}>
           <p className="m-0 max-w-2xl text-lg leading-relaxed text-tinta">
