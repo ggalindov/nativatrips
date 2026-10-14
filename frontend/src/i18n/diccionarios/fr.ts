@@ -54,7 +54,7 @@ export const fr: Diccionario = {
   paramo: {
     aria: 'Le páramo de Chingaza',
     ilustracion: 'Illustration du páramo de Chingaza avec des frailejones, une lagune, un ours andin, un cerf, un condor, un colibri, un canard et une grenouille',
-    titulo: 'Un páramo',
+    titulo: 'un páramo',
     tituloDestacado: 'qui respire.',
     subtitulo: 'Treize sentiers entre frailejones, lagunes et le territoire de l’ours andin. Des places limitées pour le préserver.',
     explorar: 'Explorer les sentiers',

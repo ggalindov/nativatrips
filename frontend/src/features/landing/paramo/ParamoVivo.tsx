@@ -331,8 +331,9 @@ export function ParamoVivo() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: CURVA, delay: 0.1 }}
-              className="m-0 max-w-[760px] font-display text-[40px] leading-[0.95] font-extrabold tracking-tight text-bosque min-[400px]:text-5xl md:text-[84px]"
+              className="m-0 max-w-[760px] font-display text-[40px] leading-[0.95] font-extrabold tracking-tight text-bosque min-[400px]:text-5xl md:text-[64px] xl:text-[72px]"
             >
+              <span className="mb-2 block font-cifras text-[0.74em] leading-none font-black tracking-tight text-bosque uppercase">Chingaza</span>{' '}
               {t.paramo.titulo} <span className="text-pino">{t.paramo.tituloDestacado}</span>
             </motion.h1>
             <motion.p
@@ -375,7 +376,7 @@ export function ParamoVivo() {
           </motion.div>
 
           <div className="absolute inset-x-3 bottom-4 z-10 mx-auto flex max-w-7xl items-end justify-between gap-3 sm:inset-x-8 sm:bottom-8 lg:inset-x-12">
-            <div aria-live="polite" className="min-w-0 max-w-[460px] flex-1">
+            <div aria-live="polite" className="mr-[4.5rem] min-w-0 max-w-[460px] flex-1 sm:mr-0">
               <AnimatePresence mode="wait">
                 <motion.article
                   key={dato}
@@ -401,7 +402,7 @@ export function ParamoVivo() {
                 </motion.article>
               </AnimatePresence>
             </div>
-            <div className="flex flex-none flex-col items-end gap-2">
+            <div className="hidden flex-none flex-col items-end gap-2 sm:mr-20 sm:flex">
               <div className="flex" role="group" aria-label={t.paramo.datosAria}>
                 {datos.map((d, i) => (
                   <button

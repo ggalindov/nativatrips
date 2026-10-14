@@ -54,7 +54,7 @@ export const pt: Diccionario = {
   paramo: {
     aria: 'O páramo de Chingaza',
     ilustracion: 'Ilustração do páramo de Chingaza com frailejones, uma lagoa, um urso-de-óculos, um veado, um condor, um beija-flor, um pato e uma rã',
-    titulo: 'Um páramo',
+    titulo: 'um páramo',
     tituloDestacado: 'que respira.',
     subtitulo: 'Treze trilhas entre frailejones, lagoas e a casa do urso-de-óculos. Vagas limitadas para preservá-lo.',
     explorar: 'Explorar trilhas',
