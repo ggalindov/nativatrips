@@ -46,9 +46,11 @@ interface LogoProps {
   /** "oscuro" = sobre fondo bosque (texto blanco); "claro" = sobre arena. */
   tono?: 'oscuro' | 'claro';
   compacto?: boolean;
+  /** Firma bajo el nombre en la versión compacta: "by Ecopalacio Chingaza". */
+  firma?: boolean;
 }
 
-export function Logo({ lema = 'PNN Chingaza · Colombia', tono = 'oscuro', compacto = false }: LogoProps) {
+export function Logo({ lema = 'PNN Chingaza · Colombia', tono = 'oscuro', compacto = false, firma = false }: LogoProps) {
   const claro = tono === 'claro';
   return (
     <span className="group inline-flex items-center gap-3 select-none">
@@ -60,6 +62,11 @@ export function Logo({ lema = 'PNN Chingaza · Colombia', tono = 'oscuro', compa
           <span className="font-extrabold">Nativa</span>
           <span className="font-light text-lima">Trips</span>
         </span>
+        {compacto && firma && (
+          <span className={`mt-[3px] text-[9px] font-semibold tracking-[0.14em] whitespace-nowrap uppercase ${claro ? 'text-tinta-suave' : 'text-white/60'}`}>
+            <span className="font-normal normal-case italic">by</span> Ecopalacio <span className="text-lima">Chingaza</span>
+          </span>
+        )}
         {!compacto && (
           <span className={`mt-1 hidden text-[9.5px] font-semibold tracking-[0.22em] uppercase min-[420px]:block ${claro ? 'text-tinta-suave' : 'text-white/55'}`}>
             {lema}

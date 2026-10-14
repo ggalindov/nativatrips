@@ -51,7 +51,7 @@ export function BarraNavegacion() {
           }`}
         >
           <Link to="/" aria-label={t.nav.inicio} className="no-underline">
-            <Logo compacto />
+            <Logo compacto firma />
           </Link>
 
           <nav aria-label={t.nav.principal} className="hidden items-center lg:flex" onMouseLeave={() => setSobre(null)}>
