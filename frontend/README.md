@@ -62,20 +62,14 @@ npm run build        # verificación de tipos + build de producción
 
 Las fotos de `public/fotos/` son fotografías reales del PNN Chingaza publicadas en Wikimedia Commons con licencias CC BY y CC BY-SA. Están redimensionadas a WebP, sin alterar su contenido, y cada una se acredita en `/creditos` (datos en `src/contenido/fotos.ts`). Ilustran el parque; lo ideal es reemplazarlas por fotos propias de cada sendero que entregue el operador.
 
-## Videos de la portada
+## Portada y video
 
-La portada usa dos medios que **no están en el repositorio** (carpeta `public/media/`, ignorada por git):
-
-- **Descenso por scroll:** un video panorámico del páramo convertido en cuadros WebP a 120 fps (interpolados desde 60 fps, sin las franjas negras). Al hacer scroll, un canvas pinta el cuadro que corresponde a la posición; los cuadros se descargan por refinamiento progresivo y la pantalla de carga muestra el avance.
-- **Video en bucle:** tomas de paisaje del video institucional de Parques Nacionales Naturales de Colombia, sin audio.
-
-Para generarlos (requiere ffmpeg):
+- **Ascenso ilustrado:** la portada es una ilustración propia en SVG del páramo de Chingaza. Al hacer scroll, una persona sube el sendero del bosque altoandino a la cumbre, la cámara la sigue y en cada tramo aparece un dato del parque (`src/domain/ascenso.ts`). No usa archivos externos.
+- **Video en bucle:** tomas de paisaje del video institucional de Parques Nacionales Naturales de Colombia, sin audio, en `public/media/` (ignorada por git hasta confirmar el permiso de uso). Se genera con:
 
 ```bash
-scripts/preparar-medios.sh <video-360.mp4> <video-parques-nacionales.mp4>
+scripts/preparar-medios.sh <video-parques-nacionales.mp4>
 ```
-
-Antes de versionarlos o publicarlos hay que confirmar el permiso de uso de ambos videos.
 
 ## Biblioteca de fotos y videos
 

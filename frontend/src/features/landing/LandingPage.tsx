@@ -14,7 +14,7 @@ import { Boton, EnlaceBoton, FlechaAccion } from '@/ui/Boton';
 import { Contornos } from '@/ui/Contornos';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { Aparecer, Contador, Escalonado, FotoAnimada, itemEscalonado } from '@/ui/movimiento';
-import { Descenso } from './Descenso';
+import { Ascenso } from './ascenso/Ascenso';
 import { VideoPaisajes } from './VideoPaisajes';
 
 function Encabezado({ antetitulo, titulo, oscuro = false, centrado = false }: { antetitulo: string; titulo: string; oscuro?: boolean; centrado?: boolean }) {
@@ -231,7 +231,7 @@ export function LandingPage() {
 
   return (
     <>
-      <Descenso />
+      <Ascenso />
       <Cifras />
       <VideoPaisajes />
 

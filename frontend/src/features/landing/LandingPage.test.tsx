@@ -4,11 +4,14 @@ import { describe, expect, it } from 'vitest';
 import { renderizarEn } from '@/test/renderizar';
 
 describe('portada', () => {
-  it('arranca el descenso en la cumbre', () => {
+  it('arranca el ascenso en el bosque altoandino con su primer dato', () => {
     renderizarEn();
-    expect(screen.getByRole('heading', { level: 1, name: 'El páramo se recorre despacio.' })).toBeInTheDocument();
-    expect(screen.getByTestId('altimetro')).toHaveTextContent('3.900');
-    expect(screen.getByText('1/4 · Cumbre')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Sube el páramo paso a paso.' })).toBeInTheDocument();
+    expect(screen.getByTestId('altimetro')).toHaveTextContent('3.000');
+    expect(screen.getByText('1/5 · Bosque altoandino')).toBeInTheDocument();
+    expect(screen.getByText('+1.000 especies de flora')).toBeInTheDocument();
+    const tramos = screen.getByRole('list', { name: 'Tramos del ascenso' });
+    expect(within(tramos).getAllByRole('listitem')).toHaveLength(5);
   });
 
   it('destaca seis senderos con foto y filtra por dificultad', async () => {
@@ -24,7 +27,8 @@ describe('portada', () => {
 
   it('cada tarjeta lleva a la ficha del sendero', async () => {
     renderizarEn();
-    const tarjeta = (await screen.findAllByRole('article')).find((a) => within(a).queryByText('La Paila'))!;
+    const seccion = await screen.findByRole('region', { name: /Rutas para conectar/ });
+    const tarjeta = (await within(seccion).findAllByRole('article')).find((a) => within(a).queryByText('La Paila'))!;
     expect(within(tarjeta).getByRole('link', { name: /Ver sendero/ })).toHaveAttribute('href', '/senderos/la-paila');
   });
 });

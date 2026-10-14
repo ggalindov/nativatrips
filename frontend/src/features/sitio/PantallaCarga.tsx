@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { cargadorSecuencia } from '@/contenido/secuencia';
 import { Simbolo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
 
-/** Cuadros que deben estar listos para que la portada se vea fluida desde el inicio. */
-const CUADROS_ESENCIALES = 48;
 const DURACION_MINIMA_MS = 2200;
 const ESPERA_MAXIMA_MS = 8000;
 const CLAVE_SESION = 'nativatrips.carga-vista';
@@ -48,7 +45,7 @@ function Excursionista({ x, y, reducido }: { x: number; y: number; reducido: boo
 
 /**
  * Pantalla de carga de la primera visita: una persona sube por el sendero
- * hasta la cima mientras se descargan los primeros cuadros de la portada.
+ * hasta la cima mientras se preparan las fuentes y la portada.
  */
 export function PantallaCarga() {
   const reducido = useReducedMotion() ?? false;
@@ -59,14 +56,13 @@ export function PantallaCarga() {
       return true;
     }
   });
-  const [cargados, setCargados] = useState(0);
+  const [fuentesListas, setFuentesListas] = useState(false);
   const [tiempo, setTiempo] = useState(0);
 
   useEffect(() => {
     if (!visible) return;
-    const cargador = cargadorSecuencia();
-    cargador.iniciar().catch(() => setCargados(CUADROS_ESENCIALES));
-    const dejar = cargador.escuchar((n) => setCargados(n));
+    let vigente = true;
+    void document.fonts?.ready.then(() => vigente && setFuentesListas(true));
     const inicio = performance.now();
     let cuadro = 0;
     const tic = () => {
@@ -76,15 +72,15 @@ export function PantallaCarga() {
     cuadro = requestAnimationFrame(tic);
     document.documentElement.style.overflow = 'hidden';
     return () => {
-      dejar();
+      vigente = false;
       cancelAnimationFrame(cuadro);
       document.documentElement.style.overflow = '';
     };
   }, [visible]);
 
-  const avanceCarga = Math.min(1, cargados / CUADROS_ESENCIALES);
+  // Avanza con el tiempo mínimo y no termina hasta que las fuentes estén listas.
   const avanceTiempo = Math.min(1, tiempo / DURACION_MINIMA_MS);
-  const avance = tiempo >= ESPERA_MAXIMA_MS ? 1 : Math.min(avanceCarga, avanceTiempo);
+  const avance = tiempo >= ESPERA_MAXIMA_MS ? 1 : fuentesListas ? avanceTiempo : Math.min(0.92, avanceTiempo);
   const listo = avance >= 1;
 
   useEffect(() => {
