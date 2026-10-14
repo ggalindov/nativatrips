@@ -1,4 +1,5 @@
 import type { Disponibilidad } from '@/domain/aforo';
+import type { ElementoBiblioteca } from '@/domain/biblioteca';
 import type { SesionEquipo } from '@/domain/equipo';
 import type { Persona, Reserva, SolicitudReserva } from '@/domain/reserva';
 import type { Sendero } from '@/domain/sendero';
@@ -82,6 +83,10 @@ export interface OperacionServicio {
   resumenGerencia(mes: string): Promise<ResumenGerencia>;
 }
 
+export interface BibliotecaServicio {
+  listar(): Promise<ElementoBiblioteca[]>;
+}
+
 export interface AutenticacionServicio {
   iniciarSesion(correo: string, clave: string): Promise<SesionEquipo>;
 }
@@ -91,6 +96,7 @@ export interface Servicios {
   reservas: ReservasServicio;
   operacion: OperacionServicio;
   autenticacion: AutenticacionServicio;
+  biblioteca: BibliotecaServicio;
 }
 
 /** Error esperable de negocio, con un mensaje apto para mostrar a la persona. */
