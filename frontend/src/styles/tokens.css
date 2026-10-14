@@ -48,6 +48,13 @@
   }
 }
 
+/* Carrusel de la portada: la franja va duplicada, así que recorrer la mitad la deja igual que al inicio. */
+@keyframes desfile {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @keyframes brillo {
   0%,
   100% {

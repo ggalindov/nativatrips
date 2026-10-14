@@ -117,13 +117,13 @@ export function OsoAndino({ x, y, s = 1 }: Ubicado) {
 }
 
 /** Cóndor andino: planea en grandes arcos, inclinándose en las vueltas. */
-export function Condor({ x, y, s = 1 }: Ubicado) {
+export function Condor({ x, y, s = 1, ancho = 820, alto = 50 }: Ubicado & { ancho?: number; alto?: number }) {
   return (
     <g transform={`translate(${x} ${y}) scale(${s})`}>
       <motion.g
         animate={{
-          x: [0, 420, 820, 420, 0],
-          y: [0, -50, 10, 50, 0],
+          x: [0, ancho / 2, ancho, ancho / 2, 0],
+          y: [0, -alto, alto * 0.2, alto, 0],
           rotate: [0, -4, 0, 5, 0],
         }}
         transition={ciclo(30)}

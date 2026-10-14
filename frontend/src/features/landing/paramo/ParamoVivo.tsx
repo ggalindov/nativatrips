@@ -5,6 +5,7 @@ import type { MotionValue } from 'motion/react';
 import { siguienteDato } from '@/domain/paramo';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { EnlaceBoton } from '@/ui/Boton';
+import { BotonReservar } from '@/ui/BotonReservar';
 import { CURVA } from '@/ui/movimiento';
 import { Colibri, Condor, OsoAndino, PatoParamo, Rana, Venado } from './Animales';
 
@@ -130,7 +131,7 @@ export function ParamoVivo() {
   });
   const tarde = useTransform(progreso, [0, 1], [0, 0.6]);
   const solY = useTransform(progreso, [0, 1], [0, 170]);
-  const vueloCondor = useTransform(progreso, [0, 1], [0, 520]);
+  const vueloCondor = useTransform(progreso, [0, 1], [0, angosta ? 0 : 90]);
   const textoY = useTransform(progreso, [0, 0.5], [0, -90]);
   const textoOpacidad = useTransform(progreso, [0, 0.45], [1, 0]);
   const pistaOpacidad = useTransform(progreso, [0, 0.12], [1, 0]);
@@ -192,7 +193,8 @@ export function ParamoVivo() {
                 <Nube y={150} s={1.2} duracion={90} retraso={20} />
                 <Nube y={250} s={0.8} duracion={70} retraso={45} />
                 <motion.g style={{ x: vueloCondor }}>
-                  <Condor x={260} y={200} s={1.1} />
+                  {/* El cóndor vuela solo por el cielo libre: a la derecha del título en escritorio, sobre las montañas en celular. */}
+                  {angosta ? <Condor x={590} y={335} s={1.6} ancho={250} alto={16} /> : <Condor x={980} y={205} s={1.8} ancho={210} alto={40} />}
                 </motion.g>
               </Capa>
 
@@ -319,13 +321,13 @@ export function ParamoVivo() {
           <motion.div
             aria-hidden="true"
             style={{ opacity: textoOpacidad }}
-            className="pointer-events-none absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-[#dfe9e6]/90 via-[#dfe9e6]/40 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-[#dfe9e6]/90 via-[#dfe9e6]/40 to-transparent md:right-auto md:h-[62%] md:w-[62%] md:bg-gradient-to-r md:from-[#dfe9e6]/85 md:via-[#dfe9e6]/45"
           />
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-bosque/60 to-transparent" />
 
           <motion.div
             style={{ y: textoY, opacity: textoOpacidad }}
-            className="relative z-10 mx-auto flex max-w-7xl flex-col items-start gap-4 px-4 pt-24 sm:gap-5 sm:px-8 sm:pt-28 md:pt-36 lg:px-12"
+            className="relative z-10 mx-auto flex max-w-7xl flex-col items-start gap-4 px-4 pt-32 sm:gap-5 sm:px-8 sm:pt-28 md:pt-36 lg:px-12"
           >
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
@@ -333,7 +335,9 @@ export function ParamoVivo() {
               transition={{ duration: 1, ease: CURVA, delay: 0.1 }}
               className="m-0 max-w-[760px] font-display text-[40px] leading-[0.95] font-extrabold tracking-tight text-bosque min-[400px]:text-5xl md:text-[64px] xl:text-[72px]"
             >
-              <span className="mb-2 block font-cifras text-[0.74em] leading-none font-black tracking-tight text-bosque uppercase">Chingaza</span>{' '}
+              <span className="mb-2 block font-cifras text-[0.74em] leading-none font-black tracking-tight text-lima uppercase [paint-order:stroke_fill] [-webkit-text-stroke:0.07em_var(--color-bosque)] [text-shadow:0_6px_18px_rgb(19_32_26/0.18)]">
+                Chingaza
+              </span>{' '}
               {t.paramo.titulo} <span className="text-pino">{t.paramo.tituloDestacado}</span>
             </motion.h1>
             <motion.p
@@ -348,14 +352,14 @@ export function ParamoVivo() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: CURVA, delay: 0.4 }}
-              className="flex flex-wrap gap-3"
+              className="hidden flex-wrap items-center gap-3 sm:flex"
             >
-              <EnlaceBoton to="/senderos" conFlecha>
+              <EnlaceBoton to="/senderos" variante="oscuro" conFlecha className="h-14">
                 {t.paramo.explorar}
               </EnlaceBoton>
-              <EnlaceBoton to="/reservar" variante="oscuro">
+              <BotonReservar to="/reservar" tamano="amplio" vivo>
                 {t.paramo.reservar}
-              </EnlaceBoton>
+              </BotonReservar>
             </motion.div>
             <motion.span
               style={{ opacity: pistaOpacidad }}
@@ -375,49 +379,65 @@ export function ParamoVivo() {
             </motion.span>
           </motion.div>
 
-          <div className="absolute inset-x-3 bottom-4 z-10 mx-auto flex max-w-7xl items-end justify-between gap-3 sm:inset-x-8 sm:bottom-8 lg:inset-x-12">
-            <div aria-live="polite" className="mr-[4.5rem] min-w-0 max-w-[460px] flex-1 sm:mr-0">
-              <AnimatePresence mode="wait">
-                <motion.article
-                  key={dato}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.45, ease: CURVA }}
-                  className="relative overflow-hidden rounded-3xl border border-white/15 bg-bosque/80 p-4 text-white shadow-2xl backdrop-blur-md sm:p-6"
-                >
-                  <span className="etiqueta text-lima">
-                    {dato + 1}/{datos.length} · {actual.zona}
-                  </span>
-                  <h2 className="m-0 mt-1.5 font-display text-lg leading-tight font-extrabold sm:text-2xl">{actual.titulo}</h2>
-                  <p className="m-0 mt-1.5 font-cifras text-lg leading-tight font-black text-lima-suave sm:mt-2 sm:text-3xl">{actual.cifra}</p>
-                  <p className="m-0 mt-2 hidden text-sm leading-relaxed text-white/80 sm:block">{actual.detalle}</p>
-                  <motion.span
-                    aria-hidden="true"
-                    className="absolute bottom-0 left-0 h-1 bg-lima"
-                    initial={{ width: '0%' }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: ROTACION_MS / 1000, ease: 'linear' }}
-                  />
-                </motion.article>
-              </AnimatePresence>
-            </div>
-            <div className="hidden flex-none flex-col items-end gap-2 sm:mr-20 sm:flex">
-              <div className="flex" role="group" aria-label={t.paramo.datosAria}>
-                {datos.map((d, i) => (
-                  <button
-                    key={d.zona}
-                    type="button"
-                    aria-label={t.paramo.verDato(d.zona)}
-                    aria-pressed={i === dato}
-                    onClick={() => setDato(i)}
-                    className="group flex h-8 min-w-6 items-center justify-center px-[3px]"
+          <div className="absolute inset-x-3 bottom-4 z-10 mx-auto flex max-w-7xl flex-col gap-3 sm:inset-x-8 sm:bottom-8 lg:inset-x-12">
+            {/* En celular los botones van bajo la laguna, sobre la tarjeta de datos. */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: CURVA, delay: 0.5 }}
+              className="flex gap-2 sm:hidden"
+            >
+              <EnlaceBoton to="/senderos" variante="oscuro" className="h-14 flex-1 px-4 text-sm whitespace-nowrap">
+                {t.paramo.explorar}
+              </EnlaceBoton>
+              <BotonReservar to="/reservar" tamano="amplio" vivo className="flex-1">
+                {t.paramo.reservar}
+              </BotonReservar>
+            </motion.div>
+            <div className="flex items-end justify-between gap-3">
+              <div aria-live="polite" className="mr-[4.5rem] min-w-0 max-w-[460px] flex-1 sm:mr-0">
+                <AnimatePresence mode="wait">
+                  <motion.article
+                    key={dato}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.45, ease: CURVA }}
+                    className="relative overflow-hidden rounded-3xl border border-white/15 bg-bosque/80 p-4 text-white shadow-2xl backdrop-blur-md sm:p-6"
                   >
-                    <span
-                      className={`h-2.5 rounded-full transition-all duration-500 ${i === dato ? 'w-7 bg-lima' : 'w-2.5 bg-white/60 group-hover:bg-white'}`}
+                    <span className="etiqueta text-lima">
+                      {dato + 1}/{datos.length} · {actual.zona}
+                    </span>
+                    <h2 className="m-0 mt-1.5 font-display text-lg leading-tight font-extrabold sm:text-2xl">{actual.titulo}</h2>
+                    <p className="m-0 mt-1.5 font-cifras text-lg leading-tight font-black text-lima-suave sm:mt-2 sm:text-3xl">{actual.cifra}</p>
+                    <p className="m-0 mt-2 hidden text-sm leading-relaxed text-white/80 sm:block">{actual.detalle}</p>
+                    <motion.span
+                      aria-hidden="true"
+                      className="absolute bottom-0 left-0 h-1 bg-lima"
+                      initial={{ width: '0%' }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: ROTACION_MS / 1000, ease: 'linear' }}
                     />
-                  </button>
-                ))}
+                  </motion.article>
+                </AnimatePresence>
+              </div>
+              <div className="hidden flex-none flex-col items-end gap-2 sm:mr-20 sm:flex">
+                <div className="flex" role="group" aria-label={t.paramo.datosAria}>
+                  {datos.map((d, i) => (
+                    <button
+                      key={d.zona}
+                      type="button"
+                      aria-label={t.paramo.verDato(d.zona)}
+                      aria-pressed={i === dato}
+                      onClick={() => setDato(i)}
+                      className="group flex h-8 min-w-6 items-center justify-center px-[3px]"
+                    >
+                      <span
+                        className={`h-2.5 rounded-full transition-all duration-500 ${i === dato ? 'w-7 bg-lima' : 'w-2.5 bg-white/60 group-hover:bg-white'}`}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
