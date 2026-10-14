@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { MotionConfig } from 'motion/react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import type { Servicios } from '@/services/puertos';
 import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
 import { BibliotecaPage } from '@/features/biblioteca/BibliotecaPage';
@@ -22,6 +22,7 @@ import { FichaSenderoPage } from '@/features/senderos/FichaSenderoPage';
 import { CreditosPage } from '@/features/sitio/CreditosPage';
 import { PantallaCarga } from '@/features/sitio/PantallaCarga';
 import { SitioLayout } from '@/features/sitio/SitioLayout';
+import { IdiomaProvider } from '@/i18n/IdiomaContext';
 
 /** Vuelve arriba al cambiar de página, salvo que la URL apunte a una sección. */
 function ScrollAlCambiar() {
@@ -31,6 +32,15 @@ function ScrollAlCambiar() {
     else window.scrollTo(0, 0);
   }, [pathname, hash]);
   return null;
+}
+
+/** El área del equipo trabaja siempre en español. */
+function AreaEquipo() {
+  return (
+    <IdiomaProvider inicial="es" fijo>
+      <Outlet />
+    </IdiomaProvider>
+  );
 }
 
 export function Rutas() {
@@ -50,7 +60,7 @@ export function Rutas() {
         <Route path="mi-reserva/:token" element={<MiReservaPage />} />
       </Route>
 
-      <Route path="equipo">
+      <Route path="equipo" element={<AreaEquipo />}>
         <Route index element={<Navigate to="acceso" replace />} />
         <Route path="acceso" element={<AccesoPage />} />
         <Route element={<RutaProtegida rol="PERSONAL_ADMINISTRATIVO" />}>
@@ -77,6 +87,7 @@ export function App({ servicios }: { servicios?: Servicios }) {
   const instancia = useMemo(() => servicios ?? crearServicios(), [servicios]);
   return (
     <MotionConfig reducedMotion="user">
+    <IdiomaProvider>
     <ServiciosProvider servicios={instancia}>
       <SesionProvider>
         <BrowserRouter>
@@ -86,6 +97,7 @@ export function App({ servicios }: { servicios?: Servicios }) {
         </BrowserRouter>
       </SesionProvider>
     </ServiciosProvider>
+    </IdiomaProvider>
     </MotionConfig>
   );
 }

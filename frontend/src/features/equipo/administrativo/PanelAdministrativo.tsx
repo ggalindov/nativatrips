@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { nivelAforo, porcentajeOcupacion } from '@/domain/aforo';
 import { formatearFechaCorta, hoyIso, sumarDias } from '@/domain/fechas';
 import { useServicios } from '@/services/ServiciosContext';
-import { mensajeDeError, useConsulta } from '@/services/useConsulta';
+import { useConsulta, useMensajeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { foto } from '@/contenido/fotos';
@@ -20,6 +20,7 @@ function Titulo({ id, children, nota }: { id: string; children: string; nota?: s
 }
 
 export function PanelAdministrativo() {
+  const mensajeDeError = useMensajeError();
   const { operacion } = useServicios();
   const hoy = useMemo(() => hoyIso(), []);
   const proxima = useMemo(() => sumarDias(hoy, 3), [hoy]);

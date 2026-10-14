@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Reserva, SolicitudReserva } from './reserva';
-import { acompanantesPendientes, pasosRecorrido, puedeCancelarse, validarSolicitud } from './reserva';
+import { acompanantesPendientes, celularValido, extranjerosEn, pasosRecorrido, puedeCancelarse, validarPersona, validarSolicitud } from './reserva';
 
 const solicitud: SolicitudReserva = {
   senderoId: 'lagunas-de-siecha',
   fecha: '2026-10-16',
   personas: 2,
-  titular: { nombre: 'Laura Gómez', documento: '1020304050', correo: 'laura@correo.co', celular: '3001234567' },
+  titular: { nombre: 'Laura Gómez', tipoDocumento: 'CC', documento: '1020304050', nacionalidad: 'CO', correo: 'laura@correo.co', indicativo: '57', celular: '3001234567' },
 };
 
 const reserva: Reserva = {
@@ -23,10 +23,28 @@ describe('reserva', () => {
     const errores = validarSolicitud({
       ...solicitud,
       fecha: '',
-      titular: { nombre: 'L', documento: '12', correo: 'sin-arroba', celular: '300' },
+      titular: { ...solicitud.titular, nombre: 'L', documento: '12', correo: 'sin-arroba', celular: '300' },
     });
-    expect(errores).toHaveLength(5);
-    expect(errores[0]).toBe('Elige una fecha.');
+    expect(errores).toEqual(['fecha', 'nombre', 'documentoNumerico', 'correo', 'celularColombia']);
+  });
+
+  it('admite visitantes extranjeros con pasaporte y celular internacional', () => {
+    const turista = { ...solicitud.titular, nombre: 'Claire Martin', nacionalidad: 'FR', tipoDocumento: 'PASAPORTE' as const, documento: '19AB12345', indicativo: '33', celular: '612345678' };
+    expect(validarSolicitud({ ...solicitud, titular: turista })).toEqual([]);
+    expect(extranjerosEn({ titular: turista, acompanantes: [{ nombre: 'Ana Ruiz', tipoDocumento: 'CC', documento: '52123456', nacionalidad: 'CO' }] })).toBe(1);
+  });
+
+  it('exige un documento acorde a la nacionalidad', () => {
+    expect(validarPersona({ nombre: 'John Smith', nacionalidad: 'US', tipoDocumento: 'CC', documento: '1020304050' })).toEqual(['tipoDocumento']);
+    expect(validarPersona({ nombre: 'John Smith', nacionalidad: 'US', tipoDocumento: 'PASAPORTE', documento: 'A 12' })).toEqual(['documentoAlfanumerico']);
+    expect(validarPersona({ nombre: 'Luisa Pérez', nacionalidad: 'VE', tipoDocumento: 'PPT', documento: '5123456' })).toEqual([]);
+  });
+
+  it('valida el celular según el indicativo', () => {
+    expect(celularValido('57', '3001234567')).toBe(true);
+    expect(celularValido('57', '6011234567')).toBe(false);
+    expect(celularValido('1', '2025550143')).toBe(true);
+    expect(celularValido('1', '123')).toBe(false);
   });
 
   it('sitúa cada paso del recorrido según el estado', () => {
@@ -36,7 +54,7 @@ describe('reserva', () => {
 
   it('cuenta los acompañantes que faltan por registrar', () => {
     expect(acompanantesPendientes(reserva)).toBe(2);
-    expect(acompanantesPendientes({ ...reserva, acompanantes: [{ nombre: 'Diego', documento: '12345' }] })).toBe(1);
+    expect(acompanantesPendientes({ ...reserva, acompanantes: [{ nombre: 'Diego', tipoDocumento: 'CC', documento: '12345', nacionalidad: 'CO' }] })).toBe(1);
   });
 
   it('solo permite cancelar reservas activas', () => {

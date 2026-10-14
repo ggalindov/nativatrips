@@ -86,6 +86,21 @@ scripts/importar-biblioteca.sh <carpeta-exportada> [Paisaje|Flora|Fauna|Experien
 
 El script genera fotos WebP (1600 y 720 px, sin metadatos), videos H.264 de 720 px sin audio con póster, y el catálogo. Después conviene revisar en `biblioteca.json` los textos alternativos y las categorías de cada elemento.
 
+## Idiomas
+
+El sitio público está en español, inglés, francés y portugués (`src/i18n/`). El selector está en la barra, en el menú móvil y en el pie; la elección se guarda en el navegador y, la primera vez, se toma el idioma del navegador.
+
+- Los textos viven en `src/i18n/diccionarios/`. `es.ts` es la fuente y los demás deben tener exactamente la misma forma: si falta una frase, TypeScript no compila.
+- Fechas, números y precios (siempre en pesos colombianos) usan el formato de cada idioma (`src/i18n/formato.ts`).
+- Las descripciones de los senderos y los textos alternativos de las fotos también están traducidos. Los nombres propios (senderos, puntos de encuentro) no se traducen.
+- El área del equipo (`/equipo`) trabaja siempre en español.
+
+## Visitantes extranjeros
+
+Cada visitante (titular y acompañantes) registra su procedencia. Para extranjeros se elige el país y se ofrecen solo documentos válidos: pasaporte, cédula de extranjería, Permiso por Protección Temporal (PPT) o documento nacional de identidad. El celular lleva indicativo internacional y se valida según el país. Se muestra un aviso sobre el documento en la entrada y la tarifa diferenciada de Parques Nacionales para extranjeros no residentes.
+
+Pendiente en el backend: `IntegranteRequest` solo guarda `nombreCompleto` y `documentoIdentidad`; hay que agregar `tipoDocumento`, `nacionalidad` (ISO 3166-1 alfa-2) y, para el titular, el indicativo del celular.
+
 ## Pendientes
 
 - Validar con el operador las tarifas, sectores, altitudes, desniveles, textos y puntos de encuentro de cada sendero (vienen del prototipo de Figma).

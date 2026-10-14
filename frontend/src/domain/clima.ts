@@ -14,32 +14,38 @@ export function temperaturaEstimada(altitudM: number, referencia = REFERENCIA): 
   return Math.round(decimas) / 10;
 }
 
-/** Recomendación de ropa según la temperatura estimada. */
-export function capasRecomendadas(temperaturaC: number): string {
-  if (temperaturaC <= 6) return 'Térmica, polar grueso, chaqueta impermeable, guantes y gorro.';
-  if (temperaturaC <= 10) return 'Térmica, polar e impermeable; guantes en la mañana.';
-  return 'Camiseta transpirable y polar ligero; lleva el impermeable en el morral.';
+/** Nivel de abrigo según la temperatura estimada; la interfaz lo describe en cada idioma. */
+export type Capas = 'frio' | 'fresco' | 'templado';
+
+export function capasRecomendadas(temperaturaC: number): Capas {
+  if (temperaturaC <= 6) return 'frio';
+  if (temperaturaC <= 10) return 'fresco';
+  return 'templado';
 }
 
+export type CategoriaEquipaje = 'Ropa' | 'Equipo' | 'Comida y agua' | 'Documentos';
+
+export const CATEGORIAS_EQUIPAJE: readonly CategoriaEquipaje[] = ['Ropa', 'Equipo', 'Comida y agua', 'Documentos'];
+
+/** Elemento del morral; su nombre visible sale del diccionario por `id`. */
 export interface ElementoEquipaje {
   id: string;
-  nombre: string;
-  categoria: 'Ropa' | 'Equipo' | 'Comida y agua' | 'Documentos';
+  categoria: CategoriaEquipaje;
   obligatorio: boolean;
 }
 
 export const EQUIPAJE: readonly ElementoEquipaje[] = [
-  { id: 'impermeable', nombre: 'Chaqueta impermeable', categoria: 'Ropa', obligatorio: true },
-  { id: 'polar', nombre: 'Polar o chaqueta térmica', categoria: 'Ropa', obligatorio: true },
-  { id: 'botas', nombre: 'Botas con agarre', categoria: 'Ropa', obligatorio: true },
-  { id: 'guantes', nombre: 'Guantes y gorro', categoria: 'Ropa', obligatorio: false },
-  { id: 'morral', nombre: 'Morral de 20 a 30 litros', categoria: 'Equipo', obligatorio: true },
-  { id: 'bloqueador', nombre: 'Bloqueador solar y gafas', categoria: 'Equipo', obligatorio: true },
-  { id: 'bastones', nombre: 'Bastones de caminata', categoria: 'Equipo', obligatorio: false },
-  { id: 'agua', nombre: 'Agua (mínimo 1,5 litros)', categoria: 'Comida y agua', obligatorio: true },
-  { id: 'snacks', nombre: 'Snacks de energía', categoria: 'Comida y agua', obligatorio: false },
-  { id: 'documento', nombre: 'Documento de identidad', categoria: 'Documentos', obligatorio: true },
-  { id: 'reserva', nombre: 'Código de la reserva', categoria: 'Documentos', obligatorio: true },
+  { id: 'impermeable', categoria: 'Ropa', obligatorio: true },
+  { id: 'polar', categoria: 'Ropa', obligatorio: true },
+  { id: 'botas', categoria: 'Ropa', obligatorio: true },
+  { id: 'guantes', categoria: 'Ropa', obligatorio: false },
+  { id: 'morral', categoria: 'Equipo', obligatorio: true },
+  { id: 'bloqueador', categoria: 'Equipo', obligatorio: true },
+  { id: 'bastones', categoria: 'Equipo', obligatorio: false },
+  { id: 'agua', categoria: 'Comida y agua', obligatorio: true },
+  { id: 'snacks', categoria: 'Comida y agua', obligatorio: false },
+  { id: 'documento', categoria: 'Documentos', obligatorio: true },
+  { id: 'reserva', categoria: 'Documentos', obligatorio: true },
 ];
 
 export function progresoEquipaje(marcados: ReadonlySet<string>): { total: number; listos: number; pct: number; faltanObligatorios: number } {

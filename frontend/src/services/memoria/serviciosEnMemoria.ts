@@ -1,7 +1,7 @@
 import type { Disponibilidad } from '@/domain/aforo';
 import { cuposLibres } from '@/domain/aforo';
 import type { Persona, Reserva } from '@/domain/reserva';
-import { validarSolicitud } from '@/domain/reserva';
+import { validarPersona, validarSolicitud } from '@/domain/reserva';
 import { sumarDias } from '@/domain/fechas';
 import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
@@ -65,14 +65,14 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
 
   const buscarSendero = (id: string) => {
     const s = SENDEROS.find((x) => x.id === id);
-    if (!s) throw new ErrorServicio('Ese sendero no existe.');
+    if (!s) throw new ErrorServicio('Ese sendero no existe.', 'senderoInexistente');
     return s;
   };
 
   const reservaPorToken = (t: string): Reserva => {
     const codigo = enlaces.get(t);
     const r = codigo ? reservas.get(codigo) : undefined;
-    if (!r) throw new ErrorServicio('El enlace no es válido o ya caducó. Pide uno nuevo con tu código y tu correo.');
+    if (!r) throw new ErrorServicio('El enlace no es válido o ya caducó.', 'enlaceInvalido');
     return r;
   };
 
@@ -89,10 +89,10 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
     reservas: {
       crear: async (s) => {
         const errores = validarSolicitud(s);
-        if (errores.length > 0) throw new ErrorServicio(errores[0]);
+        if (errores.length > 0) throw new ErrorServicio(`Solicitud inválida: ${errores.join(', ')}`, 'datosInvalidos');
         const sendero = buscarSendero(s.senderoId);
         const d = disponibilidad(s.senderoId, s.fecha);
-        if (s.personas > cuposLibres(d)) throw new ErrorServicio('Ya no quedan cupos suficientes para esa fecha.');
+        if (s.personas > cuposLibres(d)) throw new ErrorServicio('Ya no quedan cupos suficientes para esa fecha.', 'sinCupos');
         const codigo = codigoReserva();
         reservas.set(codigo, {
           codigo, senderoId: sendero.id, senderoNombre: sendero.nombre, fecha: s.fecha, horaSalida: sendero.horaSalida,
@@ -108,11 +108,9 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
       solicitarEnlace: async () => esperar(undefined),
       agregarAcompanante: async (t, persona: Persona) => {
         const r = reservaPorToken(t);
-        if (r.acompanantes.length >= r.personas - 1) throw new ErrorServicio('Ya registraste a todos los acompañantes.');
-        if (persona.nombre.trim().length < 3 || !/^\d{5,12}$/.test(persona.documento.trim())) {
-          throw new ErrorServicio('Revisa el nombre y el documento del acompañante.');
-        }
-        r.acompanantes.push({ nombre: persona.nombre.trim(), documento: persona.documento.trim() });
+        if (r.acompanantes.length >= r.personas - 1) throw new ErrorServicio('Ya registraste a todos los acompañantes.', 'acompanantesCompletos');
+        if (validarPersona(persona).length > 0) throw new ErrorServicio('Revisa los datos del acompañante.', 'acompananteInvalido');
+        r.acompanantes.push({ ...persona, nombre: persona.nombre.trim(), documento: persona.documento.trim().toUpperCase() });
         return esperar(structuredClone(r));
       },
       cancelar: async (t) => {
@@ -128,7 +126,7 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
       enRevision: () => esperar(revision.map((r) => ({ ...r }))),
       resolverRevision: async (codigo) => {
         const i = revision.findIndex((r) => r.codigo === codigo);
-        if (i === -1) throw new ErrorServicio('Esa reserva ya no está en revisión.');
+        if (i === -1) throw new ErrorServicio('Esa reserva ya no está en revisión.', 'revisionInexistente');
         revision.splice(i, 1);
         return esperar(undefined);
       },
@@ -169,7 +167,7 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
     autenticacion: {
       iniciarSesion: async (correo, clave) => {
         const cuenta = CUENTAS_DEMO.find((c) => c.correo === correo.trim().toLowerCase());
-        if (!cuenta || clave !== CLAVE_DEMO) throw new ErrorServicio('Correo o contraseña incorrectos.');
+        if (!cuenta || clave !== CLAVE_DEMO) throw new ErrorServicio('Correo o contraseña incorrectos.', 'credenciales');
         return esperar({ nombre: cuenta.nombre, correo: cuenta.correo, rol: cuenta.rol, token: token() });
       },
     },

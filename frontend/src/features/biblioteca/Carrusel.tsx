@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useReducedMotion } from 'motion/react';
 import type { ElementoBiblioteca } from '@/domain/biblioteca';
 import { indiceCircular } from '@/domain/biblioteca';
+import { useIdioma } from '@/i18n/IdiomaContext';
+import { useContenido } from '@/i18n/useContenido';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
 import { FlechaAccion } from '@/ui/Boton';
@@ -18,6 +20,9 @@ const AVANCE_MS = 4500;
  */
 export function Carrusel({ limite = 14 }: { limite?: number }) {
   const { biblioteca } = useServicios();
+  const { t } = useIdioma();
+  const { altMedio } = useContenido();
+  const b = t.biblioteca;
   const { estado } = useConsulta(() => biblioteca.listar(), [biblioteca]);
   const pista = useRef<HTMLUListElement>(null);
   const [actual, setActual] = useState(0);
@@ -63,7 +68,7 @@ export function Carrusel({ limite = 14 }: { limite?: number }) {
       <ul
         ref={pista}
         onScroll={alDesplazar}
-        aria-label="Carrusel de fotos del páramo"
+        aria-label={b.carrusel}
         className="m-0 flex list-none snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth p-0 px-4 pb-2 [scrollbar-width:none] sm:px-8 lg:px-[max(3rem,calc((100vw-80rem)/2+3rem))] [&::-webkit-scrollbar]:hidden"
       >
         {medios.map((m, i) => (
@@ -71,13 +76,13 @@ export function Carrusel({ limite = 14 }: { limite?: number }) {
             <button
               type="button"
               onClick={() => setAbierto(i)}
-              aria-label={`Ampliar: ${m.alt}`}
+              aria-label={b.ampliar(altMedio(m))}
               className={`group relative block h-[52vh] max-h-[520px] min-h-[320px] w-full overflow-hidden rounded-[32px] text-left transition-transform duration-700 ${i === actual ? 'scale-100' : 'scale-[0.96] opacity-90'}`}
             >
               <MiniaturaMedio medio={m} className="transition-transform duration-[1.4s] group-hover:scale-110" />
               <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bosque/90 via-bosque/30 to-transparent p-6 pt-16 text-white">
-                <span className="etiqueta text-lima">{m.categoria}</span>
-                <span className="font-display text-xl font-bold">{m.alt}</span>
+                <span className="etiqueta text-lima">{b.categorias[m.categoria]}</span>
+                <span className="font-display text-xl font-bold">{altMedio(m)}</span>
               </span>
             </button>
           </li>
@@ -90,14 +95,14 @@ export function Carrusel({ limite = 14 }: { limite?: number }) {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <button type="button" aria-label="Foto anterior" onClick={() => irA(indiceCircular(actual, -1, medios.length))} className="flex size-12 items-center justify-center rounded-full border border-bosque/20 text-bosque transition-colors hover:bg-bosque hover:text-lima">
+          <button type="button" aria-label={b.fotoAnterior} onClick={() => irA(indiceCircular(actual, -1, medios.length))} className="flex size-12 items-center justify-center rounded-full border border-bosque/20 text-bosque transition-colors hover:bg-bosque hover:text-lima">
             ←
           </button>
-          <button type="button" aria-label="Foto siguiente" onClick={() => irA(indiceCircular(actual, 1, medios.length))} className="flex size-12 items-center justify-center rounded-full bg-bosque text-lima transition-colors hover:bg-lima hover:text-bosque">
+          <button type="button" aria-label={b.fotoSiguiente} onClick={() => irA(indiceCircular(actual, 1, medios.length))} className="flex size-12 items-center justify-center rounded-full bg-bosque text-lima transition-colors hover:bg-lima hover:text-bosque">
             →
           </button>
           <Link to="/biblioteca" className="ml-2 hidden min-h-11 items-center gap-1.5 font-display text-sm font-bold no-underline sm:inline-flex">
-            Ver la biblioteca <FlechaAccion />
+            {b.verBiblioteca} <FlechaAccion />
           </Link>
         </div>
       </div>

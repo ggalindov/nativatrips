@@ -1,6 +1,7 @@
 import type { Disponibilidad } from '@/domain/aforo';
 import { cuposLibres, nivelAforo } from '@/domain/aforo';
-import { diaDelMes, diaSemana, formatearFecha } from '@/domain/fechas';
+import { diaDelMes } from '@/domain/fechas';
+import { useIdioma } from '@/i18n/IdiomaContext';
 
 interface Props {
   dias: readonly Disponibilidad[];
@@ -9,8 +10,9 @@ interface Props {
 }
 
 export function SelectorFecha({ dias, seleccionada, onElegir }: Props) {
+  const { t, f } = useIdioma();
   return (
-    <div role="group" aria-label="Elegir fecha" className="grid grid-cols-3 gap-2 sm:grid-cols-7">
+    <div role="group" aria-label={t.fechas.elegir} className="grid grid-cols-3 gap-2 sm:grid-cols-7">
       {dias.map((d) => {
         const nivel = nivelAforo(d);
         const libres = cuposLibres(d);
@@ -21,7 +23,7 @@ export function SelectorFecha({ dias, seleccionada, onElegir }: Props) {
             type="button"
             disabled={nivel === 'lleno'}
             aria-pressed={activa}
-            aria-label={`${formatearFecha(d.fecha)}, ${nivel === 'lleno' ? 'sin cupos' : `${libres} cupos`}`}
+            aria-label={`${f.fechaLarga(d.fecha)}, ${nivel === 'lleno' ? t.fechas.sinCupos : t.comun.cupos(libres)}`}
             onClick={() => onElegir(d.fecha)}
             className={`flex min-h-[84px] flex-col items-start gap-1.5 rounded-2xl border p-3 text-left ${
               activa
@@ -31,10 +33,10 @@ export function SelectorFecha({ dias, seleccionada, onElegir }: Props) {
                   : 'border-bosque/20 bg-superficie text-bosque hover:border-bosque'
             }`}
           >
-            <span className="font-mono text-[11px] tracking-[0.1em] uppercase">{diaSemana(d.fecha)}</span>
+            <span className="font-mono text-[11px] tracking-[0.1em] uppercase">{f.diaSemana(d.fecha)}</span>
             <span className="font-display text-[22px] font-bold">{diaDelMes(d.fecha)}</span>
             <span className={`font-mono text-xs ${!activa && nivel === 'alerta' ? 'text-advertencia' : ''}`}>
-              {nivel === 'lleno' ? 'Lleno' : `${libres} cupos`}
+              {nivel === 'lleno' ? t.fechas.lleno : t.comun.cupos(libres)}
             </span>
           </button>
         );

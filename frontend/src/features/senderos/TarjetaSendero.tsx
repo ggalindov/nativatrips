@@ -2,7 +2,8 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { fotoDeSendero } from '@/contenido/fotos';
 import type { Sendero } from '@/domain/sendero';
-import { formatearDistancia, formatearDuracion, formatearMetros, formatearPesos } from '@/domain/sendero';
+import { useIdioma } from '@/i18n/IdiomaContext';
+import { useContenido } from '@/i18n/useContenido';
 import { FlechaAccion } from '@/ui/Boton';
 import { itemEscalonado } from '@/ui/movimiento';
 
@@ -14,9 +15,10 @@ const COLOR_DIFICULTAD: Record<Sendero['dificultad'], string> = {
 };
 
 export function PildoraDificultad({ dificultad }: { dificultad: Sendero['dificultad'] }) {
+  const { t } = useIdioma();
   return (
     <span className={`rounded-full px-3 py-1 text-[11px] font-bold tracking-wide uppercase shadow-sm ${COLOR_DIFICULTAD[dificultad]}`}>
-      {dificultad}
+      {t.dificultad[dificultad]}
     </span>
   );
 }
@@ -29,6 +31,8 @@ interface Props {
 
 export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
   const f = fotoDeSendero(s.id);
+  const { t } = useIdioma();
+  const c = useContenido();
   return (
     <motion.li variants={itemEscalonado} className="list-none">
       <motion.article
@@ -39,7 +43,7 @@ export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
         <div className="relative h-56 overflow-hidden">
           <img
             src={f.srcPequena}
-            alt={f.alt}
+            alt={c.alt(f)}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-110"
           />
@@ -53,9 +57,9 @@ export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
             <PildoraDificultad dificultad={s.dificultad} />
           </div>
           <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3 text-white">
-            <span className="text-xs font-semibold tracking-wide text-white/80 uppercase">{s.sector ?? 'PNN Chingaza'}</span>
+            <span className="text-xs font-semibold tracking-wide text-white/80 uppercase">{s.sector ?? t.sendero.parque}</span>
             {s.altitudMaxM !== null && (
-              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold backdrop-blur">▲ {formatearMetros(s.altitudMaxM)}</span>
+              <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold backdrop-blur">▲ {c.metros(s.altitudMaxM)}</span>
             )}
           </div>
           {onVistaRapida && (
@@ -64,7 +68,7 @@ export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
               onClick={() => onVistaRapida(s)}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/90 px-4 py-2 text-sm font-bold text-bosque opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100 focus-visible:opacity-100"
             >
-              Vista rápida
+              {t.sendero.vistaRapida}
             </button>
           )}
         </div>
@@ -73,9 +77,9 @@ export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
           <p className="m-0 line-clamp-2 text-sm leading-relaxed text-tinta">{s.descripcion}</p>
           <dl className="m-0 grid grid-cols-3 gap-3 rounded-2xl bg-arena px-4 py-3 text-sm">
             {[
-              ['Duración', formatearDuracion(s.duracionHoras)],
-              ['Distancia', formatearDistancia(s.distanciaKm)],
-              ['Desnivel', formatearMetros(s.desnivelM)],
+              [t.sendero.duracion, c.duracion(s.duracionHoras)],
+              [t.sendero.distancia, c.distancia(s.distanciaKm)],
+              [t.sendero.desnivel, c.metros(s.desnivelM)],
             ].map(([k, v]) => (
               <div key={k} className="flex flex-col-reverse gap-0.5">
                 <dt className="text-[11px] text-tinta-suave">{k}</dt>
@@ -85,14 +89,14 @@ export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
           </dl>
           <div className="mt-auto flex items-end justify-between gap-3 pt-1">
             <div className="flex flex-col">
-              <span className="text-[11px] text-tinta-suave">Desde, por persona</span>
-              <span className="font-display text-lg font-extrabold">{formatearPesos(s.precioPorPersona)}</span>
+              <span className="text-[11px] text-tinta-suave">{t.sendero.desdePersona}</span>
+              <span className="font-display text-lg font-extrabold">{c.pesos(s.precioPorPersona)}</span>
             </div>
             <Link
               to={`/senderos/${s.id}`}
               className="inline-flex items-center gap-1.5 rounded-full bg-bosque px-4 py-2.5 font-display text-sm font-bold text-white no-underline transition-colors after:absolute after:inset-0 hover:bg-lima hover:text-bosque"
             >
-              Ver sendero <FlechaAccion />
+              {t.sendero.verSendero} <FlechaAccion />
             </Link>
           </div>
         </div>

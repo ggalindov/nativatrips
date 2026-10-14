@@ -2,6 +2,8 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Rutas } from '@/app/App';
 import type { SesionEquipo } from '@/domain/equipo';
+import { IdiomaProvider } from '@/i18n/IdiomaContext';
+import type { Idioma } from '@/i18n/idiomas';
 import { SesionProvider } from '@/features/equipo/SesionContext';
 import { crearServiciosEnMemoria } from '@/services/memoria/serviciosEnMemoria';
 import type { Servicios } from '@/services/puertos';
@@ -11,18 +13,21 @@ interface Opciones {
   ruta?: string;
   sesion?: SesionEquipo | null;
   servicios?: Servicios;
+  idioma?: Idioma;
 }
 
 /** Monta la aplicación completa en una ruta, con datos en memoria y sin latencia. */
-export function renderizarEn({ ruta = '/', sesion = null, servicios = crearServiciosEnMemoria({ latenciaMs: 0 }) }: Opciones = {}) {
+export function renderizarEn({ ruta = '/', sesion = null, servicios = crearServiciosEnMemoria({ latenciaMs: 0 }), idioma = 'es' }: Opciones = {}) {
   const resultado = render(
+    <IdiomaProvider inicial={idioma}>
     <ServiciosProvider servicios={servicios}>
       <SesionProvider inicial={sesion}>
         <MemoryRouter initialEntries={[ruta]}>
           <Rutas />
         </MemoryRouter>
       </SesionProvider>
-    </ServiciosProvider>,
+    </ServiciosProvider>
+    </IdiomaProvider>,
   );
   return { ...resultado, servicios };
 }
