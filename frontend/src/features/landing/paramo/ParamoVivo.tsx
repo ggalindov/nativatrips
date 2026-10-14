@@ -194,7 +194,7 @@ export function ParamoVivo() {
                 <Nube y={250} s={0.8} duracion={70} retraso={45} />
                 <motion.g style={{ x: vueloCondor }}>
                   {/* El cóndor vuela solo por el cielo libre: a la derecha del título en escritorio, sobre las montañas en celular. */}
-                  {angosta ? <Condor x={590} y={335} s={1.6} ancho={250} alto={16} /> : <Condor x={980} y={205} s={1.8} ancho={210} alto={40} />}
+                  {angosta ? <Condor x={590} y={335} s={1.6} ancho={250} alto={16} /> : <Condor x={980} y={300} s={1.8} ancho={210} alto={34} />}
                 </motion.g>
               </Capa>
 
@@ -395,7 +395,7 @@ export function ParamoVivo() {
               </BotonReservar>
             </motion.div>
             <div className="flex items-end justify-between gap-3">
-              <div aria-live="polite" className="mr-[4.5rem] min-w-0 max-w-[260px] flex-1 sm:mr-0 sm:max-w-[320px]">
+              <div aria-live="polite" className="mr-[4.5rem] min-w-0 max-w-[260px] flex-1 sm:mr-0 sm:max-w-[320px] md:max-w-[560px]">
                 <AnimatePresence mode="wait">
                   <motion.article
                     key={dato}
@@ -403,14 +403,14 @@ export function ParamoVivo() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.45, ease: CURVA }}
-                    className="relative overflow-hidden rounded-2xl border border-white/15 bg-bosque/75 px-3.5 py-3 text-white shadow-xl backdrop-blur-md sm:rounded-3xl sm:px-4 sm:py-3.5"
+                    className="relative overflow-hidden rounded-2xl border border-white/15 bg-bosque/75 px-3.5 py-3 text-white shadow-xl backdrop-blur-md sm:rounded-3xl sm:px-4 sm:py-3.5 md:px-6 md:py-4"
                   >
-                    <span className="etiqueta text-[10px] text-lima">
+                    <span className="etiqueta text-[10px] text-lima md:text-[11px]">
                       {dato + 1}/{datos.length} · {actual.zona}
                     </span>
-                    <h2 className="m-0 mt-1 font-display text-sm leading-tight font-extrabold sm:text-base">{actual.titulo}</h2>
-                    <p className="m-0 mt-0.5 font-cifras text-base leading-tight font-black text-lima-suave sm:text-lg">{actual.cifra}</p>
-                    <p className="m-0 mt-1 hidden text-xs leading-snug text-white/75 sm:block">{actual.detalle}</p>
+                    <h2 className="m-0 mt-1 font-display text-sm leading-tight font-extrabold sm:text-base md:text-lg">{actual.titulo}</h2>
+                    <p className="m-0 mt-0.5 font-cifras text-base leading-tight font-black text-lima-suave sm:text-lg md:text-2xl">{actual.cifra}</p>
+                    <p className="m-0 mt-1 hidden text-xs leading-snug text-white/75 sm:block md:mt-1.5 md:text-sm">{actual.detalle}</p>
                     <motion.span
                       aria-hidden="true"
                       className="absolute bottom-0 left-0 h-0.5 bg-lima"
