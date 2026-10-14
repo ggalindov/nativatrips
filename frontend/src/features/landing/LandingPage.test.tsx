@@ -4,14 +4,20 @@ import { describe, expect, it } from 'vitest';
 import { renderizarEn } from '@/test/renderizar';
 
 describe('portada', () => {
-  it('arranca el ascenso en el bosque altoandino con su primer dato', () => {
+  it('abre con el páramo vivo y rota los datos del parque', async () => {
+    const usuario = userEvent.setup();
     renderizarEn();
-    expect(screen.getByRole('heading', { level: 1, name: 'Sube el páramo paso a paso.' })).toBeInTheDocument();
-    expect(screen.getByTestId('altimetro')).toHaveTextContent('3.000');
-    expect(screen.getByText('1/5 · Bosque altoandino')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Un páramo que respira.' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /oso andino/ })).toBeInTheDocument();
     expect(screen.getByText('+1.000 especies de flora')).toBeInTheDocument();
-    const tramos = screen.getByRole('list', { name: 'Tramos del ascenso' });
-    expect(within(tramos).getAllByRole('listitem')).toHaveLength(5);
+
+    const datos = screen.getByRole('group', { name: 'Datos del páramo' });
+    await usuario.click(within(datos).getByRole('button', { name: 'Ver dato: Fauna' }));
+    expect(await screen.findByText('167 especies de mamíferos')).toBeInTheDocument();
+
+    const pausa = screen.getByRole('button', { name: 'Pausar' });
+    await usuario.click(pausa);
+    expect(pausa).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('destaca seis senderos con foto y filtra por dificultad', async () => {
