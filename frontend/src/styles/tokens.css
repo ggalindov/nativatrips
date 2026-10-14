@@ -50,8 +50,11 @@
 
 /* Carrusel de la portada: la franja va duplicada, así que recorrer la mitad la deja igual que al inicio. */
 @keyframes desfile {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
