@@ -11,7 +11,7 @@ const tramo = (v: number, desde: number, hasta: number) => Math.min(1, Math.max(
 
 /** Encuadre de la cámara: plano general al inicio, sigue a la persona y se abre al llegar a la cima. */
 function encuadre(p: number, x: number, y: number, aspecto: number) {
-  const acercar = suave(tramo(p, 0, 0.12));
+  const acercar = suave(tramo(p, 0, 0.15));
   const abrir = suave(tramo(p, 0.88, 1));
   let alto = mezclar(3300, 1250, acercar);
   alto = mezclar(alto, 2700, abrir);
@@ -96,7 +96,7 @@ function Venado() {
 }
 
 /**
- * Portada: 260 vh de scroll en celular y 300 vh en escritorio. Una persona sube el sendero del páramo de
+ * Portada: 160 vh de scroll en celular y 180 vh en escritorio. Una persona sube el sendero del páramo de
  * Chingaza desde el bosque altoandino hasta la cumbre; la cámara la sigue y
  * en cada tramo aparece un dato del parque.
  */
@@ -108,12 +108,12 @@ export function Ascenso() {
   const bandera = useRef<SVGGElement>(null);
   const reducido = useReducedMotion() ?? false;
   const { scrollYProgress } = useScroll({ target: seccion, offset: ['start start', 'end end'] });
-  const progreso = useSpring(scrollYProgress, { stiffness: 130, damping: 28, mass: 0.5 });
+  const progreso = useSpring(scrollYProgress, { stiffness: 160, damping: 30, mass: 0.4 });
   const [p, setP] = useState(0);
   useMotionValueEvent(progreso, 'change', (v) => setP(Math.round(v * 400) / 400));
 
-  const introOpacidad = useTransform(scrollYProgress, [0, 0.09], [1, 0]);
-  const introY = useTransform(scrollYProgress, [0, 0.1], [0, -60]);
+  const introOpacidad = useTransform(scrollYProgress, [0, 0.12], [1, 0]);
+  const introY = useTransform(scrollYProgress, [0, 0.13], [0, -60]);
   const cieloAlto = useTransform(progreso, [0, 1], [0, 1]);
   const solY = useTransform(progreso, [0, 1], [120, -40]);
 
@@ -147,7 +147,7 @@ export function Ascenso() {
   const actual = HITOS[hito];
 
   return (
-    <section ref={seccion} id="inicio" className="relative h-[260vh] md:h-[300vh]" aria-label="Ascenso por el páramo de Chingaza">
+    <section ref={seccion} id="inicio" className="relative h-[160vh] md:h-[180vh]" aria-label="Ascenso por el páramo de Chingaza">
       <div className="sticky top-0 h-svh overflow-hidden">
         {/* Cielo: amanecer con bruma abajo, azul despejado en lo alto */}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#b8d0d6_0%,#e3e9df_55%,#f3ead8_100%)]" />
