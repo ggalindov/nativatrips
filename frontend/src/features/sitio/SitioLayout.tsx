@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Link, useLocation, useOutlet } from 'react-router-dom';
+import { Asistente } from '@/features/asistente/Asistente';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { SelectorIdioma } from '@/i18n/SelectorIdioma';
 import { Logo } from '@/ui/Logo';
@@ -64,6 +65,7 @@ export function SitioLayout() {
         </div>
         <div className="border-t border-bosque-2 py-5 text-center text-xs text-white/50">{t.pie.derechos(new Date().getFullYear())}</div>
       </footer>
+      <Asistente />
     </div>
   );
 }
