@@ -59,16 +59,18 @@ interface Props {
   /** "compacto" para la barra de navegación; "amplio" para el menú móvil. */
   tamano?: 'compacto' | 'amplio';
   className?: string;
+  /** Animación permanente (el excursionista camina y un brillo recorre el botón): para la portada y el celular, donde no hay hover. */
+  vivo?: boolean;
 }
 
 /** Botón principal para reservar, con el excursionista en un medallón. */
-export function BotonReservar({ to, children, tamano = 'compacto', className = '' }: Props) {
+export function BotonReservar({ to, children, tamano = 'compacto', className = '', vivo = false }: Props) {
   const amplio = tamano === 'amplio';
   return (
     <EnlaceAnimado
       to={to}
       initial="reposo"
-      animate="reposo"
+      animate={vivo ? 'caminar' : 'reposo'}
       whileHover="caminar"
       whileFocus="caminar"
       whileTap={{ scale: 0.97 }}
@@ -76,7 +78,17 @@ export function BotonReservar({ to, children, tamano = 'compacto', className = '
         amplio ? 'h-14 justify-center pr-2 pl-6 text-base' : 'h-11 pr-1.5 pl-5 text-sm'
       } ${className}`}
     >
-      <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-white/50 opacity-0 blur-md transition-all duration-700 group-hover:left-[120%] group-hover:opacity-100" />
+      {vivo ? (
+        <motion.span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 w-1/3 -skew-x-12 bg-white/60 blur-md"
+          initial={{ left: '-50%' }}
+          animate={{ left: ['-50%', '130%', '130%'] }}
+          transition={{ duration: 3.2, times: [0, 0.35, 1], repeat: Infinity, ease: 'easeInOut' }}
+        />
+      ) : (
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-white/50 opacity-0 blur-md transition-all duration-700 group-hover:left-[120%] group-hover:opacity-100" />
+      )}
       <span className="relative">{children}</span>
       <span className={`relative flex flex-none items-center justify-center overflow-hidden rounded-full bg-bosque ${amplio ? 'size-11' : 'size-8'}`}>
         <Excursionista tamano={amplio ? 44 : 32} />

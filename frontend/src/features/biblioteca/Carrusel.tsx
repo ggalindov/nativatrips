@@ -1,110 +1,81 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useReducedMotion } from 'motion/react';
+import { useMemo, useState } from 'react';
 import type { ElementoBiblioteca } from '@/domain/biblioteca';
-import { indiceCircular } from '@/domain/biblioteca';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { useContenido } from '@/i18n/useContenido';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
-import { FlechaAccion } from '@/ui/Boton';
 import { MiniaturaMedio } from './MiniaturaMedio';
 import { Visor } from './Visor';
 
-const AVANCE_MS = 4500;
+/** Segundos que tarda cada foto en cruzar: define la velocidad de la franja. */
+const SEGUNDOS_POR_FOTO = 6;
+
+/** Mezcla Fisher-Yates con una semilla fija por visita, para que el orden no cambie en cada render. */
+function mezclar<T>(lista: readonly T[], semilla: number): T[] {
+  const copia = [...lista];
+  let h = Math.floor(semilla * 2 ** 31) || 1;
+  for (let i = copia.length - 1; i > 0; i--) {
+    h = (h * 1103515245 + 12345) & 0x7fffffff;
+    const j = h % (i + 1);
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
+
+function Tarjeta({ medio, onAbrir, oculta = false }: { medio: ElementoBiblioteca; onAbrir?: () => void; oculta?: boolean }) {
+  const { t } = useIdioma();
+  const { altMedio } = useContenido();
+  return (
+    <li className="w-[72vw] flex-none pr-4 sm:w-[42vw] lg:w-[28vw] xl:w-[27rem]">
+      <button
+        type="button"
+        onClick={onAbrir}
+        tabIndex={oculta ? -1 : undefined}
+        aria-label={t.biblioteca.ampliar(altMedio(medio))}
+        className="group relative block h-[52vh] max-h-[520px] min-h-[320px] w-full overflow-hidden rounded-[32px] text-left"
+      >
+        <MiniaturaMedio medio={medio} className="transition-transform duration-[1.4s] group-hover:scale-110" />
+        <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bosque/90 via-bosque/30 to-transparent p-6 pt-16 text-white">
+          <span className="etiqueta text-lima">{t.biblioteca.categorias[medio.categoria]}</span>
+          <span className="font-display text-xl font-bold">{altMedio(medio)}</span>
+        </span>
+      </button>
+    </li>
+  );
+}
 
 /**
- * Carrusel alimentado por la biblioteca: desplazamiento nativo con imán,
- * flechas, avance automático (se detiene al pasar el mouse, al enfocarlo y
- * con movimiento reducido) y visor al tocar una foto.
+ * Carrusel de la portada alimentado por la biblioteca: franja en movimiento
+ * continuo, con las fotos en orden aleatorio en cada visita. Se detiene al
+ * pasar el mouse o al enfocar una foto, y al tocarla se abre el visor.
  */
 export function Carrusel({ limite = 14 }: { limite?: number }) {
   const { biblioteca } = useServicios();
   const { t } = useIdioma();
-  const { altMedio } = useContenido();
-  const b = t.biblioteca;
   const { estado } = useConsulta(() => biblioteca.listar(), [biblioteca]);
-  const pista = useRef<HTMLUListElement>(null);
-  const [actual, setActual] = useState(0);
-  const [pausa, setPausa] = useState(false);
+  const [semilla] = useState(() => Math.random());
   const [abierto, setAbierto] = useState<number | null>(null);
-  const reducido = useReducedMotion();
-  const medios: ElementoBiblioteca[] = estado.tipo === 'listo' ? estado.datos.slice(0, limite) : [];
-
-  const irA = useCallback((i: number) => {
-    const el = pista.current?.children[i] as HTMLElement | undefined;
-    if (!el || !pista.current) return;
-    pista.current.scrollTo({ left: el.offsetLeft - pista.current.offsetLeft, behavior: 'smooth' });
-  }, []);
-
-  // El índice actual sale de la posición real del scroll (sirve también al arrastrar).
-  const alDesplazar = () => {
-    const p = pista.current;
-    if (!p) return;
-    const hijos = Array.from(p.children) as HTMLElement[];
-    let mejor = 0;
-    hijos.forEach((h, i) => {
-      if (Math.abs(h.offsetLeft - p.offsetLeft - p.scrollLeft) < Math.abs(hijos[mejor].offsetLeft - p.offsetLeft - p.scrollLeft)) mejor = i;
-    });
-    setActual(mejor);
-  };
-
-  useEffect(() => {
-    if (pausa || reducido || medios.length < 2 || abierto !== null) return;
-    const t = setInterval(() => irA(indiceCircular(actual, 1, medios.length)), AVANCE_MS);
-    return () => clearInterval(t);
-  }, [pausa, reducido, medios.length, actual, abierto, irA]);
+  const medios = useMemo(() => (estado.tipo === 'listo' ? mezclar(estado.datos, semilla).slice(0, limite) : []), [estado, semilla, limite]);
 
   if (medios.length === 0) return null;
 
   return (
-    <div
-      className="flex flex-col gap-6"
-      onMouseEnter={() => setPausa(true)}
-      onMouseLeave={() => setPausa(false)}
-      onFocus={() => setPausa(true)}
-      onBlur={() => setPausa(false)}
-    >
-      <ul
-        ref={pista}
-        onScroll={alDesplazar}
-        aria-label={b.carrusel}
-        className="m-0 flex list-none snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth p-0 px-4 pb-2 [scrollbar-width:none] sm:px-8 lg:px-[max(3rem,calc((100vw-80rem)/2+3rem))] [&::-webkit-scrollbar]:hidden"
+    <div className="relative overflow-hidden">
+      <div
+        className={`flex w-max animate-[desfile_linear_infinite] hover:[animation-play-state:paused] focus-within:[animation-play-state:paused] ${abierto !== null ? '[animation-play-state:paused]' : ''}`}
+        style={{ animationDuration: `${medios.length * SEGUNDOS_POR_FOTO}s` }}
       >
-        {medios.map((m, i) => (
-          <li key={m.id} className="w-[78vw] flex-none snap-start sm:w-[46vw] lg:w-[30vw] xl:w-[26rem]">
-            <button
-              type="button"
-              onClick={() => setAbierto(i)}
-              aria-label={b.ampliar(altMedio(m))}
-              className={`group relative block h-[52vh] max-h-[520px] min-h-[320px] w-full overflow-hidden rounded-[32px] text-left transition-transform duration-700 ${i === actual ? 'scale-100' : 'scale-[0.96] opacity-90'}`}
-            >
-              <MiniaturaMedio medio={m} className="transition-transform duration-[1.4s] group-hover:scale-110" />
-              <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bosque/90 via-bosque/30 to-transparent p-6 pt-16 text-white">
-                <span className="etiqueta text-lima">{b.categorias[m.categoria]}</span>
-                <span className="font-display text-xl font-bold">{altMedio(m)}</span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-8 lg:px-12">
-        <div className="hidden min-w-0 items-center gap-1.5 overflow-hidden min-[400px]:flex" aria-hidden="true">
+        <ul aria-label={t.biblioteca.carrusel} className="m-0 flex list-none p-0 pl-4">
           {medios.map((m, i) => (
-            <span key={m.id} className={`h-1.5 rounded-full transition-all duration-500 ${i === actual ? 'w-8 bg-bosque' : 'w-1.5 bg-bosque/25'}`} />
+            <Tarjeta key={m.id} medio={m} onAbrir={() => setAbierto(i)} />
           ))}
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <button type="button" aria-label={b.fotoAnterior} onClick={() => irA(indiceCircular(actual, -1, medios.length))} className="flex size-12 items-center justify-center rounded-full border border-bosque/20 text-bosque transition-colors hover:bg-bosque hover:text-lima">
-            ←
-          </button>
-          <button type="button" aria-label={b.fotoSiguiente} onClick={() => irA(indiceCircular(actual, 1, medios.length))} className="flex size-12 items-center justify-center rounded-full bg-bosque text-lima transition-colors hover:bg-lima hover:text-bosque">
-            →
-          </button>
-          <Link to="/biblioteca" className="ml-2 hidden min-h-11 items-center gap-1.5 font-display text-sm font-bold no-underline sm:inline-flex">
-            {b.verBiblioteca} <FlechaAccion />
-          </Link>
-        </div>
+        </ul>
+        {/* Copia para que la franja se repita sin corte; los lectores de pantalla la ignoran. */}
+        <ul aria-hidden="true" className="m-0 flex list-none p-0 pl-4">
+          {medios.map((m) => (
+            <Tarjeta key={m.id} medio={m} oculta />
+          ))}
+        </ul>
       </div>
       <Visor medios={medios} indice={abierto} onCambiar={setAbierto} />
     </div>
