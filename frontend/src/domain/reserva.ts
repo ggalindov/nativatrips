@@ -95,7 +95,7 @@ export function puedeCancelarse(r: Reserva): boolean {
 }
 
 /** Personas extranjeras en la reserva (titular y acompañantes registrados). */
-export function extranjerosEn(r: Pick<Reserva, 'titular' | 'acompanantes'>): number {
+export function extranjerosEn(r: { titular: Pick<Persona, 'nacionalidad'>; acompanantes: readonly Pick<Persona, 'nacionalidad'>[] }): number {
   return [r.titular, ...r.acompanantes].filter((p) => esExtranjero(p.nacionalidad)).length;
 }
 

@@ -4,18 +4,11 @@ import { useConsulta } from '@/services/useConsulta';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { foto } from '@/contenido/fotos';
 import { FotoAnimada } from '@/ui/movimiento';
+import { METRICAS } from '../ejemplo';
+import { Indicador as IndicadorTendencia } from '../ui';
+import { IngresosMensuales, Nps, Procedencia } from './Graficos';
 
 const SEMANA = ['jue', 'vie', 'sáb', 'dom', 'lun', 'mar', 'mié'];
-
-function Indicador({ titulo, valor, nota }: { titulo: string; valor: string; nota: string }) {
-  return (
-    <div className="tarjeta flex flex-col gap-2.5 p-6">
-      <span className="text-sm text-tinta-suave">{titulo}</span>
-      <span className="font-cifras text-[30px] leading-none font-black">{valor}</span>
-      <span className="text-[13px] text-tinta-suave">{nota}</span>
-    </div>
-  );
-}
 
 /** Una sola serie (ocupación diaria): un tono, sin leyenda; detalle al pasar o enfocar. */
 function OcupacionDiaria({ valores }: { valores: number[] }) {
@@ -87,14 +80,33 @@ export function PanelGerencia() {
         <h1 className="m-0 font-display text-4xl font-extrabold tracking-tight sm:text-[44px]">Resumen de octubre</h1>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Indicador titulo="Ocupación promedio" valor={`${r.ocupacionPromedioPct} %`} nota="del aforo autorizado" />
-        <Indicador titulo="Visitantes" valor={miles.format(r.visitantes)} nota={`en ${miles.format(r.reservas)} reservas`} />
-        <Indicador titulo="Ingresos" valor="[VALOR]" nota="pagos aprobados por PayU" />
-        <Indicador titulo="Cancelaciones" valor={`${r.cancelacionesPct} %`} nota="incluye reservas expiradas" />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <IndicadorTendencia
+          titulo="Ingresos del mes"
+          valor={`$${(METRICAS.ingresos / 1_000_000).toLocaleString('es-CO', { maximumFractionDigits: 1 })} M`}
+          tendencia={{ texto: `${Math.round(((METRICAS.ingresos - METRICAS.ingresosMesAnterior) / METRICAS.ingresosMesAnterior) * 100)} %`, positiva: METRICAS.ingresos >= METRICAS.ingresosMesAnterior }}
+          nota="frente a septiembre"
+        />
+        <IndicadorTendencia
+          titulo="Tasa de conversión"
+          valor={`${METRICAS.conversionPct} %`}
+          tendencia={{ texto: `${METRICAS.conversionPct - METRICAS.conversionMesAnterior} pts`, positiva: METRICAS.conversionPct >= METRICAS.conversionMesAnterior }}
+          nota="visitas a la reserva que terminan en pago"
+        />
+        <IndicadorTendencia titulo="NPS" valor={String(METRICAS.nps)} nota={`${METRICAS.respuestasNps} encuestas respondidas`} />
+        <IndicadorTendencia titulo="Ocupación promedio" valor={`${r.ocupacionPromedioPct} %`} nota="del aforo autorizado" />
+        <IndicadorTendencia titulo="Visitantes" valor={miles.format(r.visitantes)} nota={`en ${miles.format(r.reservas)} reservas`} />
+        <IndicadorTendencia titulo="Cancelaciones" valor={`${r.cancelacionesPct} %`} nota="incluye reservas expiradas" />
+      </div>
+
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
+        <IngresosMensuales />
+        <Nps />
       </div>
 
       <OcupacionDiaria valores={r.ocupacionDiariaPct} />
+
+      <Procedencia />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-12 xl:grid-cols-[1.3fr_1fr]">
         <section aria-labelledby="pg-send" className="flex flex-col">

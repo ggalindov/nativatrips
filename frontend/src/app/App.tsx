@@ -6,6 +6,15 @@ import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
 import { BibliotecaPage } from '@/features/biblioteca/BibliotecaPage';
 import { AntesDeSubirPage } from '@/features/antes-de-subir/AntesDeSubirPage';
 import { AccesoPage } from '@/features/equipo/AccesoPage';
+import { CapacidadPage } from '@/features/equipo/CapacidadPage';
+import { RecuperarPage } from '@/features/equipo/RecuperarPage';
+import { ReportesPage } from '@/features/equipo/ReportesPage';
+import { ConversacionesAdmin } from '@/features/equipo/administrativo/ConversacionesAdmin';
+import { RecomendacionesAdmin } from '@/features/equipo/administrativo/RecomendacionesAdmin';
+import { ReservasAdmin } from '@/features/equipo/administrativo/ReservasAdmin';
+import { SalidasAdmin } from '@/features/equipo/administrativo/SalidasAdmin';
+import { SenderosAdmin } from '@/features/equipo/administrativo/SenderosAdmin';
+import { EquipoGerencia } from '@/features/equipo/gerencia/EquipoGerencia';
 import { EquipoLayout } from '@/features/equipo/EquipoLayout';
 import { RutaProtegida } from '@/features/equipo/RutaProtegida';
 import { SesionProvider } from '@/features/equipo/SesionContext';
@@ -63,14 +72,25 @@ export function Rutas() {
       <Route path="equipo" element={<AreaEquipo />}>
         <Route index element={<Navigate to="acceso" replace />} />
         <Route path="acceso" element={<AccesoPage />} />
+        <Route path="recuperar" element={<RecuperarPage />} />
         <Route element={<RutaProtegida rol="PERSONAL_ADMINISTRATIVO" />}>
           <Route element={<EquipoLayout rol="PERSONAL_ADMINISTRATIVO" />}>
             <Route path="administrativo" element={<PanelAdministrativo />} />
+            <Route path="administrativo/reservas" element={<ReservasAdmin />} />
+            <Route path="administrativo/salidas" element={<SalidasAdmin />} />
+            <Route path="administrativo/capacidad" element={<CapacidadPage />} />
+            <Route path="administrativo/senderos" element={<SenderosAdmin />} />
+            <Route path="administrativo/conversaciones" element={<ConversacionesAdmin />} />
+            <Route path="administrativo/reportes" element={<ReportesPage />} />
+            <Route path="administrativo/recomendaciones" element={<RecomendacionesAdmin />} />
           </Route>
         </Route>
         <Route element={<RutaProtegida rol="GERENCIA" />}>
           <Route element={<EquipoLayout rol="GERENCIA" />}>
             <Route path="gerencia" element={<PanelGerencia />} />
+            <Route path="gerencia/reportes" element={<ReportesPage />} />
+            <Route path="gerencia/capacidad" element={<CapacidadPage />} />
+            <Route path="gerencia/equipo" element={<EquipoGerencia />} />
           </Route>
         </Route>
         <Route element={<RutaProtegida rol="GUIA_TURISTICO" />}>

@@ -100,6 +100,9 @@ export function AccesoPage() {
           <Boton type="submit" cargando={enviando}>
             Ingresar
           </Boton>
+          <Link to="/equipo/recuperar" className="-mt-2 self-center text-sm font-semibold">
+            ¿Olvidaste tu contraseña?
+          </Link>
           {FUENTE_MEMORIA && (
             <div className="flex flex-col gap-1.5 border-t linea pt-5 text-sm text-tinta">
               <span className="etiqueta text-[11px] text-tinta-suave">Cuentas de prueba (datos en memoria)</span>
