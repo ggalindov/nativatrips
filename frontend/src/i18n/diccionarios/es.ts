@@ -138,8 +138,7 @@ export const es = {
     galeria: {
       antetitulo: 'Vida en el páramo',
       titulo: 'Lo que cuida cada cupo que no se vende.',
-      texto: 'Desliza, toca para ampliar o abre la biblioteca completa de fotos y videos.',
-      abrir: 'Abrir la biblioteca',
+      texto: 'Toca una foto para ampliarla o abre la biblioteca completa de fotos y videos.',
       creditos: 'Fotografías de Eco Palacio Tur y de Wikimedia Commons con licencia libre',
       verCreditos: 'Ver créditos',
     },

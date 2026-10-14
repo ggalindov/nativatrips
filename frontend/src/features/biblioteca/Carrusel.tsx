@@ -1,15 +1,14 @@
 import { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
 import type { ElementoBiblioteca } from '@/domain/biblioteca';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { useContenido } from '@/i18n/useContenido';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
 import { EnlaceBoton } from '@/ui/Boton';
+import { CURVA } from '@/ui/movimiento';
 import { MiniaturaMedio } from './MiniaturaMedio';
 import { Visor } from './Visor';
-
-/** Segundos que tarda cada foto en cruzar: define la velocidad de la franja. */
-const SEGUNDOS_POR_FOTO = 26;
 
 /** Mezcla Fisher-Yates con una semilla fija por visita, para que el orden no cambie en cada render. */
 function mezclar<T>(lista: readonly T[], semilla: number): T[] {
@@ -23,62 +22,57 @@ function mezclar<T>(lista: readonly T[], semilla: number): T[] {
   return copia;
 }
 
-function Tarjeta({ medio, onAbrir, oculta = false }: { medio: ElementoBiblioteca; onAbrir?: () => void; oculta?: boolean }) {
-  const { t } = useIdioma();
-  const { altMedio } = useContenido();
-  return (
-    <li className="w-[72vw] flex-none pr-4 sm:w-[42vw] lg:w-[28vw] xl:w-[27rem]">
-      <button
-        type="button"
-        onClick={onAbrir}
-        tabIndex={oculta ? -1 : undefined}
-        aria-label={t.biblioteca.ampliar(altMedio(medio))}
-        className="group relative block h-[52vh] max-h-[520px] min-h-[320px] w-full overflow-hidden rounded-[32px] text-left"
-      >
-        <MiniaturaMedio medio={medio} className="transition-transform duration-[1.4s] group-hover:scale-110" />
-        <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bosque/90 via-bosque/30 to-transparent p-6 pt-16 text-white">
-          <span className="etiqueta text-lima">{t.biblioteca.categorias[medio.categoria]}</span>
-          <span className="font-display text-xl font-bold">{altMedio(medio)}</span>
-        </span>
-      </button>
-    </li>
-  );
-}
+/** Posición de cada foto en el mosaico de escritorio: una grande y cuatro pequeñas. */
+const CELDAS = ['lg:col-span-2 lg:row-span-2', '', '', '', ''];
 
 /**
- * Carrusel de la portada alimentado por la biblioteca: franja en movimiento
- * continuo, con las fotos en orden aleatorio en cada visita. Se detiene al
- * pasar el mouse o al enfocar una foto, y al tocarla se abre el visor.
+ * Galería de la portada alimentada por la biblioteca, sin movimiento
+ * automático: mosaico en escritorio y fila que se desliza con el dedo en
+ * celular. Las fotos salen en orden aleatorio en cada visita; al tocar una se
+ * abre el visor.
  */
-export function Carrusel({ limite = 14 }: { limite?: number }) {
+export function Carrusel({ limite = 5 }: { limite?: number }) {
   const { biblioteca } = useServicios();
   const { t } = useIdioma();
+  const { altMedio } = useContenido();
   const { estado } = useConsulta(() => biblioteca.listar(), [biblioteca]);
   const [semilla] = useState(() => Math.random());
   const [abierto, setAbierto] = useState<number | null>(null);
-  const medios = useMemo(() => (estado.tipo === 'listo' ? mezclar(estado.datos, semilla).slice(0, limite) : []), [estado, semilla, limite]);
+  const medios: ElementoBiblioteca[] = useMemo(() => (estado.tipo === 'listo' ? mezclar(estado.datos, semilla).slice(0, limite) : []), [estado, semilla, limite]);
 
   if (medios.length === 0) return null;
 
   return (
-    <div className="relative overflow-hidden">
-      <div
-        className={`flex w-max animate-[desfile_linear_infinite] [backface-visibility:hidden] will-change-transform hover:[animation-play-state:paused] focus-within:[animation-play-state:paused] ${abierto !== null ? '[animation-play-state:paused]' : ''}`}
-        style={{ animationDuration: `${medios.length * SEGUNDOS_POR_FOTO}s` }}
+    <div className="flex flex-col gap-8">
+      <ul
+        aria-label={t.biblioteca.carrusel}
+        className="m-0 flex list-none snap-x snap-mandatory gap-3 overflow-x-auto p-0 px-4 [scrollbar-width:none] sm:px-8 lg:mx-auto lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-4 lg:grid-rows-[220px_220px] lg:gap-4 lg:overflow-visible lg:px-12 [&::-webkit-scrollbar]:hidden"
       >
-        <ul aria-label={t.biblioteca.carrusel} className="m-0 flex list-none p-0 pl-4">
-          {medios.map((m, i) => (
-            <Tarjeta key={m.id} medio={m} onAbrir={() => setAbierto(i)} />
-          ))}
-        </ul>
-        {/* Copia para que la franja se repita sin corte; los lectores de pantalla la ignoran. */}
-        <ul aria-hidden="true" className="m-0 flex list-none p-0 pl-4">
-          {medios.map((m) => (
-            <Tarjeta key={m.id} medio={m} oculta />
-          ))}
-        </ul>
-      </div>
-      <div className="mt-8 flex justify-center px-4">
+        {medios.map((m, i) => (
+          <motion.li
+            key={m.id}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, ease: CURVA, delay: i * 0.07 }}
+            className={`w-[78vw] flex-none snap-start sm:w-[46vw] lg:w-auto ${CELDAS[i] ?? ''}`}
+          >
+            <button
+              type="button"
+              onClick={() => setAbierto(i)}
+              aria-label={t.biblioteca.ampliar(altMedio(m))}
+              className="group relative block h-[360px] w-full overflow-hidden rounded-[28px] text-left lg:h-full"
+            >
+              <MiniaturaMedio medio={m} className="transition-transform duration-[1.2s] ease-out group-hover:scale-105" />
+              <span className="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-gradient-to-t from-bosque/90 via-bosque/30 to-transparent p-5 pt-14 text-white">
+                <span className="etiqueta text-lima">{t.biblioteca.categorias[m.categoria]}</span>
+                <span className={`font-display font-bold ${i === 0 ? 'text-2xl' : 'text-lg'}`}>{altMedio(m)}</span>
+              </span>
+            </button>
+          </motion.li>
+        ))}
+      </ul>
+      <div className="flex justify-center px-4">
         <EnlaceBoton to="/biblioteca" variante="oscuro" conFlecha>
           {t.biblioteca.verBiblioteca}
         </EnlaceBoton>

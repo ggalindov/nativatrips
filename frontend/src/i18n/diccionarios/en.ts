@@ -115,8 +115,7 @@ export const en: Diccionario = {
     galeria: {
       antetitulo: 'Life in the páramo',
       titulo: 'What every unsold spot protects.',
-      texto: 'Swipe, tap to enlarge or open the full gallery of photos and videos.',
-      abrir: 'Open the gallery',
+      texto: 'Tap a photo to enlarge it or open the full gallery of photos and videos.',
       creditos: 'Photos by Eco Palacio Tur and from Wikimedia Commons under free licenses',
       verCreditos: 'See credits',
     },

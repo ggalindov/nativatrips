@@ -115,8 +115,7 @@ export const fr: Diccionario = {
     galeria: {
       antetitulo: 'La vie dans le páramo',
       titulo: 'Ce que protège chaque place non vendue.',
-      texto: 'Faites défiler, touchez pour agrandir ou ouvrez la galerie complète de photos et de vidéos.',
-      abrir: 'Ouvrir la galerie',
+      texto: 'Touchez une photo pour l’agrandir ou ouvrez la galerie complète de photos et de vidéos.',
       creditos: 'Photos d’Eco Palacio Tur et de Wikimedia Commons sous licence libre',
       verCreditos: 'Voir les crédits',
     },
