@@ -1,38 +1,20 @@
 #!/usr/bin/env bash
 # Genera los medios de video de la portada a partir de los archivos fuente.
 #
-#   scripts/preparar-medios.sh <video-360.mp4> <video-parques-nacionales.mp4>
+#   scripts/preparar-medios.sh <video-parques-nacionales.mp4>
 #
-# 1. Secuencia del descenso: detecta y recorta las franjas negras del video
-#    panorámico, lo reduce a 1440 px, interpola a 120 fps (estimación de
-#    movimiento) y lo exporta como cuadros WebP con su manifest.json.
-# 2. Video en bucle: siete tomas limpias de paisaje del video institucional,
-#    unidas con fundidos, sin audio, en H.264 con faststart, más su póster.
+# Video en bucle de la portada: siete tomas limpias de paisaje del video
+# institucional, unidas con fundidos, sin audio, en H.264 con faststart, más
+# su póster.
 #
 # Los resultados quedan en public/media/, que no se versiona hasta confirmar
 # los derechos de uso de los videos fuente.
 set -euo pipefail
 
-VIDEO_360="${1:?Falta la ruta del video 360}"
-VIDEO_PNN="${2:?Falta la ruta del video de Parques Nacionales}"
+VIDEO_PNN="${1:?Falta la ruta del video de Parques Nacionales}"
 SALIDA="$(dirname "$0")/../public/media"
-SECUENCIA="$SALIDA/descenso"
 
-mkdir -p "$SECUENCIA"
-rm -f "$SECUENCIA"/*.webp
-
-FPS=120
-# Recorte más frecuente que propone cropdetect (franjas negras de cine).
-RECORTE=$(ffmpeg -hide_banner -i "$VIDEO_360" -vf "cropdetect=limit=24:round=2:reset=0" -an -f null - 2>&1 \
-  | grep -o 'crop=[0-9:]*' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')
-
-ffmpeg -v error -i "$VIDEO_360" -an \
-  -vf "${RECORTE},scale=1440:-2:flags=lanczos,minterpolate=fps=${FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1" \
-  -c:v libwebp -quality 50 -compression_level 5 "$SECUENCIA/%04d.webp" -y
-
-total=$(ls "$SECUENCIA"/*.webp | wc -l)
-read -r ancho alto < <(ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=p=0:s=' ' "$SECUENCIA/0001.webp")
-printf '{"total": %d, "ancho": %d, "alto": %d, "fps": %d}\n' "$total" "$ancho" "$alto" "$FPS" > "$SECUENCIA/manifest.json"
+mkdir -p "$SALIDA"
 
 # Inicio (s) de cada toma limpia: laguna, bosque, frailejones, laguna, pastos, flores.
 TOMAS=(17 77 92 99 274 290 439)
@@ -56,4 +38,4 @@ ffmpeg -v error "${entradas[@]}" -filter_complex "${filtro%;}" -map "[$anterior]
   "$SALIDA/chingaza-paisajes.mp4" -y
 ffmpeg -v error -ss 0.5 -i "$SALIDA/chingaza-paisajes.mp4" -frames:v 1 -q:v 4 "$SALIDA/chingaza-paisajes.jpg" -y
 
-echo "Listo: $total cuadros en $SECUENCIA y video en bucle en $SALIDA"
+echo "Listo: video en bucle en $SALIDA"

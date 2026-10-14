@@ -48,6 +48,16 @@
   }
 }
 
+@keyframes brillo {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
 @keyframes bruma {
   0%,
   100% {
