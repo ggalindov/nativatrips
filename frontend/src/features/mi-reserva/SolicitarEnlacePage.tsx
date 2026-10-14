@@ -34,7 +34,7 @@ export function SolicitarEnlacePage() {
     <div className="flex max-w-xl flex-col gap-8">
       <div className="flex flex-col gap-3">
         <span className="etiqueta text-tinta-suave">Mi reserva</span>
-        <h1 className="m-0 font-display text-5xl leading-none font-extrabold tracking-tight">Te enviamos un enlace.</h1>
+        <h1 className="m-0 font-display text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">Te enviamos un enlace.</h1>
         <p className="m-0 text-[17px] leading-relaxed text-tinta">
           Escribe el código de tu reserva y el correo con el que la hiciste. El enlace sirve una sola vez y no necesitas
           contraseña.

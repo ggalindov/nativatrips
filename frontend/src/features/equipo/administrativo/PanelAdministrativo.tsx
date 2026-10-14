@@ -52,7 +52,7 @@ export function PanelAdministrativo() {
         </div>
         <div className="flex flex-col gap-2">
           <span className="etiqueta text-lima">{formatearFechaCorta(hoy)} · operación del día</span>
-          <h1 className="m-0 font-display text-[44px] font-extrabold tracking-tight">Hoy</h1>
+          <h1 className="m-0 font-display text-4xl font-extrabold tracking-tight sm:text-[44px]">Hoy</h1>
         </div>
         <dl className="m-0 flex gap-10">
           {[
@@ -85,7 +85,7 @@ export function PanelAdministrativo() {
         {revision.estado.tipo === 'listo' && (
           <ul className="m-0 list-none p-0">
             {revision.estado.datos.map((r) => (
-              <li key={r.codigo} className="grid items-center gap-x-5 gap-y-2 border-t linea py-4 md:grid-cols-[110px_minmax(0,1.4fr)_minmax(0,1fr)_70px_210px]">
+              <li key={r.codigo} className="grid grid-cols-[minmax(0,1fr)] items-center gap-x-5 gap-y-2 border-t linea py-4 md:grid-cols-[110px_minmax(0,1.4fr)_minmax(0,1fr)_70px_210px]">
                 <span className="font-mono text-sm">{r.codigo}</span>
                 <span className="flex flex-col gap-0.5">
                   <span className="font-semibold">{r.titular}</span>
@@ -113,7 +113,7 @@ export function PanelAdministrativo() {
         )}
       </section>
 
-      <div className="grid gap-12 xl:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-12 xl:grid-cols-[1.2fr_1fr]">
         <section aria-labelledby="pa-sal" className="flex flex-col">
           <Titulo id="pa-sal">Salidas de hoy</Titulo>
           {salidas.estado.tipo === 'cargando' && <Cargando />}

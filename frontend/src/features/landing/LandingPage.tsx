@@ -37,14 +37,14 @@ function Cifras() {
   ];
   return (
     <section aria-label="NativaTrips en cifras" className="relative z-10 -mt-px bg-bosque">
-      <Escalonado como="dl" className="mx-auto m-0 grid max-w-7xl grid-cols-2 gap-px overflow-hidden px-4 py-14 sm:px-8 md:grid-cols-4 lg:px-12">
+      <Escalonado como="dl" className="mx-auto m-0 grid max-w-7xl grid-cols-2 gap-x-px gap-y-8 overflow-hidden px-4 py-14 sm:px-8 md:grid-cols-4 lg:px-12">
         {cifras.map((c) => (
-          <motion.div key={c.titulo} variants={itemEscalonado} className="flex flex-col-reverse gap-1.5 border-l border-bosque-3 px-5 py-2">
+          <motion.div key={c.titulo} variants={itemEscalonado} className="flex min-w-0 flex-col-reverse gap-1.5 border-l border-bosque-3 px-3 py-2 sm:px-5">
             <dt className="flex flex-col">
               <span className="font-display text-base font-bold text-white">{c.titulo}</span>
               <span className="text-sm text-white/60">{c.texto}</span>
             </dt>
-            <dd className="m-0 font-cifras text-3xl font-black text-lima-suave md:text-4xl">
+            <dd className="m-0 font-cifras text-xl font-black whitespace-nowrap text-lima-suave min-[360px]:text-2xl sm:text-3xl md:text-2xl lg:text-3xl xl:text-4xl">
               <Contador valor={c.valor} sufijo={c.sufijo} />
             </dd>
           </motion.div>
@@ -109,10 +109,10 @@ function GuiaVisita() {
           whileInView={{ opacity: 1, scale: 1, rotate: -3 }}
           viewport={{ once: true }}
           transition={{ type: 'spring', stiffness: 160, damping: 14, delay: 0.3 }}
-          className="absolute -right-3 -bottom-6 flex flex-col gap-1 rounded-3xl bg-lima px-6 py-5 text-bosque shadow-xl md:-right-8"
+          className="absolute right-2 -bottom-6 flex flex-col gap-1 rounded-3xl bg-lima px-5 py-4 text-bosque shadow-xl sm:px-6 sm:py-5 lg:-right-8"
         >
           <span className="etiqueta">Altitud regulada</span>
-          <span className="font-cifras text-3xl font-black">3.900 m</span>
+          <span className="font-cifras text-2xl font-black whitespace-nowrap sm:text-3xl">3.900 m</span>
           <span className="text-xs font-semibold">sobre el nivel del mar</span>
         </motion.div>
         <motion.div
@@ -236,7 +236,7 @@ export function LandingPage() {
       <VideoPaisajes />
 
       <section id="senderos" aria-label="Rutas para conectar con el páramo" className="mx-auto flex max-w-7xl flex-col gap-12 px-4 pt-28 pb-16 sm:px-8 lg:px-12">
-        <div className="grid items-end gap-8 md:grid-cols-[1.2fr_1fr]">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-end gap-8 md:grid-cols-[1.2fr_1fr]">
           <Encabezado antetitulo="Experiencias y senderos" titulo="Rutas para conectar con el páramo." />
           <Aparecer retraso={0.1}>
             <p className="m-0 text-[17px] leading-relaxed text-tinta">

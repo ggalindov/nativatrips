@@ -41,18 +41,18 @@ export function SitioLayout() {
           </div>
           <div className="flex flex-col gap-2">
             <span className="etiqueta text-lima">Explora</span>
-            <Link className="text-white/80 no-underline hover:text-white" to="/senderos">Senderos</Link>
-            <Link className="text-white/80 no-underline hover:text-white" to="/biblioteca">Biblioteca</Link>
-            <Link className="text-white/80 no-underline hover:text-white" to="/antes-de-subir">Antes de subir</Link>
-            <Link className="text-white/80 no-underline hover:text-white" to="/mi-reserva">Mi reserva</Link>
-            <Link className="text-white/80 no-underline hover:text-white" to="/creditos">Créditos fotográficos</Link>
+            <Link className="inline-flex min-h-8 items-center text-white/80 no-underline hover:text-white" to="/senderos">Senderos</Link>
+            <Link className="inline-flex min-h-8 items-center text-white/80 no-underline hover:text-white" to="/biblioteca">Biblioteca</Link>
+            <Link className="inline-flex min-h-8 items-center text-white/80 no-underline hover:text-white" to="/antes-de-subir">Antes de subir</Link>
+            <Link className="inline-flex min-h-8 items-center text-white/80 no-underline hover:text-white" to="/mi-reserva">Mi reserva</Link>
+            <Link className="inline-flex min-h-8 items-center text-white/80 no-underline hover:text-white" to="/creditos">Créditos fotográficos</Link>
           </div>
           <div className="flex flex-col gap-2">
             <span className="etiqueta text-lima">Eco Palacio Tur S.A.S.</span>
             <span>La Calera, Cundinamarca</span>
             <span>RNT [NÚMERO]</span>
             <span>[CORREO DE CONTACTO] · [TELÉFONO]</span>
-            <Link className="mt-2 text-white/60 no-underline hover:text-white" to="/equipo/acceso">Acceso equipo</Link>
+            <Link className="mt-2 inline-flex min-h-8 items-center text-white/60 no-underline hover:text-white" to="/equipo/acceso">Acceso equipo</Link>
           </div>
         </div>
         <div className="border-t border-bosque-2 py-5 text-center text-xs text-white/50">© {new Date().getFullYear()} NativaTrips · Turismo responsable en el páramo</div>

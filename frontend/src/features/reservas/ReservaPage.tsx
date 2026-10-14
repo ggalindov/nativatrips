@@ -39,12 +39,12 @@ const PASOS = ['Reserva', 'Pago', 'Enlace'];
 
 function Pasos() {
   return (
-    <ol aria-label="Progreso" className="m-0 flex list-none flex-wrap items-center gap-3 p-0">
+    <ol aria-label="Progreso" className="m-0 flex list-none items-center gap-2 p-0 sm:gap-3">
       {PASOS.map((p, i) => (
-        <li key={p} aria-current={i === 0 ? 'step' : undefined} className="flex items-center gap-3">
-          <span className={`flex size-8 items-center justify-center rounded-full text-sm font-bold ${i === 0 ? 'bg-lima text-bosque' : 'bg-white/15 text-white/70'}`}>{i + 1}</span>
+        <li key={p} aria-current={i === 0 ? 'step' : undefined} className="flex items-center gap-2 sm:gap-3">
+          <span className={`flex size-7 flex-none items-center justify-center rounded-full text-sm font-bold sm:size-8 ${i === 0 ? 'bg-lima text-bosque' : 'bg-white/15 text-white/70'}`}>{i + 1}</span>
           <span className={`text-sm font-semibold ${i === 0 ? 'text-white' : 'text-white/60'}`}>{p}</span>
-          {i < PASOS.length - 1 && <span aria-hidden="true" className="h-px w-8 bg-white/25" />}
+          {i < PASOS.length - 1 && <span aria-hidden="true" className="h-px w-4 bg-white/25 sm:w-8" />}
         </li>
       ))}
     </ol>
@@ -121,7 +121,7 @@ export function ReservaPage() {
       <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-32 pb-16 sm:px-8 lg:px-12">
         <Aparecer>
           <span className="etiqueta text-tinta-suave">Reservar</span>
-          <h1 className="m-0 mt-2 font-display text-5xl font-extrabold tracking-tight">¿Qué sendero quieres recorrer?</h1>
+          <h1 className="m-0 mt-2 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">¿Qué sendero quieres recorrer?</h1>
         </Aparecer>
         <Escalonado inmediato como="ul" className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {ordenarPorExigencia(catalogo.estado.datos).map((s) => {
@@ -209,7 +209,7 @@ export function ReservaPage() {
           </Seccion>
 
           <Seccion id="rv-contacto" numero={3} titulo="Quién reserva" nota="El enlace llega a este correo">
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 sm:grid-cols-2">
               <Campo etiqueta="Nombre completo" autoComplete="name" value={titular.nombre} onChange={actualizar('nombre')} />
               <Campo etiqueta="Documento" inputMode="numeric" value={titular.documento} onChange={actualizar('documento')} />
               <Campo etiqueta="Correo" type="email" autoComplete="email" value={titular.correo} onChange={actualizar('correo')} />

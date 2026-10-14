@@ -84,19 +84,19 @@ export function Carrusel({ limite = 14 }: { limite?: number }) {
         ))}
       </ul>
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-8 lg:px-12">
-        <div className="flex items-center gap-1.5" aria-hidden="true">
+        <div className="hidden min-w-0 items-center gap-1.5 overflow-hidden min-[400px]:flex" aria-hidden="true">
           {medios.map((m, i) => (
             <span key={m.id} className={`h-1.5 rounded-full transition-all duration-500 ${i === actual ? 'w-8 bg-bosque' : 'w-1.5 bg-bosque/25'}`} />
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <button type="button" aria-label="Foto anterior" onClick={() => irA(indiceCircular(actual, -1, medios.length))} className="flex size-12 items-center justify-center rounded-full border border-bosque/20 text-bosque transition-colors hover:bg-bosque hover:text-lima">
             ←
           </button>
           <button type="button" aria-label="Foto siguiente" onClick={() => irA(indiceCircular(actual, 1, medios.length))} className="flex size-12 items-center justify-center rounded-full bg-bosque text-lima transition-colors hover:bg-lima hover:text-bosque">
             →
           </button>
-          <Link to="/biblioteca" className="ml-2 hidden items-center gap-1.5 font-display text-sm font-bold no-underline sm:inline-flex">
+          <Link to="/biblioteca" className="ml-2 hidden min-h-11 items-center gap-1.5 font-display text-sm font-bold no-underline sm:inline-flex">
             Ver la biblioteca <FlechaAccion />
           </Link>
         </div>

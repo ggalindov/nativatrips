@@ -9,7 +9,7 @@ export function CreditosPage() {
     <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-32 pb-20 sm:px-8 lg:px-12">
       <Aparecer className="flex max-w-3xl flex-col gap-4">
         <span className="etiqueta text-tinta-suave">Créditos</span>
-        <h1 className="m-0 font-display text-5xl font-extrabold tracking-tight">Fotografías del páramo</h1>
+        <h1 className="m-0 font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Fotografías del páramo</h1>
         <p className="m-0 text-[17px] leading-relaxed text-tinta">
           Las fotografías son de autores que las publicaron en Wikimedia Commons con licencias libres. Se muestran sin
           modificar su contenido, solo reducidas de tamaño. Gracias a cada autor por compartir el páramo de Chingaza.

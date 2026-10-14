@@ -62,7 +62,7 @@ function Acompanantes({ reserva, token, onCambio }: { reserva: Reserva; token: s
           )}
           {pendientes > 0 && puedeCancelarse(reserva) && (
             <form onSubmit={guardar} className="flex flex-col gap-5">
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-5 sm:grid-cols-2">
                 <Campo etiqueta="Nombre completo" value={nombre} onChange={(e) => setNombre(e.target.value)} />
                 <Campo etiqueta="Documento" inputMode="numeric" value={documento} onChange={(e) => setDocumento(e.target.value)} />
               </div>
@@ -152,7 +152,7 @@ export function MiReservaPage() {
         </ol>
       )}
 
-      <div className="grid items-start gap-14 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-14 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex flex-col gap-12">
           {r.estado === 'PENDIENTE_PAGO' && (
             <section className="flex flex-col items-start gap-4 rounded-[28px] bg-bosque p-6 text-white md:p-8">

@@ -23,7 +23,7 @@ export function BibliotecaPage() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pt-32 pb-24 sm:px-8 lg:px-12">
-      <Aparecer className="grid items-end gap-6 md:grid-cols-[1.3fr_1fr]">
+      <Aparecer className="grid grid-cols-[minmax(0,1fr)] items-end gap-6 md:grid-cols-[1.3fr_1fr]">
         <div className="flex flex-col gap-3">
           <span className="etiqueta text-tinta-suave">Biblioteca</span>
           <h1 className="m-0 font-display text-5xl leading-[0.95] font-extrabold tracking-tight md:text-7xl">El páramo en imágenes.</h1>
@@ -58,7 +58,7 @@ export function BibliotecaPage() {
       {estado.tipo === 'cargando' && <Cargando texto="Cargando la biblioteca…" />}
       {estado.tipo === 'error' && <ErrorCarga mensaje={estado.mensaje} reintentar={recargar} />}
       {estado.tipo === 'listo' && (
-        <ul aria-label="Fotos y videos" className="m-0 list-none columns-1 gap-4 p-0 sm:columns-2 lg:columns-3 [&>li]:mb-4">
+        <ul aria-label="Fotos y videos" className="m-0 list-none columns-2 gap-3 p-0 sm:gap-4 lg:columns-3 [&>li]:mb-3 sm:[&>li]:mb-4">
           {visibles.map((m, i) => (
             <motion.li
               key={m.id}
@@ -71,13 +71,13 @@ export function BibliotecaPage() {
                 type="button"
                 onClick={() => setAbierto(i)}
                 aria-label={`Ampliar: ${m.alt}`}
-                className="group relative block w-full overflow-hidden rounded-[24px] bg-arena-oscura text-left shadow-[var(--shadow-tarjeta)]"
+                className="group relative block w-full overflow-hidden rounded-[18px] bg-arena-oscura sm:rounded-[24px] text-left shadow-[var(--shadow-tarjeta)]"
                 style={{ aspectRatio: `${m.ancho} / ${m.alto}` }}
               >
                 <MiniaturaMedio medio={m} className="transition-transform duration-700 group-hover:scale-105" />
-                <span className="absolute inset-x-0 bottom-0 flex translate-y-2 flex-col gap-0.5 bg-gradient-to-t from-bosque/85 to-transparent p-4 pt-10 text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
-                  <span className="font-display font-bold">{m.alt}</span>
-                  <span className="text-xs text-white/70">
+                <span className="absolute inset-x-0 bottom-0 flex translate-y-2 flex-col gap-0.5 bg-gradient-to-t from-bosque/85 to-transparent p-3 pt-10 text-white sm:p-4 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">
+                  <span className="line-clamp-2 font-display text-sm font-bold sm:text-base">{m.alt}</span>
+                  <span className="truncate text-xs text-white/70">
                     {m.categoria} · {m.propio ? 'Eco Palacio Tur' : m.credito}
                   </span>
                 </span>
