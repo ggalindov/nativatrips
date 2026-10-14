@@ -48,6 +48,16 @@
   }
 }
 
+/* Galería de la portada en celular: la franja va duplicada, así que recorrer la mitad la deja igual que al inicio. */
+@keyframes desfile {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
 @keyframes brillo {
   0%,
   100% {
