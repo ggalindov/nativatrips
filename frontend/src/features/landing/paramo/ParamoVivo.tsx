@@ -9,7 +9,7 @@ import { BotonReservar } from '@/ui/BotonReservar';
 import { CURVA } from '@/ui/movimiento';
 import { Colibri, Condor, OsoAndino, PatoParamo, Rana, Venado } from './Animales';
 
-const ROTACION_MS = 5500;
+const ROTACION_MS = 9000;
 
 /** En celulares vertical se muestra más cielo para que el paisaje no se recorte por los lados. */
 function useAngosta() {
@@ -395,7 +395,7 @@ export function ParamoVivo() {
               </BotonReservar>
             </motion.div>
             <div className="flex items-end justify-between gap-3">
-              <div aria-live="polite" className="mr-[4.5rem] min-w-0 max-w-[460px] flex-1 sm:mr-0">
+              <div aria-live="polite" className="mr-[4.5rem] min-w-0 max-w-[260px] flex-1 sm:mr-0 sm:max-w-[320px]">
                 <AnimatePresence mode="wait">
                   <motion.article
                     key={dato}
@@ -403,17 +403,17 @@ export function ParamoVivo() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -12 }}
                     transition={{ duration: 0.45, ease: CURVA }}
-                    className="relative overflow-hidden rounded-3xl border border-white/15 bg-bosque/80 p-4 text-white shadow-2xl backdrop-blur-md sm:p-6"
+                    className="relative overflow-hidden rounded-2xl border border-white/15 bg-bosque/75 px-3.5 py-3 text-white shadow-xl backdrop-blur-md sm:rounded-3xl sm:px-4 sm:py-3.5"
                   >
-                    <span className="etiqueta text-lima">
+                    <span className="etiqueta text-[10px] text-lima">
                       {dato + 1}/{datos.length} · {actual.zona}
                     </span>
-                    <h2 className="m-0 mt-1.5 font-display text-lg leading-tight font-extrabold sm:text-2xl">{actual.titulo}</h2>
-                    <p className="m-0 mt-1.5 font-cifras text-lg leading-tight font-black text-lima-suave sm:mt-2 sm:text-3xl">{actual.cifra}</p>
-                    <p className="m-0 mt-2 hidden text-sm leading-relaxed text-white/80 sm:block">{actual.detalle}</p>
+                    <h2 className="m-0 mt-1 font-display text-sm leading-tight font-extrabold sm:text-base">{actual.titulo}</h2>
+                    <p className="m-0 mt-0.5 font-cifras text-base leading-tight font-black text-lima-suave sm:text-lg">{actual.cifra}</p>
+                    <p className="m-0 mt-1 hidden text-xs leading-snug text-white/75 sm:block">{actual.detalle}</p>
                     <motion.span
                       aria-hidden="true"
-                      className="absolute bottom-0 left-0 h-1 bg-lima"
+                      className="absolute bottom-0 left-0 h-0.5 bg-lima"
                       initial={{ width: '0%' }}
                       animate={{ width: '100%' }}
                       transition={{ duration: ROTACION_MS / 1000, ease: 'linear' }}

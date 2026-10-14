@@ -4,11 +4,12 @@ import { useIdioma } from '@/i18n/IdiomaContext';
 import { useContenido } from '@/i18n/useContenido';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
+import { EnlaceBoton } from '@/ui/Boton';
 import { MiniaturaMedio } from './MiniaturaMedio';
 import { Visor } from './Visor';
 
 /** Segundos que tarda cada foto en cruzar: define la velocidad de la franja. */
-const SEGUNDOS_POR_FOTO = 6;
+const SEGUNDOS_POR_FOTO = 14;
 
 /** Mezcla Fisher-Yates con una semilla fija por visita, para que el orden no cambie en cada render. */
 function mezclar<T>(lista: readonly T[], semilla: number): T[] {
@@ -76,6 +77,11 @@ export function Carrusel({ limite = 14 }: { limite?: number }) {
             <Tarjeta key={m.id} medio={m} oculta />
           ))}
         </ul>
+      </div>
+      <div className="mt-8 flex justify-center px-4">
+        <EnlaceBoton to="/biblioteca" variante="oscuro" conFlecha>
+          {t.biblioteca.verBiblioteca}
+        </EnlaceBoton>
       </div>
       <Visor medios={medios} indice={abierto} onCambiar={setAbierto} />
     </div>
