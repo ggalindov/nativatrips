@@ -29,7 +29,7 @@ describe('carrusel de la portada', () => {
     renderizarEn();
     const carrusel = await screen.findByRole('list', { name: 'Carrusel de fotos del páramo' });
     expect(within(carrusel).getAllByRole('listitem')).toHaveLength(14);
-    expect(screen.getByRole('button', { name: 'Foto siguiente' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Foto siguiente' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Abrir la biblioteca/ })).toHaveAttribute('href', '/biblioteca');
   });
 });
