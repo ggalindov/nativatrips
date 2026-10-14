@@ -219,11 +219,8 @@ function Galeria() {
             {g.titulo}
           </h2>
         </Aparecer>
-        <Aparecer retraso={0.1} className="flex flex-col items-start gap-3">
+        <Aparecer retraso={0.1}>
           <p className="m-0 text-[17px] leading-relaxed text-tinta">{g.texto}</p>
-          <EnlaceBoton to="/biblioteca" variante="oscuro" conFlecha>
-            {g.abrir}
-          </EnlaceBoton>
         </Aparecer>
       </div>
       <Carrusel />
