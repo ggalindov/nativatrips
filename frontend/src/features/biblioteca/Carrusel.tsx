@@ -63,7 +63,7 @@ export function Carrusel({ limite = 14 }: { limite?: number }) {
   return (
     <div className="relative overflow-hidden">
       <div
-        className={`flex w-max animate-[desfile_linear_infinite] hover:[animation-play-state:paused] focus-within:[animation-play-state:paused] ${abierto !== null ? '[animation-play-state:paused]' : ''}`}
+        className={`flex w-max animate-[desfile_linear_infinite] [backface-visibility:hidden] will-change-transform hover:[animation-play-state:paused] focus-within:[animation-play-state:paused] ${abierto !== null ? '[animation-play-state:paused]' : ''}`}
         style={{ animationDuration: `${medios.length * SEGUNDOS_POR_FOTO}s` }}
       >
         <ul aria-label={t.biblioteca.carrusel} className="m-0 flex list-none p-0 pl-4">
