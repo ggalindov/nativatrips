@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { hoyIso } from '@/domain/fechas';
 import type { Visitante } from '@/services/puertos';
 import { useServicios } from '@/services/ServiciosContext';
-import { mensajeDeError, useConsulta } from '@/services/useConsulta';
+import { useConsulta, useMensajeError } from '@/services/useConsulta';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { useSesion } from '../SesionContext';
 
 /** Panel móvil del guía: pasar lista en el punto de encuentro. */
 export function PanelGuia() {
+  const mensajeDeError = useMensajeError();
   const { operacion } = useServicios();
   const { sesion, cerrar } = useSesion();
   const navegar = useNavigate();

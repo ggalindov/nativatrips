@@ -1,9 +1,11 @@
 import { useRef } from 'react';
 import type { ElementoBiblioteca } from '@/domain/biblioteca';
+import { useContenido } from '@/i18n/useContenido';
 
 /** Miniatura de foto o video; el video se reproduce en silencio al pasar el mouse. */
 export function MiniaturaMedio({ medio, className = '' }: { medio: ElementoBiblioteca; className?: string }) {
   const video = useRef<HTMLVideoElement>(null);
+  const { altMedio } = useContenido();
   if (medio.tipo === 'video') {
     return (
       <div className={`relative h-full w-full ${className}`}>
@@ -27,5 +29,5 @@ export function MiniaturaMedio({ medio, className = '' }: { medio: ElementoBibli
       </div>
     );
   }
-  return <img src={medio.miniatura} alt={medio.alt} loading="lazy" decoding="async" className={`h-full w-full object-cover ${className}`} />;
+  return <img src={medio.miniatura} alt={altMedio(medio)} loading="lazy" decoding="async" className={`h-full w-full object-cover ${className}`} />;
 }

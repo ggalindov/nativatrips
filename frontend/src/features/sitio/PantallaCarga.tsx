@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { useIdioma } from '@/i18n/IdiomaContext';
 import { Simbolo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
 
@@ -49,6 +50,7 @@ function Excursionista({ x, y, reducido }: { x: number; y: number; reducido: boo
  */
 export function PantallaCarga() {
   const reducido = useReducedMotion() ?? false;
+  const { t } = useIdioma();
   const [visible, setVisible] = useState(() => {
     try {
       return sessionStorage.getItem(CLAVE_SESION) !== '1';
@@ -104,7 +106,7 @@ export function PantallaCarga() {
         <motion.div
           key="carga"
           role="progressbar"
-          aria-label="Cargando NativaTrips"
+          aria-label={t.carga.aria}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(avance * 100)}
@@ -146,7 +148,7 @@ export function PantallaCarga() {
                 <span className="font-light text-lima">Trips</span>
               </span>
             </div>
-            <span className="etiqueta text-white/60">{listo ? 'Llegaste a la cima' : 'Subiendo al páramo'}</span>
+            <span className="etiqueta text-white/60">{listo ? t.carga.cima : t.carga.subiendo}</span>
             <span className="font-cifras text-sm font-black text-lima-suave tabular-nums">{Math.round(avance * 100)}%</span>
           </div>
         </motion.div>

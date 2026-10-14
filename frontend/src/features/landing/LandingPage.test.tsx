@@ -19,6 +19,25 @@ describe('portada', () => {
     expect(screen.queryByRole('button', { name: /Pausar|Reanudar|Reproducir video/ })).not.toBeInTheDocument();
   });
 
+  it('cambia todo el sitio de idioma desde el selector y lo recuerda', async () => {
+    const usuario = userEvent.setup();
+    renderizarEn();
+    await usuario.click(screen.getAllByRole('button', { name: /English/ })[0]);
+    expect(screen.getByRole('heading', { level: 1, name: 'A páramo that breathes.' })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe('en');
+    expect(localStorage.getItem('nativatrips.idioma')).toBe('en');
+    expect(await screen.findByRole('region', { name: 'Trails to connect with the páramo' })).toBeInTheDocument();
+    expect((await screen.findAllByText('Strenuous')).length).toBeGreaterThan(0);
+  });
+
+  it('muestra el sitio en francés y portugués', () => {
+    const { unmount } = renderizarEn({ idioma: 'fr' });
+    expect(screen.getByRole('heading', { level: 1, name: 'Un páramo qui respire.' })).toBeInTheDocument();
+    unmount();
+    renderizarEn({ idioma: 'pt' });
+    expect(screen.getByRole('heading', { level: 1, name: 'Um páramo que respira.' })).toBeInTheDocument();
+  });
+
   it('destaca seis senderos con foto y filtra por dificultad', async () => {
     const usuario = userEvent.setup();
     renderizarEn();

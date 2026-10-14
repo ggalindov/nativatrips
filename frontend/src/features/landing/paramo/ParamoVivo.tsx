@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
 import { AnimatePresence, MotionConfig, motion, useMotionValueEvent, useScroll, useSpring, useTransform } from 'motion/react';
 import type { MotionValue } from 'motion/react';
-import { DATOS_PARAMO, siguienteDato } from '@/domain/paramo';
+import { siguienteDato } from '@/domain/paramo';
+import { useIdioma } from '@/i18n/IdiomaContext';
 import { EnlaceBoton } from '@/ui/Boton';
 import { CURVA } from '@/ui/movimiento';
 import { Colibri, Condor, OsoAndino, PatoParamo, Rana, Venado } from './Animales';
@@ -105,6 +106,8 @@ function Capa({
  */
 export function ParamoVivo() {
   const seccion = useRef<HTMLElement>(null);
+  const { t } = useIdioma();
+  const datos = t.paramo.datos;
   const [dato, setDato] = useState(0);
   const angosta = useAngosta();
 
@@ -135,7 +138,7 @@ export function ParamoVivo() {
   // El scroll también recorre los datos del parque.
   const ultimoTramo = useRef(0);
   useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    const tramo = Math.min(DATOS_PARAMO.length - 1, Math.floor(v * DATOS_PARAMO.length));
+    const tramo = Math.min(datos.length - 1, Math.floor(v * datos.length));
     if (tramo !== ultimoTramo.current) {
       ultimoTramo.current = tramo;
       setDato(tramo);
@@ -143,7 +146,7 @@ export function ParamoVivo() {
   });
 
   useEffect(() => {
-    const t = setInterval(() => setDato((d) => siguienteDato(d)), ROTACION_MS);
+    const t = setInterval(() => setDato((d) => siguienteDato(d, 1, datos.length)), ROTACION_MS);
     return () => clearInterval(t);
   }, []);
 
@@ -154,11 +157,11 @@ export function ParamoVivo() {
     py.set(((e.clientY - r.top) / r.height - 0.5) * -2);
   };
 
-  const actual = DATOS_PARAMO[dato];
+  const actual = datos[dato];
 
   return (
     <MotionConfig reducedMotion="never">
-      <section ref={seccion} id="inicio" aria-label="El páramo de Chingaza" className="relative h-[150vh]">
+      <section ref={seccion} id="inicio" aria-label={t.paramo.aria} className="relative h-[150vh]">
         <div onPointerMove={mover} className="sticky top-0 h-svh min-h-[600px] overflow-hidden bg-[linear-gradient(180deg,#9ec4d4_0%,#d8e4e0_45%,#f3ead8_70%)]">
           <motion.div
             aria-hidden="true"
@@ -170,7 +173,7 @@ export function ParamoVivo() {
             preserveAspectRatio="xMidYMax slice"
             className="absolute inset-0 h-full w-full"
             role="img"
-            aria-label="Ilustración del páramo de Chingaza con frailejones, una laguna, un oso andino, un venado, un cóndor, un colibrí, un pato y una rana"
+            aria-label={t.paramo.ilustracion}
           >
             <defs>
               <linearGradient id="pv-laguna" x1="0" y1="0" x2="0" y2="1">
@@ -330,7 +333,7 @@ export function ParamoVivo() {
               transition={{ duration: 1, ease: CURVA, delay: 0.1 }}
               className="m-0 max-w-[760px] font-display text-[40px] leading-[0.95] font-extrabold tracking-tight text-bosque min-[400px]:text-5xl md:text-[84px]"
             >
-              Un páramo <span className="text-pino">que respira.</span>
+              {t.paramo.titulo} <span className="text-pino">{t.paramo.tituloDestacado}</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -338,7 +341,7 @@ export function ParamoVivo() {
               transition={{ duration: 1, ease: CURVA, delay: 0.25 }}
               className="m-0 max-w-[500px] text-base leading-relaxed text-tinta sm:text-lg"
             >
-              Trece senderos entre frailejones, lagunas y la casa del oso andino. Cupos limitados para cuidarlo.
+              {t.paramo.subtitulo}
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -347,17 +350,17 @@ export function ParamoVivo() {
               className="flex flex-wrap gap-3"
             >
               <EnlaceBoton to="/senderos" conFlecha>
-                Explorar senderos
+                {t.paramo.explorar}
               </EnlaceBoton>
               <EnlaceBoton to="/reservar" variante="oscuro">
-                Reservar
+                {t.paramo.reservar}
               </EnlaceBoton>
             </motion.div>
             <motion.span
               style={{ opacity: pistaOpacidad }}
               className="hidden items-center gap-2 text-xs font-bold tracking-widest text-bosque/70 uppercase sm:flex"
             >
-              Desliza
+              {t.paramo.desliza}
               <motion.svg
                 width="14"
                 height="14"
@@ -383,7 +386,7 @@ export function ParamoVivo() {
                   className="relative overflow-hidden rounded-3xl border border-white/15 bg-bosque/80 p-4 text-white shadow-2xl backdrop-blur-md sm:p-6"
                 >
                   <span className="etiqueta text-lima">
-                    {dato + 1}/{DATOS_PARAMO.length} · {actual.zona}
+                    {dato + 1}/{datos.length} · {actual.zona}
                   </span>
                   <h2 className="m-0 mt-1.5 font-display text-lg leading-tight font-extrabold sm:text-2xl">{actual.titulo}</h2>
                   <p className="m-0 mt-1.5 font-cifras text-lg leading-tight font-black text-lima-suave sm:mt-2 sm:text-3xl">{actual.cifra}</p>
@@ -399,12 +402,12 @@ export function ParamoVivo() {
               </AnimatePresence>
             </div>
             <div className="flex flex-none flex-col items-end gap-2">
-              <div className="flex" role="group" aria-label="Datos del páramo">
-                {DATOS_PARAMO.map((d, i) => (
+              <div className="flex" role="group" aria-label={t.paramo.datosAria}>
+                {datos.map((d, i) => (
                   <button
                     key={d.zona}
                     type="button"
-                    aria-label={`Ver dato: ${d.zona}`}
+                    aria-label={t.paramo.verDato(d.zona)}
                     aria-pressed={i === dato}
                     onClick={() => setDato(i)}
                     className="group flex h-8 min-w-6 items-center justify-center px-[3px]"

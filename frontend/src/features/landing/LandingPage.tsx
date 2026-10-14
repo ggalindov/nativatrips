@@ -8,6 +8,8 @@ import type { Dificultad, Sendero } from '@/domain/sendero';
 import { DIFICULTADES, filtrarPorDificultad, ordenarPorExigencia } from '@/domain/sendero';
 import { Carrusel } from '@/features/biblioteca/Carrusel';
 import { TarjetaSendero } from '@/features/senderos/TarjetaSendero';
+import { useIdioma } from '@/i18n/IdiomaContext';
+import { useContenido } from '@/i18n/useContenido';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
 import { Boton, EnlaceBoton, FlechaAccion } from '@/ui/Boton';
@@ -29,16 +31,17 @@ function Encabezado({ antetitulo, titulo, oscuro = false, centrado = false }: { 
 }
 
 function Cifras() {
+  const { t } = useIdioma();
   return (
     <section aria-label="Eco Palacio Chingaza" className="relative z-10 -mt-px overflow-hidden bg-bosque">
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-14 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:gap-12 lg:px-12">
+      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-7 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:gap-12 lg:py-8 lg:px-12">
         <Aparecer>
-          <dl className="m-0 flex flex-col-reverse gap-1.5 border-l border-bosque-3 px-3 py-2 sm:px-5">
+          <dl className="m-0 flex flex-col-reverse gap-1 border-l border-bosque-3 px-3 py-1 sm:px-5">
             <dt className="flex flex-col">
-              <span className="font-display text-base font-bold text-white">Rutas habilitadas</span>
-              <span className="text-sm text-white/60">Páramo y bosque andino</span>
+              <span className="font-display text-base font-bold text-white">{t.franja.rutas}</span>
+              <span className="text-sm text-white/60">{t.franja.rutasDetalle}</span>
             </dt>
-            <dd className="m-0 font-cifras text-4xl font-black text-lima-suave lg:text-5xl">
+            <dd className="m-0 font-cifras text-3xl font-black text-lima-suave lg:text-4xl">
               <Contador valor={13} />
             </dd>
           </dl>
@@ -58,11 +61,13 @@ function Cifras() {
 }
 
 function Destacados({ senderos }: { senderos: readonly Sendero[] }) {
+  const { t } = useIdioma();
+  const { dificultad } = useContenido();
   const [filtro, setFiltro] = useState<Dificultad | null>(null);
   const visibles = useMemo(() => filtrarPorDificultad(ordenarPorExigencia(senderos), filtro).slice(0, 6), [senderos, filtro]);
   return (
     <div className="flex flex-col gap-8">
-      <div role="group" aria-label="Filtrar por dificultad" className="flex flex-wrap gap-2">
+      <div role="group" aria-label={t.portada.filtrarDificultad} className="flex flex-wrap gap-2">
         {[null, ...DIFICULTADES].map((d) => {
           const activo = filtro === d;
           return (
@@ -74,7 +79,7 @@ function Destacados({ senderos }: { senderos: readonly Sendero[] }) {
               className={`relative h-10 rounded-full px-5 text-sm font-semibold transition-colors ${activo ? 'text-lima' : 'text-bosque hover:bg-bosque/5'}`}
             >
               {activo && <motion.span layoutId="filtro-activo" className="absolute inset-0 rounded-full bg-bosque" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />}
-              <span className="relative">{d ?? 'Todas'}</span>
+              <span className="relative">{d ? dificultad(d) : t.portada.todas}</span>
             </button>
           );
         })}
@@ -86,7 +91,7 @@ function Destacados({ senderos }: { senderos: readonly Sendero[] }) {
       </Escalonado>
       <Aparecer className="flex justify-center pt-4">
         <EnlaceBoton to="/senderos" variante="oscuro" conFlecha>
-          Ver el catálogo completo de 13 senderos
+          {t.portada.verCatalogo}
         </EnlaceBoton>
       </Aparecer>
     </div>
@@ -94,18 +99,15 @@ function Destacados({ senderos }: { senderos: readonly Sendero[] }) {
 }
 
 function GuiaVisita() {
+  const { t } = useIdioma();
+  const { alt } = useContenido();
+  const g = t.portada.guia;
   const f = foto('espeletias-laguna');
-  const pautas = [
-    ['Capas de ropa', 'Térmica, polar e impermeable. En minutos se pasa del sol a la lluvia.'],
-    ['Agua y comida ligera', 'Al menos 1,5 litros por persona y snacks de energía.'],
-    ['Ritmo constante', 'Pasos cortos para que el cuerpo se adapte a la altura.'],
-    ['Sin huella', 'Toda la basura vuelve contigo. No se toca ni se arranca nada.'],
-  ];
   return (
     <section id="antes" className="mx-auto grid max-w-7xl items-center gap-14 px-4 py-28 sm:px-8 lg:grid-cols-2 lg:px-12">
       <Aparecer className="relative">
         <div className="relative h-[520px] overflow-hidden rounded-[40px] shadow-2xl">
-          <FotoAnimada src={f.src} alt={f.alt} kenBurns />
+          <FotoAnimada src={f.src} alt={alt(f)} kenBurns />
         </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.8, rotate: -6 }}
@@ -114,9 +116,9 @@ function GuiaVisita() {
           transition={{ type: 'spring', stiffness: 160, damping: 14, delay: 0.3 }}
           className="absolute right-2 -bottom-6 flex flex-col gap-1 rounded-3xl bg-lima px-5 py-4 text-bosque shadow-xl sm:px-6 sm:py-5 lg:-right-8"
         >
-          <span className="etiqueta">Altitud regulada</span>
+          <span className="etiqueta">{g.altitudRegulada}</span>
           <span className="font-cifras text-2xl font-black whitespace-nowrap sm:text-3xl">3.900 m</span>
-          <span className="text-xs font-semibold">sobre el nivel del mar</span>
+          <span className="text-xs font-semibold">{g.sobreNivel}</span>
         </motion.div>
         <motion.div
           animate={{ y: [0, -10, 0] }}
@@ -126,25 +128,25 @@ function GuiaVisita() {
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
           </svg>
-          Niebla frecuente en la tarde
+          {g.niebla}
         </motion.div>
       </Aparecer>
       <div className="flex flex-col gap-8">
-        <Encabezado antetitulo="Guía de visita" titulo="Arriba hace frío, y el aire es otro." />
+        <Encabezado antetitulo={g.antetitulo} titulo={g.titulo} />
         <Escalonado como="ul" className="m-0 flex list-none flex-col gap-3 p-0">
-          {pautas.map(([t, d], i) => (
-            <motion.li key={t} variants={itemEscalonado} className="tarjeta flex items-start gap-4 px-5 py-4">
+          {g.pautas.map(([titulo, detalle], i) => (
+            <motion.li key={titulo} variants={itemEscalonado} className="tarjeta flex items-start gap-4 px-5 py-4">
               <span className="flex size-10 flex-none items-center justify-center rounded-2xl bg-bosque font-cifras text-sm font-black text-lima">{i + 1}</span>
               <div className="flex flex-col gap-0.5">
-                <span className="font-display text-lg font-bold">{t}</span>
-                <span className="text-[15px] leading-relaxed text-tinta">{d}</span>
+                <span className="font-display text-lg font-bold">{titulo}</span>
+                <span className="text-[15px] leading-relaxed text-tinta">{detalle}</span>
               </div>
             </motion.li>
           ))}
         </Escalonado>
         <Aparecer>
           <Link to="/antes-de-subir" className="inline-flex items-center gap-2 font-display font-bold">
-            Ver la guía completa: equipaje, altura y normas <FlechaAccion />
+            {g.verGuia} <FlechaAccion />
           </Link>
         </Aparecer>
       </div>
@@ -153,6 +155,9 @@ function GuiaVisita() {
 }
 
 function ReservaRapida({ senderos }: { senderos: readonly Sendero[] }) {
+  const { t } = useIdioma();
+  const { dificultad } = useContenido();
+  const r = t.portada.rapida;
   const navegar = useNavigate();
   const manana = useMemo(() => sumarDias(hoyIso(), 1), []);
   const [senderoId, setSenderoId] = useState('lagunas-de-siecha');
@@ -167,34 +172,34 @@ function ReservaRapida({ senderos }: { senderos: readonly Sendero[] }) {
       <Aparecer className="relative mx-auto grid max-w-7xl items-center gap-12 overflow-hidden rounded-[40px] bg-bosque px-6 py-16 text-white md:px-14 md:py-20 lg:grid-cols-2">
         <Contornos className="opacity-40" />
         <div className="relative flex flex-col gap-6">
-          <span className="etiqueta text-lima">Reserva rápida</span>
-          <h2 className="m-0 font-display text-4xl leading-none font-extrabold tracking-tight md:text-[52px]">Sin cuentas. Sin contraseñas.</h2>
+          <span className="etiqueta text-lima">{r.etiqueta}</span>
+          <h2 className="m-0 font-display text-4xl leading-none font-extrabold tracking-tight md:text-[52px]">{r.titulo}</h2>
           <ul className="m-0 flex list-none flex-col gap-3 p-0 text-white/80">
-            {['Eliges sendero y fecha y ves los cupos del día.', 'Pagas con PayU: tarjeta, PSE o efectivo.', 'Recibes un enlace al correo para gestionar tu reserva.'].map((t) => (
-              <li key={t} className="flex items-start gap-3">
+            {r.pasos.map((paso) => (
+              <li key={paso} className="flex items-start gap-3">
                 <span aria-hidden="true" className="mt-1 flex size-5 flex-none items-center justify-center rounded-full bg-lima text-xs font-black text-bosque">✓</span>
-                {t}
+                {paso}
               </li>
             ))}
           </ul>
         </div>
         <form onSubmit={ir} className="relative flex flex-col gap-4 rounded-[32px] border border-white/10 bg-bosque-2/70 p-6 backdrop-blur md:p-8">
           <label className="flex flex-col gap-2">
-            <span className="etiqueta text-white/70">Sendero</span>
+            <span className="etiqueta text-white/70">{r.sendero}</span>
             <select value={senderoId} onChange={(e) => setSenderoId(e.target.value)} className={campo}>
               {ordenarPorExigencia(senderos).map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.nombre} · {s.dificultad}
+                  {s.nombre} · {dificultad(s.dificultad)}
                 </option>
               ))}
             </select>
           </label>
           <label className="flex flex-col gap-2">
-            <span className="etiqueta text-white/70">Fecha de visita</span>
+            <span className="etiqueta text-white/70">{r.fecha}</span>
             <input type="date" min={manana} value={fecha} onChange={(e) => setFecha(e.target.value)} className={`${campo} [color-scheme:dark]`} />
           </label>
           <Boton type="submit" conFlecha className="mt-2 h-14 text-base">
-            Ver cupos y reservar
+            {r.boton}
           </Boton>
         </form>
       </Aparecer>
@@ -203,25 +208,27 @@ function ReservaRapida({ senderos }: { senderos: readonly Sendero[] }) {
 }
 
 function Galeria() {
+  const { t } = useIdioma();
+  const g = t.portada.galeria;
   return (
     <section aria-labelledby="galeria-titulo" className="flex flex-col gap-10 py-24">
       <div className="mx-auto grid w-full max-w-7xl items-end gap-6 px-4 sm:px-8 md:grid-cols-[1.3fr_1fr] lg:px-12">
         <Aparecer className="flex flex-col gap-3">
-          <span className="etiqueta text-tinta-suave">Vida en el páramo</span>
+          <span className="etiqueta text-tinta-suave">{g.antetitulo}</span>
           <h2 id="galeria-titulo" className="m-0 font-display text-4xl leading-none font-extrabold tracking-tight md:text-[56px]">
-            Lo que cuida cada cupo que no se vende.
+            {g.titulo}
           </h2>
         </Aparecer>
         <Aparecer retraso={0.1} className="flex flex-col items-start gap-3">
-          <p className="m-0 text-[17px] leading-relaxed text-tinta">Desliza, toca para ampliar o abre la biblioteca completa de fotos y videos.</p>
+          <p className="m-0 text-[17px] leading-relaxed text-tinta">{g.texto}</p>
           <EnlaceBoton to="/biblioteca" variante="oscuro" conFlecha>
-            Abrir la biblioteca
+            {g.abrir}
           </EnlaceBoton>
         </Aparecer>
       </div>
       <Carrusel />
-      <p className="mx-auto m-0 text-xs text-tinta-suave">
-        Fotografías de Eco Palacio Tur y de Wikimedia Commons con licencia libre · <Link to="/creditos">Ver créditos</Link>
+      <p className="mx-auto m-0 px-4 text-center text-xs text-tinta-suave">
+        {g.creditos} · <Link to="/creditos">{g.verCreditos}</Link>
       </p>
     </section>
   );
@@ -229,8 +236,10 @@ function Galeria() {
 
 export function LandingPage() {
   const { senderos } = useServicios();
+  const { t } = useIdioma();
+  const { sendero } = useContenido();
   const { estado, recargar } = useConsulta(() => senderos.listar(), [senderos]);
-  const lista = estado.tipo === 'listo' ? estado.datos : [];
+  const lista = useMemo(() => (estado.tipo === 'listo' ? estado.datos.map(sendero) : []), [estado, sendero]);
 
   return (
     <>
@@ -238,17 +247,14 @@ export function LandingPage() {
       <Cifras />
       <VideoPaisajes />
 
-      <section id="senderos" aria-label="Rutas para conectar con el páramo" className="mx-auto flex max-w-7xl flex-col gap-12 px-4 pt-28 pb-16 sm:px-8 lg:px-12">
+      <section id="senderos" aria-label={t.portada.senderosAria} className="mx-auto flex max-w-7xl flex-col gap-12 px-4 pt-28 pb-16 sm:px-8 lg:px-12">
         <div className="grid grid-cols-[minmax(0,1fr)] items-end gap-8 md:grid-cols-[1.2fr_1fr]">
-          <Encabezado antetitulo="Experiencias y senderos" titulo="Rutas para conectar con el páramo." />
+          <Encabezado antetitulo={t.portada.senderosAntetitulo} titulo={t.portada.senderosTitulo} />
           <Aparecer retraso={0.1}>
-            <p className="m-0 text-[17px] leading-relaxed text-tinta">
-              Cada sendero tiene un aforo diario fijado con el parque. Cuando se llena, se cierra la fecha: así el páramo se
-              recupera entre grupos.
-            </p>
+            <p className="m-0 text-[17px] leading-relaxed text-tinta">{t.portada.senderosTexto}</p>
           </Aparecer>
         </div>
-        {estado.tipo === 'cargando' && <Cargando texto="Cargando senderos…" />}
+        {estado.tipo === 'cargando' && <Cargando texto={t.portada.cargandoSenderos} />}
         {estado.tipo === 'error' && <ErrorCarga mensaje={estado.mensaje} reintentar={recargar} />}
         {estado.tipo === 'listo' && <Destacados senderos={lista} />}
       </section>

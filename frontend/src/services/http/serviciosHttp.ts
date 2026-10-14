@@ -63,7 +63,7 @@ export function crearServiciosHttp(baseUrl: string): Servicios {
         headers: { 'Content-Type': 'application/json', ...init?.headers },
       });
     } catch {
-      throw new ErrorServicio('No hay conexión con el servidor. Intenta de nuevo en un momento.');
+      throw new ErrorServicio('No hay conexión con el servidor.', 'sinConexion');
     }
     if (!respuesta.ok) {
       const cuerpo = (await respuesta.json().catch(() => null)) as { message?: string } | null;
@@ -73,7 +73,7 @@ export function crearServiciosHttp(baseUrl: string): Servicios {
   }
 
   const pendiente = (): never => {
-    throw new ErrorServicio('Esta función estará disponible cuando el backend implemente las reservas por enlace (ADR-004).');
+    throw new ErrorServicio('Pendiente en el backend: reservas por enlace (ADR-004).', 'noDisponible');
   };
 
   return {
@@ -114,7 +114,7 @@ export function crearServiciosHttp(baseUrl: string): Servicios {
           method: 'POST',
           body: JSON.stringify({ email: correo, password: clave }),
         });
-        if (!esRolEquipo(r.usuario.rol)) throw new ErrorServicio('Esta cuenta no pertenece al equipo.');
+        if (!esRolEquipo(r.usuario.rol)) throw new ErrorServicio('Esta cuenta no pertenece al equipo.', 'cuentaNoEquipo');
         return { nombre: r.usuario.nombreCompleto, correo: r.usuario.email, rol: r.usuario.rol, token: r.accessToken };
       },
     },

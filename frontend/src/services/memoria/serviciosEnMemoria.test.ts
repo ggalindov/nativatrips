@@ -4,7 +4,7 @@ import { ErrorServicio } from '../puertos';
 import { CLAVE_DEMO } from './datos';
 import { crearServiciosEnMemoria } from './serviciosEnMemoria';
 
-const titular = { nombre: 'Laura Gómez', documento: '1020304050', correo: 'laura@correo.co', celular: '3001234567' };
+const titular = { nombre: 'Laura Gómez', tipoDocumento: 'CC' as const, documento: '1020304050', nacionalidad: 'CO', indicativo: '57', correo: 'laura@correo.co', celular: '3001234567' };
 
 async function fechaConCupos(s: ReturnType<typeof crearServiciosEnMemoria>, minimo: number) {
   const dias = await s.senderos.disponibilidad('lagunas-de-siecha', '2026-10-12', 30);
@@ -48,8 +48,8 @@ describe('servicios en memoria', () => {
     const { enlaceDesarrollo } = await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 2, titular });
     const token = enlaceDesarrollo!.split('/').pop()!;
 
-    await s.reservas.agregarAcompanante(token, { nombre: 'Diego Gómez', documento: '98765432' });
-    await expect(s.reservas.agregarAcompanante(token, { nombre: 'Otra Persona', documento: '11223344' })).rejects.toBeInstanceOf(
+    await s.reservas.agregarAcompanante(token, { nombre: 'Diego Gómez', tipoDocumento: 'CC', documento: '98765432', nacionalidad: 'CO' });
+    await expect(s.reservas.agregarAcompanante(token, { nombre: 'Otra Persona', tipoDocumento: 'PASAPORTE', documento: 'X1122334', nacionalidad: 'FR' })).rejects.toBeInstanceOf(
       ErrorServicio,
     );
   });

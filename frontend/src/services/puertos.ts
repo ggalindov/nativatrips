@@ -99,10 +99,32 @@ export interface Servicios {
   biblioteca: BibliotecaServicio;
 }
 
-/** Error esperable de negocio, con un mensaje apto para mostrar a la persona. */
+/** Errores de negocio conocidos; la interfaz los traduce al idioma activo. */
+export type CodigoError =
+  | 'senderoInexistente'
+  | 'enlaceInvalido'
+  | 'sinCupos'
+  | 'acompanantesCompletos'
+  | 'acompananteInvalido'
+  | 'revisionInexistente'
+  | 'credenciales'
+  | 'sinConexion'
+  | 'noDisponible'
+  | 'cuentaNoEquipo'
+  | 'asistenteNoDisponible'
+  | 'datosInvalidos';
+
+/**
+ * Error esperable de negocio. `codigo` permite mostrarlo en el idioma de la
+ * persona; `message` queda en español para registros y para errores del
+ * servidor que no tienen código.
+ */
 export class ErrorServicio extends Error {
-  constructor(message: string) {
+  readonly codigo: CodigoError | null;
+
+  constructor(message: string, codigo: CodigoError | null = null) {
     super(message);
     this.name = 'ErrorServicio';
+    this.codigo = codigo;
   }
 }

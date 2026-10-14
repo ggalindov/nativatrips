@@ -9,8 +9,9 @@ describe('clima por altitud', () => {
   });
 
   it('recomienda más capas cuanto más frío', () => {
-    expect(capasRecomendadas(5)).toContain('guantes y gorro');
-    expect(capasRecomendadas(12)).toContain('polar ligero');
+    expect(capasRecomendadas(5)).toBe('frio');
+    expect(capasRecomendadas(8)).toBe('fresco');
+    expect(capasRecomendadas(12)).toBe('templado');
   });
 });
 

@@ -3,16 +3,9 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { foto, fotoDeSendero } from '@/contenido/fotos';
 import type { Dificultad, Sendero } from '@/domain/sendero';
-import {
-  DIFICULTADES,
-  buscarSenderos,
-  filtrarPorDificultad,
-  formatearDistancia,
-  formatearDuracion,
-  formatearMetros,
-  formatearPesos,
-  ordenarPorExigencia,
-} from '@/domain/sendero';
+import { DIFICULTADES, buscarSenderos, filtrarPorDificultad, ordenarPorExigencia } from '@/domain/sendero';
+import { useIdioma } from '@/i18n/IdiomaContext';
+import { useContenido } from '@/i18n/useContenido';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
 import { EnlaceBoton, FlechaAccion } from '@/ui/Boton';
@@ -25,12 +18,14 @@ type Vista = 'cuadricula' | 'lista';
 
 function VistaRapida({ sendero, onCerrar }: { sendero: Sendero | null; onCerrar: () => void }) {
   const f = sendero ? fotoDeSendero(sendero.id) : null;
+  const { t } = useIdioma();
+  const c = useContenido();
   return (
-    <Dialogo abierto={sendero !== null} onCerrar={onCerrar} titulo={sendero ? `Vista rápida: ${sendero.nombre}` : 'Vista rápida'}>
+    <Dialogo abierto={sendero !== null} onCerrar={onCerrar} titulo={sendero ? t.sendero.vistaRapidaDe(sendero.nombre) : t.sendero.vistaRapida}>
       {sendero && f && (
         <div className="grid md:grid-cols-2">
           <div className="relative h-64 md:h-full">
-            <img src={f.src} alt={f.alt} className="h-full w-full object-cover" />
+            <img src={f.src} alt={c.alt(f)} className="h-full w-full object-cover" />
             <div className="absolute top-4 left-4">
               <PildoraDificultad dificultad={sendero.dificultad} />
             </div>
@@ -40,7 +35,7 @@ function VistaRapida({ sendero, onCerrar }: { sendero: Sendero | null; onCerrar:
             <h2 className="m-0 font-display text-3xl font-extrabold tracking-tight">{sendero.nombre}</h2>
             <p className="m-0 text-[15px] leading-relaxed text-tinta">{sendero.descripcion}</p>
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-bold">Puntos destacados del sendero</span>
+              <span className="text-sm font-bold">{t.sendero.destacados}</span>
               <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
                 {sendero.destacados.map((d) => (
                   <li key={d} className="rounded-full bg-arena px-3 py-1.5 text-sm">
@@ -51,11 +46,11 @@ function VistaRapida({ sendero, onCerrar }: { sendero: Sendero | null; onCerrar:
             </div>
             <div className="mt-auto flex items-end justify-between gap-4 border-t linea pt-5">
               <div className="flex flex-col">
-                <span className="text-xs text-tinta-suave">Tarifa por persona</span>
-                <span className="font-display text-2xl font-extrabold">{formatearPesos(sendero.precioPorPersona)}</span>
+                <span className="text-xs text-tinta-suave">{t.sendero.tarifaPersona}</span>
+                <span className="font-display text-2xl font-extrabold">{c.pesos(sendero.precioPorPersona)}</span>
               </div>
               <EnlaceBoton to={`/senderos/${sendero.id}`} conFlecha onClick={onCerrar}>
-                Ficha completa
+                {t.sendero.fichaCompleta}
               </EnlaceBoton>
             </div>
           </div>
@@ -67,6 +62,8 @@ function VistaRapida({ sendero, onCerrar }: { sendero: Sendero | null; onCerrar:
 
 function FilaSendero({ sendero: s }: { sendero: Sendero }) {
   const f = fotoDeSendero(s.id);
+  const { t } = useIdioma();
+  const c = useContenido();
   return (
     <motion.li variants={itemEscalonado} className="list-none">
       <Link
@@ -74,7 +71,7 @@ function FilaSendero({ sendero: s }: { sendero: Sendero }) {
         className="tarjeta group grid items-center gap-5 overflow-hidden p-3 pr-6 text-bosque no-underline transition-shadow hover:text-bosque hover:shadow-xl sm:grid-cols-[180px_minmax(0,1fr)_auto]"
       >
         <div className="h-36 overflow-hidden rounded-2xl sm:h-28">
-          <img src={f.srcPequena} alt={f.alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+          <img src={f.srcPequena} alt={c.alt(f)} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
         </div>
         <div className="flex flex-col gap-2 px-2 sm:px-0">
           <div className="flex flex-wrap items-center gap-3">
@@ -82,13 +79,13 @@ function FilaSendero({ sendero: s }: { sendero: Sendero }) {
             <PildoraDificultad dificultad={s.dificultad} />
           </div>
           <span className="font-mono text-sm text-tinta">
-            {formatearDuracion(s.duracionHoras)} · {formatearDistancia(s.distanciaKm)} · ▲ {formatearMetros(s.altitudMaxM)} · {s.sector}
+            {c.duracion(s.duracionHoras)} · {c.distancia(s.distanciaKm)} · ▲ {c.metros(s.altitudMaxM)} · {s.sector}
           </span>
         </div>
         <div className="flex items-center justify-between gap-4 px-2 pb-2 sm:flex-col sm:items-end sm:px-0 sm:pb-0">
-          <span className="font-display text-lg font-extrabold">{formatearPesos(s.precioPorPersona)}</span>
+          <span className="font-display text-lg font-extrabold">{c.pesos(s.precioPorPersona)}</span>
           <span className="inline-flex items-center gap-1 text-sm font-bold text-pino">
-            Ver sendero <FlechaAccion />
+            {t.sendero.verSendero} <FlechaAccion />
           </span>
         </div>
       </Link>
@@ -98,6 +95,8 @@ function FilaSendero({ sendero: s }: { sendero: Sendero }) {
 
 export function CatalogoPage() {
   const { senderos } = useServicios();
+  const { t } = useIdioma();
+  const c = useContenido();
   const { estado, recargar } = useConsulta(() => senderos.listar(), [senderos]);
   const [texto, setTexto] = useState('');
   const [dificultad, setDificultad] = useState<Dificultad | null>(null);
@@ -106,8 +105,8 @@ export function CatalogoPage() {
   const portada = foto('paramo-panorama');
 
   const resultados = useMemo(
-    () => (estado.tipo === 'listo' ? filtrarPorDificultad(buscarSenderos(ordenarPorExigencia(estado.datos), texto), dificultad) : []),
-    [estado, texto, dificultad],
+    () => (estado.tipo === 'listo' ? filtrarPorDificultad(buscarSenderos(ordenarPorExigencia(estado.datos.map(c.sendero)), texto), dificultad) : []),
+    [estado, texto, dificultad, c],
   );
   const filtrando = texto.trim() !== '' || dificultad !== null;
 
@@ -120,16 +119,16 @@ export function CatalogoPage() {
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-36 pb-24 sm:px-8 md:pt-44 md:pb-32 lg:px-12">
           <Aparecer>
-            <span className="etiqueta text-lima">Explora Chingaza · Catálogo oficial</span>
+            <span className="etiqueta text-lima">{t.catalogo.etiqueta}</span>
           </Aparecer>
           <Aparecer retraso={0.1}>
             <h1 className="m-0 max-w-3xl font-display text-5xl leading-[0.95] font-extrabold tracking-tight md:text-7xl">
-              Trece senderos, un páramo por descubrir.
+              {t.catalogo.titulo}
             </h1>
           </Aparecer>
           <Aparecer retraso={0.2}>
             <p className="m-0 max-w-xl text-lg text-white/80">
-              Rutas de baja a alta exigencia, todas con guía local y cupos regulados por capacidad de carga.
+              {t.catalogo.texto}
             </p>
           </Aparecer>
         </div>
@@ -138,7 +137,7 @@ export function CatalogoPage() {
       <div className="sticky top-0 z-20 border-b linea bg-arena/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-4 sm:px-8 lg:px-12">
           <label className="relative min-w-[220px] flex-1">
-            <span className="sr-only">Buscar sendero</span>
+            <span className="sr-only">{t.catalogo.buscar}</span>
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="absolute top-1/2 left-4 -translate-y-1/2 text-tinta-suave" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
@@ -147,11 +146,11 @@ export function CatalogoPage() {
               type="search"
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder="Buscar por nombre, sector o atractivo"
+              placeholder={t.catalogo.buscarPlaceholder}
               className="h-12 w-full rounded-full border border-bosque/15 bg-superficie pr-4 pl-11 text-[15px] shadow-sm focus:border-bosque focus:outline-none"
             />
           </label>
-          <div role="group" aria-label="Filtrar por dificultad" className="flex flex-wrap gap-1.5">
+          <div role="group" aria-label={t.catalogo.filtrar} className="flex flex-wrap gap-1.5">
             {[null, ...DIFICULTADES].map((d) => (
               <button
                 key={d ?? 'todas'}
@@ -162,11 +161,11 @@ export function CatalogoPage() {
                   dificultad === d ? 'bg-bosque text-lima' : 'bg-superficie text-bosque hover:bg-bosque/5'
                 }`}
               >
-                {d ?? 'Todas'}
+                {d ? c.dificultad(d) : t.catalogo.todas}
               </button>
             ))}
           </div>
-          <div role="group" aria-label="Tipo de vista" className="flex rounded-full bg-superficie p-1 shadow-sm">
+          <div role="group" aria-label={t.catalogo.vista} className="flex rounded-full bg-superficie p-1 shadow-sm">
             {(['cuadricula', 'lista'] as Vista[]).map((v) => (
               <button
                 key={v}
@@ -175,21 +174,21 @@ export function CatalogoPage() {
                 onClick={() => setVista(v)}
                 className={`h-9 rounded-full px-4 text-sm font-semibold capitalize transition-colors ${vista === v ? 'bg-lima text-bosque' : 'text-tinta'}`}
               >
-                {v === 'cuadricula' ? 'Cuadrícula' : 'Lista'}
+                {v === 'cuadricula' ? t.catalogo.cuadricula : t.catalogo.lista}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <section className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-8 lg:px-12" aria-label="Resultados">
-        {estado.tipo === 'cargando' && <Cargando texto="Cargando senderos…" />}
+      <section className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-8 lg:px-12" aria-label={t.catalogo.resultados}>
+        {estado.tipo === 'cargando' && <Cargando texto={t.catalogo.cargando} />}
         {estado.tipo === 'error' && <ErrorCarga mensaje={estado.mensaje} reintentar={recargar} />}
         {estado.tipo === 'listo' && (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p role="status" className="m-0 rounded-full bg-bosque px-4 py-1.5 text-sm font-bold text-lima">
-                {resultados.length} {resultados.length === 1 ? 'sendero' : 'senderos'}
+                {t.catalogo.cantidad(resultados.length)}
               </p>
               {filtrando && (
                 <button
@@ -200,15 +199,15 @@ export function CatalogoPage() {
                   }}
                   className="text-sm font-semibold text-pino underline underline-offset-4"
                 >
-                  Quitar filtros
+                  {t.catalogo.quitarFiltros}
                 </button>
               )}
             </div>
             <AnimatePresence mode="wait">
               {resultados.length === 0 ? (
                 <motion.div key="vacio" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="tarjeta flex flex-col items-center gap-3 p-12 text-center">
-                  <h2 className="m-0 font-display text-2xl font-bold">No encontramos senderos con esos filtros</h2>
-                  <p className="m-0 text-tinta">Prueba con otra palabra o quita el filtro de dificultad.</p>
+                  <h2 className="m-0 font-display text-2xl font-bold">{t.catalogo.vacioTitulo}</h2>
+                  <p className="m-0 text-tinta">{t.catalogo.vacioTexto}</p>
                 </motion.div>
               ) : vista === 'cuadricula' ? (
                 <Escalonado inmediato key={`c-${texto}-${dificultad}`} como="ul" className="m-0 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">

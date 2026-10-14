@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { RUTA_PANEL } from '@/domain/equipo';
 import { useServicios } from '@/services/ServiciosContext';
-import { mensajeDeError } from '@/services/useConsulta';
+import { useMensajeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Campo } from '@/ui/Campo';
 import { foto } from '@/contenido/fotos';
@@ -15,6 +15,7 @@ import { useSesion } from './SesionContext';
 const FUENTE_MEMORIA = import.meta.env.VITE_FUENTE_DATOS !== 'http';
 
 export function AccesoPage() {
+  const mensajeDeError = useMensajeError();
   const { autenticacion } = useServicios();
   const { sesion, abrir } = useSesion();
   const navegar = useNavigate();

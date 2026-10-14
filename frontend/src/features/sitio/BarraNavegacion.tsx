@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll, useSpring } from 'motion/react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { foto } from '@/contenido/fotos';
-import { FlechaAccion } from '@/ui/Boton';
+import { useIdioma } from '@/i18n/IdiomaContext';
+import { SelectorIdioma } from '@/i18n/SelectorIdioma';
+import { BotonReservar } from '@/ui/BotonReservar';
 import { Logo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
 
 const ENLACES = [
-  { a: '/senderos', texto: 'Senderos', detalle: '13 rutas en el páramo' },
-  { a: '/biblioteca', texto: 'Biblioteca', detalle: 'El páramo en fotos y videos' },
-  { a: '/antes-de-subir', texto: 'Antes de subir', detalle: 'Equipaje, altura y normas' },
-  { a: '/mi-reserva', texto: 'Mi reserva', detalle: 'Gestiona tu reserva por enlace' },
-];
+  { a: '/senderos', clave: 'senderos' },
+  { a: '/biblioteca', clave: 'biblioteca' },
+  { a: '/antes-de-subir', clave: 'antes' },
+  { a: '/mi-reserva', clave: 'miReserva' },
+] as const;
 
 /**
  * Barra flotante en forma de cápsula. Transparente sobre la portada, sólida al
@@ -19,6 +21,7 @@ const ENLACES = [
  */
 export function BarraNavegacion() {
   const { pathname } = useLocation();
+  const { t } = useIdioma();
   const { scrollY, scrollYProgress } = useScroll();
   const progreso = useSpring(scrollYProgress, { stiffness: 140, damping: 30 });
   const [arriba, setArriba] = useState(true);
@@ -43,15 +46,15 @@ export function BarraNavegacion() {
         className="fixed inset-x-0 top-3 z-50 flex justify-center px-3"
       >
         <div
-          className={`relative flex w-full max-w-6xl items-center justify-between gap-4 overflow-hidden rounded-full border py-2 pr-2 pl-4 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-500 ${
+          className={`relative flex w-full max-w-6xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-500 ${
             transparente ? 'border-white/15 bg-bosque/25' : 'border-white/10 bg-bosque/85 shadow-[0_18px_40px_-18px_rgb(19_32_26/0.7)]'
           }`}
         >
-          <Link to="/" aria-label="NativaTrips, inicio" className="no-underline">
+          <Link to="/" aria-label={t.nav.inicio} className="no-underline">
             <Logo compacto />
           </Link>
 
-          <nav aria-label="Principal" className="hidden items-center lg:flex" onMouseLeave={() => setSobre(null)}>
+          <nav aria-label={t.nav.principal} className="hidden items-center lg:flex" onMouseLeave={() => setSobre(null)}>
             {ENLACES.map((e) => (
               <NavLink
                 key={e.a}
@@ -67,7 +70,7 @@ export function BarraNavegacion() {
                     {sobre === e.a && (
                       <motion.span layoutId="nav-sobre" className="absolute inset-0 rounded-full bg-white/10" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />
                     )}
-                    <span className="relative">{e.texto}</span>
+                    <span className="relative">{t.nav.enlaces[e.clave].texto}</span>
                     {isActive && <motion.span layoutId="nav-activo" className="absolute -bottom-0.5 left-1/2 size-1 -translate-x-1/2 rounded-full bg-lima" />}
                   </>
                 )}
@@ -76,20 +79,17 @@ export function BarraNavegacion() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link
-              to="/reservar"
-              className="group hidden h-11 items-center gap-2 rounded-full bg-lima pr-2 pl-5 font-display text-sm font-bold text-bosque no-underline transition-colors hover:bg-white hover:text-bosque sm:flex"
-            >
-              Reservar
-              <span className="flex size-7 items-center justify-center rounded-full bg-bosque text-lima transition-transform duration-500 group-hover:rotate-45">
-                <FlechaAccion />
-              </span>
-            </Link>
+            <div className="hidden sm:block">
+              <SelectorIdioma />
+            </div>
+            <div className="hidden sm:block">
+              <BotonReservar to="/reservar">{t.nav.reservar}</BotonReservar>
+            </div>
             <button
               type="button"
               aria-expanded={menu}
               aria-controls="menu-pantalla"
-              aria-label={menu ? 'Cerrar menú' : 'Abrir menú'}
+              aria-label={menu ? t.nav.cerrarMenu : t.nav.abrirMenu}
               onClick={() => setMenu((m) => !m)}
               className="relative flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 lg:hidden"
             >
@@ -115,19 +115,20 @@ export function BarraNavegacion() {
             className="fixed inset-0 z-40 flex flex-col justify-end overflow-hidden bg-bosque px-6 pt-28 pb-12 text-white lg:hidden"
           >
             <img src={foto('desde-las-nubes').src} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25" />
-            <nav aria-label="Principal móvil" className="relative flex flex-col gap-2">
+            <nav aria-label={t.nav.principalMovil} className="relative flex flex-col gap-2">
               {ENLACES.map((e, i) => (
                 <motion.div key={e.a} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: CURVA }}>
                   <NavLink to={e.a} className={({ isActive }) => `group flex flex-col border-b border-white/10 py-4 no-underline ${isActive ? 'text-lima' : 'text-white'}`}>
-                    <span className="font-display text-4xl font-extrabold tracking-tight">{e.texto}</span>
-                    <span className="text-sm text-white/60">{e.detalle}</span>
+                    <span className="font-display text-4xl font-extrabold tracking-tight">{t.nav.enlaces[e.clave].texto}</span>
+                    <span className="text-sm text-white/60">{t.nav.enlaces[e.clave].detalle}</span>
                   </NavLink>
                 </motion.div>
               ))}
-              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6, ease: CURVA }} className="pt-6">
-                <Link to="/reservar" className="flex h-14 items-center justify-center gap-2 rounded-full bg-lima font-display font-bold text-bosque no-underline">
-                  Reservar un sendero <FlechaAccion />
-                </Link>
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6, ease: CURVA }} className="flex flex-col gap-5 pt-6">
+                <BotonReservar to="/reservar" tamano="amplio" className="w-full">
+                  {t.nav.reservarSendero}
+                </BotonReservar>
+                <SelectorIdioma variante="lista" />
               </motion.div>
             </nav>
           </motion.div>
