@@ -37,7 +37,7 @@ export function Descenso() {
           }}
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <SecuenciaCanvas progreso={scrollYProgress} etiqueta="Recorrido de 360 grados por el páramo de Chingaza que avanza al hacer scroll" />
+        <SecuenciaCanvas progreso={scrollYProgress} etiqueta="Recorrido entre los frailejones del páramo de Chingaza que avanza al hacer scroll" />
 
         {/* Velo de marca para que el texto se lea sobre cualquier foto. */}
         <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgb(19_32_26/0.6)_0%,rgb(19_32_26/0.15)_45%,rgb(19_32_26/0.8)_100%)]" />

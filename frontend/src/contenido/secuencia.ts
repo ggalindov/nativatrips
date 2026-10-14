@@ -48,6 +48,16 @@ export function cuadroCercano(pedido: number, cargados: ArrayLike<unknown>, tota
   return -1;
 }
 
+/**
+ * En pantallas pequeñas o con ahorro de datos se descarga un cuadro de cada
+ * dos: la mitad de peso y el scroll sigue viéndose fluido.
+ */
+export function saltoDeCuadros(): number {
+  const conexion = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  const pequena = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 767px)').matches;
+  return pequena || conexion?.saveData ? 2 : 1;
+}
+
 type Oyente = (cargados: number, total: number) => void;
 
 /** Descarga los cuadros con concurrencia limitada y avisa el avance. Una sola instancia por página. */
@@ -66,7 +76,9 @@ export class CargadorSecuencia {
     const respuesta = await fetch(`${RUTA_SECUENCIA}/manifest.json`);
     if (!respuesta.ok) throw new Error('No hay secuencia de cuadros');
     this.manifiesto = (await respuesta.json()) as Manifiesto;
-    const cola = ordenDeCarga(this.manifiesto.total);
+    const salto = saltoDeCuadros();
+    const ultimo = this.manifiesto.total - 1;
+    const cola = ordenDeCarga(this.manifiesto.total).filter((i) => i % salto === 0 || i === ultimo);
     const trabajador = async () => {
       for (let i = cola.shift(); i !== undefined; i = cola.shift()) await this.cargar(i);
     };
