@@ -9,7 +9,7 @@ import { MiniaturaMedio } from './MiniaturaMedio';
 import { Visor } from './Visor';
 
 /** Segundos que tarda cada foto en cruzar: define la velocidad de la franja. */
-const SEGUNDOS_POR_FOTO = 14;
+const SEGUNDOS_POR_FOTO = 26;
 
 /** Mezcla Fisher-Yates con una semilla fija por visita, para que el orden no cambie en cada render. */
 function mezclar<T>(lista: readonly T[], semilla: number): T[] {
