@@ -6,15 +6,19 @@ import { Link } from 'react-router-dom';
 const EnlaceAnimado = motion.create(Link);
 
 const ciclo = { duration: 0.55, repeat: Infinity, ease: 'easeInOut' as const };
+/** Paso tranquilo de la animación permanente: la mitad de rápido que al pasar el mouse. */
+const paseo = { duration: 1.3, repeat: Infinity, ease: 'easeInOut' as const };
 
-const piernaAdelante: Variants = { reposo: { rotate: 8 }, caminar: { rotate: [22, -18, 22], transition: ciclo } };
-const piernaAtras: Variants = { reposo: { rotate: -8 }, caminar: { rotate: [-18, 22, -18], transition: ciclo } };
+const piernaAdelante: Variants = { reposo: { rotate: 8 }, pasear: { rotate: [16, -12, 16], transition: paseo }, caminar: { rotate: [22, -18, 22], transition: ciclo } };
+const piernaAtras: Variants = { reposo: { rotate: -8 }, pasear: { rotate: [-12, 16, -12], transition: paseo }, caminar: { rotate: [-18, 22, -18], transition: ciclo } };
 const cuerpo: Variants = {
   reposo: { y: [0, -0.6, 0], transition: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } },
+  pasear: { y: [0, -0.8, 0], transition: { duration: 0.65, repeat: Infinity, ease: 'easeInOut' } },
   caminar: { y: [0, -1.2, 0], transition: { duration: 0.275, repeat: Infinity, ease: 'easeInOut' } },
 };
 const ladera: Variants = {
   reposo: { x: 0 },
+  pasear: { x: [0, -6], transition: { duration: 1.3, repeat: Infinity, ease: 'linear' } },
   caminar: { x: [0, -6], transition: { duration: 0.55, repeat: Infinity, ease: 'linear' } },
 };
 
@@ -70,7 +74,7 @@ export function BotonReservar({ to, children, tamano = 'compacto', className = '
     <EnlaceAnimado
       to={to}
       initial="reposo"
-      animate={vivo ? 'caminar' : 'reposo'}
+      animate={vivo ? 'pasear' : 'reposo'}
       whileHover="caminar"
       whileFocus="caminar"
       whileTap={{ scale: 0.97 }}
@@ -84,7 +88,7 @@ export function BotonReservar({ to, children, tamano = 'compacto', className = '
           className="pointer-events-none absolute inset-y-0 w-1/3 -skew-x-12 bg-white/60 blur-md"
           initial={{ left: '-50%' }}
           animate={{ left: ['-50%', '130%', '130%'] }}
-          transition={{ duration: 3.2, times: [0, 0.35, 1], repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 6, times: [0, 0.3, 1], repeat: Infinity, ease: 'easeInOut' }}
         />
       ) : (
         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/3 -skew-x-12 bg-white/50 opacity-0 blur-md transition-all duration-700 group-hover:left-[120%] group-hover:opacity-100" />

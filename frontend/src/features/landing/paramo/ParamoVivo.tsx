@@ -321,7 +321,7 @@ export function ParamoVivo() {
           <motion.div
             aria-hidden="true"
             style={{ opacity: textoOpacidad }}
-            className="pointer-events-none absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-[#dfe9e6]/90 via-[#dfe9e6]/40 to-transparent md:right-auto md:h-[62%] md:w-[62%] md:bg-gradient-to-r md:from-[#dfe9e6]/85 md:via-[#dfe9e6]/45"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-[#dfe9e6]/90 via-[#dfe9e6]/40 to-transparent md:h-full md:bg-[radial-gradient(ellipse_62%_58%_at_24%_26%,rgb(223_233_230/0.8)_0%,rgb(223_233_230/0.45)_45%,rgb(223_233_230/0)_100%)]"
           />
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-bosque/60 to-transparent" />
 
@@ -387,10 +387,10 @@ export function ParamoVivo() {
               transition={{ duration: 0.8, ease: CURVA, delay: 0.5 }}
               className="flex gap-2 sm:hidden"
             >
-              <EnlaceBoton to="/senderos" variante="oscuro" className="h-14 flex-1 px-4 text-sm whitespace-nowrap">
+              <EnlaceBoton to="/senderos" variante="oscuro" className="h-11 flex-1 px-3 text-[13px] whitespace-nowrap">
                 {t.paramo.explorar}
               </EnlaceBoton>
-              <BotonReservar to="/reservar" tamano="amplio" vivo className="flex-1">
+              <BotonReservar to="/reservar" vivo className="flex-1 justify-center text-[13px]">
                 {t.paramo.reservar}
               </BotonReservar>
             </motion.div>
