@@ -16,6 +16,7 @@ import { Boton, EnlaceBoton, FlechaAccion } from '@/ui/Boton';
 import { Contornos } from '@/ui/Contornos';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { Aparecer, Contador, Escalonado, FotoAnimada, itemEscalonado } from '@/ui/movimiento';
+import { ComoLlegar } from './ComoLlegar';
 import { ParamoVivo } from './paramo/ParamoVivo';
 import { VideoPaisajes } from './VideoPaisajes';
 
@@ -259,6 +260,7 @@ export function LandingPage() {
       <GuiaVisita />
       {lista.length > 0 && <ReservaRapida senderos={lista} />}
       <Galeria />
+      <ComoLlegar />
     </>
   );
 }
