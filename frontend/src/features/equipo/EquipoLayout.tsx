@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ETIQUETA_ROL } from '@/domain/equipo';
+import { CargandoPagina } from '@/ui/Estados';
 import { Logo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
 import { NOTIFICACIONES } from './ejemplo';
@@ -215,7 +216,9 @@ export function EquipoLayout() {
           </div>
         </aside>
         <main className="min-w-0 flex-1 px-4 pt-8 pb-16 sm:px-6 md:px-10 lg:px-12 lg:pt-10">
-          <Outlet />
+          <Suspense fallback={<CargandoPagina />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </AvisoProvider>

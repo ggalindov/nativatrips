@@ -1,8 +1,10 @@
+import { Suspense } from 'react';
 import { motion } from 'motion/react';
 import { Link, useLocation, useOutlet } from 'react-router-dom';
-import { Asistente } from '@/features/asistente/Asistente';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { SelectorIdioma } from '@/i18n/SelectorIdioma';
+import { perezosa } from '@/app/perezosa';
+import { CargandoPagina } from '@/ui/Estados';
 import { Logo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
 import { BarraNavegacion } from './BarraNavegacion';
@@ -17,10 +19,13 @@ function Transicion() {
   const salida = useOutlet();
   return (
     <motion.div key={pathname} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: CURVA }}>
-      {salida}
+      <Suspense fallback={<CargandoPagina />}>{salida}</Suspense>
     </motion.div>
   );
 }
+
+/** El asistente no hace falta para ver la página: su código llega después. */
+const Asistente = perezosa(() => import('@/features/asistente/Asistente').then((m) => m.Asistente));
 
 const ENLACE_PIE = 'inline-flex min-h-8 items-center text-white/80 no-underline hover:text-white';
 
@@ -66,7 +71,9 @@ export function SitioLayout() {
         </div>
         <div className="border-t border-bosque-2 py-5 text-center text-xs text-white/50">{t.pie.derechos(new Date().getFullYear())}</div>
       </footer>
-      <Asistente />
+      <Suspense fallback={null}>
+        <Asistente />
+      </Suspense>
     </div>
   );
 }

@@ -10,6 +10,18 @@ export function Cargando({ texto }: { texto?: string }) {
   );
 }
 
+/** Espacio reservado mientras llega el código de una página que aún no se había visitado. */
+export function CargandoPagina() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center px-4">
+      <span aria-hidden="true" className="size-8 animate-spin rounded-full border-2 border-bosque/15 border-t-lima" />
+      <span className="sr-only">
+        <Cargando />
+      </span>
+    </div>
+  );
+}
+
 export function ErrorCarga({ mensaje, reintentar }: { mensaje: string; reintentar?: () => void }) {
   const { t } = useIdioma();
   return (
