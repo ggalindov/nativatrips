@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent } from 'react';
-import { AnimatePresence, MotionConfig, motion, useMotionValueEvent, useScroll, useSpring, useTransform } from 'motion/react';
+import { AnimatePresence, MotionConfig, motion, useInView, useMotionValueEvent, useScroll, useSpring, useTransform } from 'motion/react';
 import type { MotionValue } from 'motion/react';
 import { siguienteDato } from '@/domain/paramo';
 import { useIdioma } from '@/i18n/IdiomaContext';
@@ -126,9 +126,15 @@ export function ParamoVivo() {
   // La cámara se acerca a la laguna; se escribe directo en el atributo
   // `transform` del grupo SVG para no pasar por los estilos CSS.
   const camara = useRef<SVGGElement>(null);
-  useMotionValueEvent(progreso, 'change', (v) => {
-    camara.current?.setAttribute('transform', `translate(840 700) scale(${1 + v * 0.3}) translate(-840 -700)`);
-  });
+  const encuadrar = (v: number) => camara.current?.setAttribute('transform', `translate(840 700) scale(${1 + v * 0.3}) translate(-840 -700)`);
+  useMotionValueEvent(progreso, 'change', encuadrar);
+
+  // Fuera de la pantalla la ilustración se desmonta: sus animaciones en bucle
+  // dejan de ocupar el procesador, algo que se nota en celulares modestos.
+  const activo = useInView(seccion, { margin: '200px 0px' });
+  useEffect(() => {
+    if (activo) encuadrar(progreso.get());
+  }, [activo]);
   const tarde = useTransform(progreso, [0, 1], [0, 0.6]);
   const solY = useTransform(progreso, [0, 1], [0, 170]);
   const vueloCondor = useTransform(progreso, [0, 1], [0, angosta ? 0 : 90]);
@@ -169,154 +175,156 @@ export function ParamoVivo() {
             style={{ opacity: tarde }}
             className="absolute inset-0 bg-[linear-gradient(180deg,#e9b98a_0%,#f2cf9c_40%,#f6dcb0_65%,transparent_85%)]"
           />
-          <svg
-            viewBox={angosta ? '0 -360 1600 1480' : '0 0 1600 900'}
-            preserveAspectRatio="xMidYMax slice"
-            className="absolute inset-0 h-full w-full"
-            role="img"
-            aria-label={t.paramo.ilustracion}
-          >
-            <defs>
-              <linearGradient id="pv-laguna" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#5d93a1" />
-                <stop offset="1" stopColor="#24505e" />
-              </linearGradient>
-              <radialGradient id="pv-sol">
-                <stop offset="0" stopColor="#fffbe8" />
-                <stop offset="0.45" stopColor="#f7e9ad" stopOpacity="0.9" />
-                <stop offset="1" stopColor="#f7e9ad" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <g ref={camara}>
-              <Capa profundidad={4} px={px} py={py} scroll={scrollYProgress}>
-                <motion.circle cx="1240" cy="180" r="150" fill="url(#pv-sol)" style={{ y: solY }} />
-                <Nube y={150} s={1.2} duracion={90} retraso={20} />
-                <Nube y={250} s={0.8} duracion={70} retraso={45} />
-                <motion.g style={{ x: vueloCondor }}>
-                  {/* El cóndor vuela solo por el cielo libre: a la derecha del título en escritorio, sobre las montañas en celular. */}
-                  {angosta ? <Condor x={590} y={335} s={1.6} ancho={250} alto={16} /> : <Condor x={980} y={300} s={1.8} ancho={210} alto={34} />}
-                </motion.g>
-              </Capa>
+          {activo && (
+            <svg
+              viewBox={angosta ? '0 -360 1600 1480' : '0 0 1600 900'}
+              preserveAspectRatio="xMidYMax slice"
+              className="absolute inset-0 h-full w-full"
+              role="img"
+              aria-label={t.paramo.ilustracion}
+            >
+              <defs>
+                <linearGradient id="pv-laguna" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#5d93a1" />
+                  <stop offset="1" stopColor="#24505e" />
+                </linearGradient>
+                <radialGradient id="pv-sol">
+                  <stop offset="0" stopColor="#fffbe8" />
+                  <stop offset="0.45" stopColor="#f7e9ad" stopOpacity="0.9" />
+                  <stop offset="1" stopColor="#f7e9ad" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <g ref={camara}>
+                <Capa profundidad={4} px={px} py={py} scroll={scrollYProgress}>
+                  <motion.circle cx="1240" cy="180" r="150" fill="url(#pv-sol)" style={{ y: solY }} />
+                  <Nube y={150} s={1.2} duracion={90} retraso={20} />
+                  <Nube y={250} s={0.8} duracion={70} retraso={45} />
+                  <motion.g style={{ x: vueloCondor }}>
+                    {/* El cóndor vuela solo por el cielo libre: a la derecha del título en escritorio, sobre las montañas en celular. */}
+                    {angosta ? <Condor x={590} y={335} s={1.6} ancho={250} alto={16} /> : <Condor x={980} y={300} s={1.8} ancho={210} alto={34} />}
+                  </motion.g>
+                </Capa>
 
-              <Capa profundidad={8} px={px} py={py} scroll={scrollYProgress}>
-                <path
-                  d="M-100 520 C 120 430 260 470 420 420 C 600 360 760 450 920 400 C 1100 340 1260 430 1420 390 C 1560 360 1640 400 1700 420 L1700 900 L-100 900 Z"
-                  fill="#a9b9b1"
-                />
-              </Capa>
-
-              <Capa profundidad={14} px={px} py={py} scroll={scrollYProgress}>
-                <path d="M-100 600 C 150 520 300 580 520 530 C 720 490 860 560 1060 520 C 1260 480 1420 550 1700 510 L1700 900 L-100 900 Z" fill="#8ea397" />
-                {/* Sendero con una persona que sube a lo lejos */}
-                <path
-                  d="M1240 640 C 1300 600 1340 590 1370 560 C 1400 530 1440 520 1500 496"
-                  fill="none"
-                  stroke="#e7dcbc"
-                  strokeWidth="4"
-                  strokeDasharray="2 8"
-                  strokeLinecap="round"
-                  opacity="0.8"
-                />
-                <motion.g
-                  animate={{
-                    x: [0, 130, 260],
-                    y: [0, -80, -144],
-                    opacity: [0, 1, 0],
-                  }}
-                  transition={{
-                    duration: 24,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                >
-                  <g transform="translate(1240 640)">
-                    <circle cx="0" cy="-15" r="3" fill="#c89b78" />
-                    <path d="M0 -12 L0 -4" stroke="#dceb6b" strokeWidth="5" strokeLinecap="round" />
-                    <path d="M0 -4 L-2 2 M0 -4 L2 2" stroke="#1e312b" strokeWidth="2.5" strokeLinecap="round" />
-                  </g>
-                </motion.g>
-              </Capa>
-
-              {/* Niebla que cruza a media altura */}
-              <motion.g
-                animate={{ x: [-200, 200, -200] }}
-                transition={{
-                  duration: 30,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                opacity="0.4"
-              >
-                <ellipse cx="400" cy="600" rx="420" ry="30" fill="#ffffff" />
-                <ellipse cx="1250" cy="570" rx="380" ry="24" fill="#ffffff" />
-              </motion.g>
-
-              <Capa profundidad={20} px={px} py={py} scroll={scrollYProgress}>
-                <path d="M-100 660 C 200 600 420 640 640 630 C 900 618 1100 600 1320 620 C 1480 634 1600 620 1700 630 L1700 900 L-100 900 Z" fill="#6f8557" />
-                {[90, 230, 380, 500, 1180, 1300, 1420, 1540].map((x, i) => (
-                  <Frailejon key={x} x={x} y={664 + (i % 3) * 8} s={0.44 + (i % 3) * 0.07} retraso={i * 0.7} />
-                ))}
-                <Venado x={560} y={636} s={1.15} />
-                <OsoAndino x={1000} y={616} />
-                {/* arbustos donde se esconde el oso */}
-                <g>
-                  <ellipse cx="1120" cy="596" rx="84" ry="48" fill="#2f4d36" />
-                  <ellipse cx="1186" cy="606" rx="60" ry="36" fill="#3c6040" />
-                  <ellipse cx="1070" cy="610" rx="50" ry="26" fill="#284530" />
-                  <circle cx="1100" cy="566" r="4" fill="#d9433b" />
-                  <circle cx="1150" cy="578" r="4" fill="#d9433b" />
-                  <circle cx="1196" cy="590" r="3.5" fill="#d9433b" />
-                </g>
-                {/* Laguna */}
-                <ellipse cx="840" cy="700" rx="300" ry="46" fill="#3d5d3f" opacity="0.5" />
-                <ellipse cx="840" cy="694" rx="280" ry="38" fill="url(#pv-laguna)" />
-                {[0, 1, 2].map((i) => (
-                  <motion.path
-                    key={i}
-                    d={`M${700 + i * 90} ${684 + i * 8} h${60 - i * 10}`}
-                    stroke="#e2eef0"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    animate={{ opacity: [0.2, 0.8, 0.2], x: [0, 14, 0] }}
-                    transition={{
-                      duration: 4 + i,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                      delay: i,
-                    }}
-                  />
-                ))}
-                <PatoParamo x={690} y={700} s={1.3} />
-                <Rana x={990} y={748} s={1.1} />
-              </Capa>
-
-              <Capa profundidad={32} px={px} py={py} scroll={scrollYProgress}>
-                <path d="M-100 780 C 200 740 500 770 800 760 C 1100 750 1400 730 1700 760 L1700 1300 L-100 1300 Z" fill="#3d5a3a" />
-                {[120, 300, 460, 1150, 1290, 1460].map((x, i) => (
+                <Capa profundidad={8} px={px} py={py} scroll={scrollYProgress}>
                   <path
-                    key={x}
-                    d={`M${x} 790 C ${x - 8} 770 ${x - 18} 760 ${x - 24} 744 M${x} 790 C ${x - 2} 768 ${x - 2} 756 ${x} 740 M${x} 790 C ${x + 6} 770 ${x + 14} 760 ${x + 22} 748`}
-                    stroke={i % 2 ? '#c0b27a' : '#a99f6b'}
-                    strokeWidth="3"
-                    fill="none"
-                    strokeLinecap="round"
+                    d="M-100 520 C 120 430 260 470 420 420 C 600 360 760 450 920 400 C 1100 340 1260 430 1420 390 C 1560 360 1640 400 1700 420 L1700 900 L-100 900 Z"
+                    fill="#a9b9b1"
                   />
-                ))}
-                <Frailejon x={210} y={800} s={1.25} retraso={0} />
-                <Frailejon x={390} y={820} s={0.85} retraso={1.2} />
-                <Frailejon x={1290} y={800} s={1.15} retraso={0.6} />
-                <Frailejon x={1450} y={820} s={0.9} retraso={1.8} />
-                <Colibri
-                  puntos={[
-                    [170, 572],
-                    [352, 654],
-                    [1252, 582],
-                    [1412, 646],
-                  ]}
-                />
-              </Capa>
-            </g>
-          </svg>
+                </Capa>
+
+                <Capa profundidad={14} px={px} py={py} scroll={scrollYProgress}>
+                  <path d="M-100 600 C 150 520 300 580 520 530 C 720 490 860 560 1060 520 C 1260 480 1420 550 1700 510 L1700 900 L-100 900 Z" fill="#8ea397" />
+                  {/* Sendero con una persona que sube a lo lejos */}
+                  <path
+                    d="M1240 640 C 1300 600 1340 590 1370 560 C 1400 530 1440 520 1500 496"
+                    fill="none"
+                    stroke="#e7dcbc"
+                    strokeWidth="4"
+                    strokeDasharray="2 8"
+                    strokeLinecap="round"
+                    opacity="0.8"
+                  />
+                  <motion.g
+                    animate={{
+                      x: [0, 130, 260],
+                      y: [0, -80, -144],
+                      opacity: [0, 1, 0],
+                    }}
+                    transition={{
+                      duration: 24,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                  >
+                    <g transform="translate(1240 640)">
+                      <circle cx="0" cy="-15" r="3" fill="#c89b78" />
+                      <path d="M0 -12 L0 -4" stroke="#dceb6b" strokeWidth="5" strokeLinecap="round" />
+                      <path d="M0 -4 L-2 2 M0 -4 L2 2" stroke="#1e312b" strokeWidth="2.5" strokeLinecap="round" />
+                    </g>
+                  </motion.g>
+                </Capa>
+
+                {/* Niebla que cruza a media altura */}
+                <motion.g
+                  animate={{ x: [-200, 200, -200] }}
+                  transition={{
+                    duration: 30,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  opacity="0.4"
+                >
+                  <ellipse cx="400" cy="600" rx="420" ry="30" fill="#ffffff" />
+                  <ellipse cx="1250" cy="570" rx="380" ry="24" fill="#ffffff" />
+                </motion.g>
+
+                <Capa profundidad={20} px={px} py={py} scroll={scrollYProgress}>
+                  <path d="M-100 660 C 200 600 420 640 640 630 C 900 618 1100 600 1320 620 C 1480 634 1600 620 1700 630 L1700 900 L-100 900 Z" fill="#6f8557" />
+                  {[90, 230, 380, 500, 1180, 1300, 1420, 1540].map((x, i) => (
+                    <Frailejon key={x} x={x} y={664 + (i % 3) * 8} s={0.44 + (i % 3) * 0.07} retraso={i * 0.7} />
+                  ))}
+                  <Venado x={560} y={636} s={1.15} />
+                  <OsoAndino x={1000} y={616} />
+                  {/* arbustos donde se esconde el oso */}
+                  <g>
+                    <ellipse cx="1120" cy="596" rx="84" ry="48" fill="#2f4d36" />
+                    <ellipse cx="1186" cy="606" rx="60" ry="36" fill="#3c6040" />
+                    <ellipse cx="1070" cy="610" rx="50" ry="26" fill="#284530" />
+                    <circle cx="1100" cy="566" r="4" fill="#d9433b" />
+                    <circle cx="1150" cy="578" r="4" fill="#d9433b" />
+                    <circle cx="1196" cy="590" r="3.5" fill="#d9433b" />
+                  </g>
+                  {/* Laguna */}
+                  <ellipse cx="840" cy="700" rx="300" ry="46" fill="#3d5d3f" opacity="0.5" />
+                  <ellipse cx="840" cy="694" rx="280" ry="38" fill="url(#pv-laguna)" />
+                  {[0, 1, 2].map((i) => (
+                    <motion.path
+                      key={i}
+                      d={`M${700 + i * 90} ${684 + i * 8} h${60 - i * 10}`}
+                      stroke="#e2eef0"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      animate={{ opacity: [0.2, 0.8, 0.2], x: [0, 14, 0] }}
+                      transition={{
+                        duration: 4 + i,
+                        repeat: Infinity,
+                        ease: 'easeInOut',
+                        delay: i,
+                      }}
+                    />
+                  ))}
+                  <PatoParamo x={690} y={700} s={1.3} />
+                  <Rana x={990} y={748} s={1.1} />
+                </Capa>
+
+                <Capa profundidad={32} px={px} py={py} scroll={scrollYProgress}>
+                  <path d="M-100 780 C 200 740 500 770 800 760 C 1100 750 1400 730 1700 760 L1700 1300 L-100 1300 Z" fill="#3d5a3a" />
+                  {[120, 300, 460, 1150, 1290, 1460].map((x, i) => (
+                    <path
+                      key={x}
+                      d={`M${x} 790 C ${x - 8} 770 ${x - 18} 760 ${x - 24} 744 M${x} 790 C ${x - 2} 768 ${x - 2} 756 ${x} 740 M${x} 790 C ${x + 6} 770 ${x + 14} 760 ${x + 22} 748`}
+                      stroke={i % 2 ? '#c0b27a' : '#a99f6b'}
+                      strokeWidth="3"
+                      fill="none"
+                      strokeLinecap="round"
+                    />
+                  ))}
+                  <Frailejon x={210} y={800} s={1.25} retraso={0} />
+                  <Frailejon x={390} y={820} s={0.85} retraso={1.2} />
+                  <Frailejon x={1290} y={800} s={1.15} retraso={0.6} />
+                  <Frailejon x={1450} y={820} s={0.9} retraso={1.8} />
+                  <Colibri
+                    puntos={[
+                      [170, 572],
+                      [352, 654],
+                      [1252, 582],
+                      [1412, 646],
+                    ]}
+                  />
+                </Capa>
+              </g>
+            </svg>
+          )}
 
           <motion.div
             aria-hidden="true"
