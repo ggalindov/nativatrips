@@ -33,4 +33,4 @@ export function renderizarEn({ ruta = '/', sesion = null, servicios = crearServi
 }
 
 export const SESION_GUIA: SesionEquipo = { nombre: 'Marta León', correo: 'guia@ecopalacio.co', rol: 'GUIA_TURISTICO', token: 't' };
-export const SESION_ADMIN: SesionEquipo = { nombre: 'Andrea Ruiz', correo: 'admin@ecopalacio.co', rol: 'PERSONAL_ADMINISTRATIVO', token: 't' };
+export const SESION_ADMIN: SesionEquipo = { nombre: 'Andrea Ruiz', correo: 'admin@ecopalacio.co', rol: 'ADMINISTRADOR', token: 't' };

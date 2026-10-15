@@ -279,3 +279,130 @@ const pesos = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP
 export const formatoPesos = (v: number) => pesos.format(v).replace(/\s/g, ' ');
 const fechas = new Intl.DateTimeFormat('es-CO', { weekday: 'short', day: '2-digit', month: 'short' });
 export const formatoFecha = (iso: string) => fechas.format(new Date(`${iso}T12:00:00`));
+
+/** Interruptor con explicación, para estados como "publicado" o "cuenta activa". */
+export function Interruptor({ titulo, nota, activo, onCambio }: { titulo: string; nota?: string; activo: boolean; onCambio: (v: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl bg-superficie p-4">
+      <span className="flex flex-col">
+        <span className="font-semibold">{titulo}</span>
+        {nota && <span className="text-sm text-tinta-suave">{nota}</span>}
+      </span>
+      <input type="checkbox" role="switch" checked={activo} onChange={(e) => onCambio(e.target.checked)} className="peer sr-only" />
+      <span
+        aria-hidden="true"
+        className="relative h-7 w-12 flex-none rounded-full bg-bosque/20 transition-colors peer-checked:bg-bosque peer-focus-visible:ring-2 peer-focus-visible:ring-lima after:absolute after:top-1 after:left-1 after:size-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-5"
+      />
+    </label>
+  );
+}
+
+/** Texto de varias líneas con el mismo estilo de los formularios del equipo. */
+export function AreaTexto({ etiqueta, valor, onCambio, filas = 4, ayuda }: { etiqueta: string; valor: string; onCambio: (v: string) => void; filas?: number; ayuda?: string }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="etiqueta text-tinta-suave">{etiqueta}</span>
+      <textarea
+        value={valor}
+        onChange={(e) => onCambio(e.target.value)}
+        rows={filas}
+        className="rounded-2xl border border-bosque/15 bg-superficie p-4 text-[15px] leading-relaxed focus:border-bosque focus:outline-none"
+      />
+      {ayuda && <span className="text-sm text-tinta-suave">{ayuda}</span>}
+    </label>
+  );
+}
+
+/** Zona para soltar o elegir fotos y videos desde el equipo. */
+export function ZonaArchivos({
+  etiqueta,
+  ayuda,
+  onArchivos,
+  multiple = true,
+  acepta = 'image/*,video/*',
+  compacta = false,
+}: {
+  etiqueta: string;
+  ayuda?: string;
+  onArchivos: (archivos: File[]) => void;
+  multiple?: boolean;
+  acepta?: string;
+  compacta?: boolean;
+}) {
+  const [encima, setEncima] = useState(false);
+  const entrada = useRef<HTMLInputElement>(null);
+  const recibir = (lista: FileList | null) => {
+    const archivos = Array.from(lista ?? []).filter((f) => acepta.split(',').some((t) => (t.endsWith('/*') ? f.type.startsWith(t.slice(0, -1)) : f.type === t)));
+    if (archivos.length) onArchivos(multiple ? archivos : archivos.slice(0, 1));
+  };
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setEncima(true);
+      }}
+      onDragLeave={() => setEncima(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setEncima(false);
+        recibir(e.dataTransfer.files);
+      }}
+      className={`flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed text-center transition-colors ${compacta ? 'p-5' : 'p-8 sm:p-10'} ${
+        encima ? 'border-bosque bg-lima/30' : 'border-bosque/20 bg-superficie'
+      }`}
+    >
+      <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-full bg-bosque text-lima">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+        </svg>
+      </span>
+      <span className="flex flex-col gap-1">
+        <span className="font-display text-lg font-bold">Arrastra aquí o</span>
+        {ayuda && <span className="text-sm text-tinta-suave">{ayuda}</span>}
+      </span>
+      <button
+        type="button"
+        onClick={() => entrada.current?.click()}
+        className="h-11 rounded-full bg-bosque px-5 text-sm font-semibold text-white transition-colors hover:bg-pino"
+      >
+        {etiqueta}
+      </button>
+      <input
+        ref={entrada}
+        type="file"
+        accept={acepta}
+        multiple={multiple}
+        aria-label={etiqueta}
+        onChange={(e) => {
+          recibir(e.target.files);
+          e.target.value = '';
+        }}
+        className="sr-only"
+      />
+    </div>
+  );
+}
+
+/** Botón de borrado que pide una segunda confirmación en el mismo lugar. */
+export function BorrarConConfirmacion({ texto, confirmacion, onBorrar }: { texto: string; confirmacion: string; onBorrar: () => void }) {
+  const [preguntando, setPreguntando] = useState(false);
+  if (!preguntando)
+    return (
+      <button type="button" onClick={() => setPreguntando(true)} className="min-h-11 self-start bg-transparent px-1 text-sm font-semibold text-error underline">
+        {texto}
+      </button>
+    );
+  return (
+    <div role="group" aria-label={confirmacion} className="flex flex-col gap-3 rounded-2xl border border-error/30 bg-error/5 p-4">
+      <span className="text-sm text-error">{confirmacion}</span>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={onBorrar} className="h-10 rounded-full bg-error px-4 text-sm font-semibold text-white">
+          Sí, eliminar
+        </button>
+        <button type="button" onClick={() => setPreguntando(false)} className="h-10 rounded-full bg-superficie px-4 text-sm font-semibold">
+          No, conservar
+        </button>
+      </div>
+    </div>
+  );
+}

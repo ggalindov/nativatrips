@@ -42,11 +42,10 @@ La interfaz solo conoce los puertos de `services/puertos.ts`. La fuente de datos
 | `/reservar/:sendero` | Público | Reserva sin cuenta, con cupos por día |
 | `/mi-reserva` y `/mi-reserva/:token` | Turista | Pedir el enlace mágico y gestionar la reserva (ADR-004) |
 | `/equipo/acceso` | Personal | Inicio de sesión |
-| `/equipo/administrativo` | Personal administrativo | Revisión de reservas, salidas del día, aforo |
+| `/equipo/admin` | Administrador | Operación, contenido del sitio, indicadores y usuarios |
 | `/equipo/guia` | Guía | Lista del grupo y asistencia, pensado para el celular |
-| `/equipo/gerencia` | Gerencia | Ocupación, senderos más reservados y alertas |
 
-Con datos en memoria, las cuentas de prueba son `admin@`, `guia@` y `gerencia@ecopalacio.co`, con la contraseña `paramo2026`.
+Con datos en memoria, las cuentas de prueba son `admin@` y `guia@ecopalacio.co`, con la contraseña `paramo2026`.
 
 ## Desarrollo
 
@@ -111,9 +110,10 @@ Solo interfaz, con datos de ejemplo (`src/features/equipo/ejemplo.ts`); falta co
 
 | Rol | Pantallas |
 | --- | --- |
-| Personal administrativo | Hoy · Reservas (filtros, detalle con visitantes, pagos e historial) · Salidas y guías · Capacidad por temporada y alertas al 80 % · Catálogo de senderos · Conversaciones derivadas del chat · Reporte ambiental (PDF/CSV) · Reglas de recomendación |
+| Administrador | **Operación:** Hoy · Reservas (filtros, detalle, edición de fecha, recorrido, personas y titular) · Salidas y guías · Capacidad por temporada · Conversaciones derivadas del chat. **Contenido:** Recorridos (crear, editar todo —ficha técnica, días y horarios, cupo, idiomas, qué incluye, tarifas nacional/extranjeros/niños, portada y galería—, duplicar, dar de baja, eliminar) · Biblioteca (subir fotos y videos, describirlos, ocultar, destacar en portada, eliminar) · Reglas de recomendación. **Indicadores:** Resumen del mes (ingresos, conversión, NPS, procedencia) · Reporte ambiental (PDF/CSV). **Accesos:** Usuarios (crear, editar, cambiar rol, desactivar, eliminar, restablecer clave) |
 | Guía (celular) | Lista del grupo con país, visitas y requerimientos especiales · Novedades · Cierre del tour con encuesta · Agenda de 7 días |
-| Gerencia | Tablero con ingresos, conversión, NPS, ocupación y procedencia · Reporte ambiental · Capacidad · Cuentas del equipo |
+
+Administración y gerencia son un solo rol, **Administrador**. Mientras el backend conserve `PERSONAL_ADMINISTRATIVO` y `GERENCIA`, el frontend trata a ambos como administrador (`rolDesdeServidor` en `src/domain/equipo.ts`), y las direcciones antiguas `/equipo/administrativo/*` y `/equipo/gerencia/*` llevan a `/equipo/admin`. Las subidas de la biblioteca y de las fotos de los recorridos solo muestran la vista previa local: falta el servicio de almacenamiento.
 
 Todos los roles pueden recuperar la contraseña desde el acceso.
 

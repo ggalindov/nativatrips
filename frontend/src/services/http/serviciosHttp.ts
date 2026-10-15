@@ -1,5 +1,5 @@
 import type { Dificultad, Sendero } from '@/domain/sendero';
-import { esRolEquipo } from '@/domain/equipo';
+import { rolDesdeServidor } from '@/domain/equipo';
 import { sumarDias } from '@/domain/fechas';
 import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
@@ -114,8 +114,9 @@ export function crearServiciosHttp(baseUrl: string): Servicios {
           method: 'POST',
           body: JSON.stringify({ email: correo, password: clave }),
         });
-        if (!esRolEquipo(r.usuario.rol)) throw new ErrorServicio('Esta cuenta no pertenece al equipo.', 'cuentaNoEquipo');
-        return { nombre: r.usuario.nombreCompleto, correo: r.usuario.email, rol: r.usuario.rol, token: r.accessToken };
+        const rol = rolDesdeServidor(r.usuario.rol);
+        if (!rol) throw new ErrorServicio('Esta cuenta no pertenece al equipo.', 'cuentaNoEquipo');
+        return { nombre: r.usuario.nombreCompleto, correo: r.usuario.email, rol, token: r.accessToken };
       },
     },
   };

@@ -19,7 +19,7 @@ function Titulo({ id, children, nota }: { id: string; children: string; nota?: s
   );
 }
 
-export function PanelAdministrativo() {
+export function HoyAdmin() {
   const mensajeDeError = useMensajeError();
   const { operacion } = useServicios();
   const hoy = useMemo(() => hoyIso(), []);

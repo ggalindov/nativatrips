@@ -100,9 +100,8 @@ export const SENDEROS: readonly Sendero[] = [
 
 /** Cuentas del equipo disponibles solo con la fuente de datos en memoria. */
 export const CUENTAS_DEMO = [
-  { correo: 'admin@ecopalacio.co', nombre: 'Andrea Ruiz', rol: 'PERSONAL_ADMINISTRATIVO' },
+  { correo: 'admin@ecopalacio.co', nombre: 'Andrea Ruiz', rol: 'ADMINISTRADOR' },
   { correo: 'guia@ecopalacio.co', nombre: 'Marta León', rol: 'GUIA_TURISTICO' },
-  { correo: 'gerencia@ecopalacio.co', nombre: 'Carlos Palacio', rol: 'GERENCIA' },
 ] as const;
 
 export const CLAVE_DEMO = 'paramo2026';
