@@ -70,7 +70,7 @@ export function AccesoPage() {
               Ingresar
             </h1>
             <p className="m-0 text-[15px] leading-relaxed text-tinta">
-              Solo para personal administrativo, guías y gerencia. Las cuentas las crea gerencia.
+              Solo para administradores y guías. Las cuentas las crea un administrador.
             </p>
           </div>
           <Campo etiqueta="Correo de trabajo" type="email" autoComplete="username" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
@@ -106,7 +106,7 @@ export function AccesoPage() {
           {FUENTE_MEMORIA && (
             <div className="flex flex-col gap-1.5 border-t linea pt-5 text-sm text-tinta">
               <span className="etiqueta text-[11px] text-tinta-suave">Cuentas de prueba (datos en memoria)</span>
-              <span className="font-mono">admin@ · guia@ · gerencia@ecopalacio.co</span>
+              <span className="font-mono">admin@ · guia@ecopalacio.co</span>
               <span className="font-mono">Contraseña: paramo2026</span>
             </div>
           )}

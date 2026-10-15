@@ -4,19 +4,82 @@ import { esExtranjero } from '@/domain/paises';
 import type { EstadoReserva } from '@/domain/reserva';
 import { extranjerosEn } from '@/domain/reserva';
 import { es } from '@/i18n/diccionarios/es';
+import { SENDEROS } from '@/services/memoria/datos';
 import { Boton } from '@/ui/Boton';
+import { Campo } from '@/ui/Campo';
+import { Selector } from '@/ui/Selector';
 import { GUIAS, RESERVAS, nombreSendero } from '../ejemplo';
 import type { ReservaEjemplo } from '../ejemplo';
-import { Busqueda, CabeceraPanel, Cajon, Datos, Insignia, InsigniaEstado, Pais, Pestanas, formatoFecha, formatoPesos, useAviso } from '../ui';
+import { AreaTexto, Busqueda, CabeceraPanel, Cajon, Datos, Insignia, InsigniaEstado, Pais, Pestanas, formatoFecha, formatoPesos, useAviso } from '../ui';
 
 type Filtro = 'todas' | EstadoReserva;
 type Procedencia = 'todas' | 'nacionales' | 'extranjeros';
 
 const ORDEN_ESTADOS: EstadoReserva[] = ['EN_REVISION', 'PENDIENTE_PAGO', 'CONFIRMADA', 'COMPLETADA', 'CANCELADA', 'EXPIRADA'];
 
+/** Corrección de los datos de una reserva por parte del administrador. */
+function EditarReserva({
+  reserva,
+  onGuardar,
+  onCancelar,
+}: {
+  reserva: ReservaEjemplo;
+  onGuardar: (cambios: Partial<ReservaEjemplo>) => void;
+  onCancelar: () => void;
+}) {
+  const [b, setB] = useState(reserva);
+  const titular = (campo: 'nombre' | 'correo' | 'celular', valor: string) => setB({ ...b, titular: { ...b.titular, [campo]: valor } });
+  return (
+    <form
+      aria-label="Editar datos de la reserva"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onGuardar({ senderoId: b.senderoId, fecha: b.fecha, hora: b.hora, personas: b.personas, titular: b.titular, nota: b.nota?.trim() || undefined });
+      }}
+      className="flex flex-col gap-5 rounded-3xl bg-superficie p-5"
+    >
+      <h3 className="m-0 font-display text-lg font-bold">Editar datos</h3>
+      <Selector
+        etiqueta="Recorrido"
+        value={b.senderoId}
+        onChange={(e) => setB({ ...b, senderoId: e.target.value })}
+        opciones={SENDEROS.map((x) => ({ valor: x.id, texto: x.nombre }))}
+      />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <Campo className="col-span-2 sm:col-span-1" etiqueta="Fecha" type="date" value={b.fecha} onChange={(e) => setB({ ...b, fecha: e.target.value })} />
+        <Campo etiqueta="Hora" type="time" value={b.hora} onChange={(e) => setB({ ...b, hora: e.target.value })} />
+        <Campo
+          etiqueta="Personas"
+          type="number"
+          min={1}
+          max={30}
+          value={b.personas}
+          onChange={(e) => setB({ ...b, personas: Math.max(1, Number(e.target.value)) })}
+        />
+      </div>
+      <Campo etiqueta="Nombre del titular" value={b.titular.nombre} onChange={(e) => titular('nombre', e.target.value)} />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2">
+        <Campo etiqueta="Correo" type="email" value={b.titular.correo} onChange={(e) => titular('correo', e.target.value)} />
+        <Campo etiqueta="Celular" type="tel" value={b.titular.celular} onChange={(e) => titular('celular', e.target.value)} />
+      </div>
+      <AreaTexto etiqueta="Nota interna" valor={b.nota ?? ''} onCambio={(v) => setB({ ...b, nota: v })} filas={2} ayuda="Solo la ve el equipo" />
+      <p className="m-0 text-sm text-tinta-suave">El titular recibe un correo con los datos actualizados.</p>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Boton variante="secundario" className="h-11 px-5 text-sm" onClick={onCancelar}>
+          Descartar
+        </Boton>
+        <Boton type="submit" className="h-11 px-5 text-sm">
+          Guardar datos
+        </Boton>
+      </div>
+    </form>
+  );
+}
+
 function DetalleReserva({ reserva, onCerrar, onCambio }: { reserva: ReservaEjemplo | null; onCerrar: () => void; onCambio: (r: ReservaEjemplo) => void }) {
   const { avisar } = useAviso();
   const [confirmarCancelar, setConfirmarCancelar] = useState(false);
+  const [editando, setEditando] = useState(false);
   const r = reserva;
   const visitantes = r ? [{ ...r.titular, titular: true }, ...r.acompanantes.map((a) => ({ ...a, titular: false }))] : [];
   const actualizar = (cambios: Partial<ReservaEjemplo>, aviso: string) => {
@@ -30,6 +93,7 @@ function DetalleReserva({ reserva, onCerrar, onCambio }: { reserva: ReservaEjemp
       abierto={r !== null}
       onCerrar={() => {
         setConfirmarCancelar(false);
+        setEditando(false);
         onCerrar();
       }}
       titulo={r ? `${r.codigo} · ${nombreSendero(r.senderoId)}` : ''}
@@ -49,7 +113,11 @@ function DetalleReserva({ reserva, onCerrar, onCambio }: { reserva: ReservaEjemp
             )}
             {(r.estado === 'CONFIRMADA' || r.estado === 'PENDIENTE_PAGO') &&
               (confirmarCancelar ? (
-                <Boton variante="peligro" className="h-11 px-5 text-sm" onClick={() => actualizar({ estado: 'CANCELADA' }, `Reserva ${r.codigo} cancelada · cupos liberados`)}>
+                <Boton
+                  variante="peligro"
+                  className="h-11 px-5 text-sm"
+                  onClick={() => actualizar({ estado: 'CANCELADA' }, `Reserva ${r.codigo} cancelada · cupos liberados`)}
+                >
                   Sí, cancelar y liberar cupos
                 </Boton>
               ) : (
@@ -68,23 +136,44 @@ function DetalleReserva({ reserva, onCerrar, onCambio }: { reserva: ReservaEjemp
         <div className="flex flex-col gap-8">
           <div className="flex flex-wrap items-center gap-2">
             <InsigniaEstado estado={r.estado} />
-            {extranjerosEn(r) > 0 && <Insignia tono="alerta">{extranjerosEn(r)} extranjero{extranjerosEn(r) === 1 ? '' : 's'} · tarifa diferenciada</Insignia>}
+            {extranjerosEn(r) > 0 && (
+              <Insignia tono="alerta">
+                {extranjerosEn(r)} extranjero{extranjerosEn(r) === 1 ? '' : 's'} · tarifa diferenciada
+              </Insignia>
+            )}
             {r.nota && <Insignia tono="info">{r.nota}</Insignia>}
           </div>
 
-          <section className="flex flex-col gap-4">
-            <h3 className="m-0 font-display text-lg font-bold">Titular</h3>
-            <Datos
-              filas={[
-                ['Nombre', r.titular.nombre],
-                ['Documento', `${es.persona.documentosCortos[r.titular.tipoDocumento]} ${r.titular.documento}`],
-                ['Correo', r.titular.correo],
-                ['Celular', r.titular.celular],
-                ['Total', formatoPesos(r.total)],
-                ['Creada', r.creada],
-              ]}
+          {editando ? (
+            <EditarReserva
+              key={r.codigo}
+              reserva={r}
+              onCancelar={() => setEditando(false)}
+              onGuardar={(cambios) => {
+                actualizar(cambios, `Datos de ${r.codigo} actualizados`);
+                setEditando(false);
+              }}
             />
-          </section>
+          ) : (
+            <section className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="m-0 font-display text-lg font-bold">Titular</h3>
+                <button type="button" onClick={() => setEditando(true)} className="min-h-11 bg-transparent px-1 text-sm font-semibold text-pino underline">
+                  Editar datos
+                </button>
+              </div>
+              <Datos
+                filas={[
+                  ['Nombre', r.titular.nombre],
+                  ['Documento', `${es.persona.documentosCortos[r.titular.tipoDocumento]} ${r.titular.documento}`],
+                  ['Correo', r.titular.correo],
+                  ['Celular', r.titular.celular],
+                  ['Total', formatoPesos(r.total)],
+                  ['Creada', r.creada],
+                ]}
+              />
+            </section>
+          )}
 
           <section className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between gap-3">
@@ -121,7 +210,12 @@ function DetalleReserva({ reserva, onCerrar, onCambio }: { reserva: ReservaEjemp
             <select
               aria-label="Guía asignado"
               value={r.guiaId ?? ''}
-              onChange={(e) => actualizar({ guiaId: e.target.value || null }, e.target.value ? `Guía asignado: ${GUIAS.find((g) => g.id === e.target.value)?.nombre}` : 'Guía sin asignar')}
+              onChange={(e) =>
+                actualizar(
+                  { guiaId: e.target.value || null },
+                  e.target.value ? `Guía asignado: ${GUIAS.find((g) => g.id === e.target.value)?.nombre}` : 'Guía sin asignar',
+                )
+              }
               className="h-12 w-full rounded-2xl border border-bosque/15 bg-superficie px-4 text-[15px] focus:border-bosque focus:outline-none"
             >
               <option value="">Sin asignar</option>
@@ -145,7 +239,9 @@ function DetalleReserva({ reserva, onCerrar, onCambio }: { reserva: ReservaEjemp
                       <span className="font-semibold">
                         {pago.medio} · {formatoPesos(pago.valor)}
                       </span>
-                      <span className="text-xs text-tinta-suave">{pago.fecha} · intento {i + 1} de 2</span>
+                      <span className="text-xs text-tinta-suave">
+                        {pago.fecha} · intento {i + 1} de 2
+                      </span>
                     </span>
                     <Insignia tono={pago.estado === 'Aprobado' ? 'exito' : pago.estado === 'Rechazado' ? 'peligro' : 'alerta'}>{pago.estado}</Insignia>
                   </li>
@@ -219,16 +315,29 @@ export function ReservasAdmin() {
           etiqueta="Estado"
           valor={filtro}
           onCambio={setFiltro}
-          opciones={[{ valor: 'todas' as Filtro, texto: 'Todas', cuenta: reservas.length }, ...ORDEN_ESTADOS.map((e) => ({ valor: e as Filtro, texto: es.estados[e], cuenta: cuenta(e) }))]}
+          opciones={[
+            { valor: 'todas' as Filtro, texto: 'Todas', cuenta: reservas.length },
+            ...ORDEN_ESTADOS.map((e) => ({ valor: e as Filtro, texto: es.estados[e], cuenta: cuenta(e) })),
+          ]}
         />
         <div className="flex flex-wrap items-center gap-2">
           <Busqueda valor={texto} onCambio={setTexto} etiqueta="Buscar reserva" placeholder="Código, titular, correo o documento" />
-          <select aria-label="Procedencia" value={procedencia} onChange={(e) => setProcedencia(e.target.value as Procedencia)} className="h-11 rounded-full border border-bosque/15 bg-superficie px-4 text-sm font-semibold focus:border-bosque focus:outline-none">
+          <select
+            aria-label="Procedencia"
+            value={procedencia}
+            onChange={(e) => setProcedencia(e.target.value as Procedencia)}
+            className="h-11 rounded-full border border-bosque/15 bg-superficie px-4 text-sm font-semibold focus:border-bosque focus:outline-none"
+          >
             <option value="todas">Todas las procedencias</option>
             <option value="nacionales">Solo nacionales</option>
             <option value="extranjeros">Con extranjeros</option>
           </select>
-          <select aria-label="Sendero" value={sendero} onChange={(e) => setSendero(e.target.value)} className="h-11 max-w-full rounded-full border border-bosque/15 bg-superficie px-4 text-sm font-semibold focus:border-bosque focus:outline-none">
+          <select
+            aria-label="Sendero"
+            value={sendero}
+            onChange={(e) => setSendero(e.target.value)}
+            className="h-11 max-w-full rounded-full border border-bosque/15 bg-superficie px-4 text-sm font-semibold focus:border-bosque focus:outline-none"
+          >
             <option value="">Todos los senderos</option>
             {senderosConReservas.map((id) => (
               <option key={id} value={id}>
@@ -263,7 +372,9 @@ export function ReservasAdmin() {
                   <Pais codigo={r.titular.nacionalidad} />
                   <span className="truncate font-semibold">{r.titular.nombre}</span>
                 </span>
-                <span className="truncate text-[15px] max-lg:order-4 max-lg:col-span-2 max-lg:text-sm max-lg:text-tinta-suave">{nombreSendero(r.senderoId)}</span>
+                <span className="truncate text-[15px] max-lg:order-4 max-lg:col-span-2 max-lg:text-sm max-lg:text-tinta-suave">
+                  {nombreSendero(r.senderoId)}
+                </span>
                 <span className="font-mono text-sm max-lg:hidden">{formatoFecha(r.fecha)}</span>
                 <span className="font-mono text-sm max-lg:hidden">{r.personas}</span>
                 <span className="max-lg:order-2 max-lg:row-start-1 max-lg:justify-self-end">
@@ -275,7 +386,11 @@ export function ReservasAdmin() {
         </ul>
       </section>
 
-      <DetalleReserva reserva={seleccionada} onCerrar={() => setAbierta(null)} onCambio={(nueva) => setReservas((rs) => rs.map((x) => (x.codigo === nueva.codigo ? nueva : x)))} />
+      <DetalleReserva
+        reserva={seleccionada}
+        onCerrar={() => setAbierta(null)}
+        onCambio={(nueva) => setReservas((rs) => rs.map((x) => (x.codigo === nueva.codigo ? nueva : x)))}
+      />
     </div>
   );
 }
