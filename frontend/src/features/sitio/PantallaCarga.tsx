@@ -1,11 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import {
+  OFRECER_ENTRAR_MS,
+  avisoDeCarga,
+  cerrarCarga,
+  estadoCarga,
+  registrarCarga,
+  siguienteAvance,
+  suscribirCarga,
+  techoDeAvance,
+} from '@/app/carga';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { Simbolo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
 
-const DURACION_MINIMA_MS = 2200;
-const ESPERA_MAXIMA_MS = 8000;
 const CLAVE_SESION = 'nativatrips.carga-vista';
 
 /** Puntos del sendero en zigzag, de la base a la cima (coordenadas del SVG). */
@@ -44,9 +52,18 @@ function Excursionista({ x, y, reducido }: { x: number; y: number; reducido: boo
   );
 }
 
+/** Se resuelve cuando el documento y los recursos que pidió de entrada terminaron de cargar. */
+function documentoCargado(): Promise<void> {
+  if (document.readyState === 'complete') return Promise.resolve();
+  return new Promise((resolver) => window.addEventListener('load', () => resolver(), { once: true }));
+}
+
 /**
- * Pantalla de carga de la primera visita: una persona sube por el sendero
- * hasta la cima mientras se preparan las fuentes y la portada.
+ * Pantalla de carga de la primera visita: una persona sube por el sendero a
+ * medida que llegan las fuentes, el documento con sus imágenes y el código de
+ * la página abierta, y planta la bandera en la cima cuando todo está listo.
+ * Si la carga se demora, avisa que la conexión está lenta y, más adelante,
+ * ofrece entrar sin esperar.
  */
 export function PantallaCarga() {
   const reducido = useReducedMotion() ?? false;
@@ -58,44 +75,70 @@ export function PantallaCarga() {
       return true;
     }
   });
-  const [fuentesListas, setFuentesListas] = useState(false);
+  const [avance, setAvance] = useState(0);
   const [tiempo, setTiempo] = useState(0);
+  const [completa, setCompleta] = useState(false);
+  const [enLinea, setEnLinea] = useState(() => navigator.onLine !== false);
+  const estado = useRef(estadoCarga());
 
   useEffect(() => {
-    if (!visible) return;
-    let vigente = true;
-    void document.fonts?.ready.then(() => vigente && setFuentesListas(true));
-    const inicio = performance.now();
+    if (!visible) {
+      cerrarCarga();
+      return;
+    }
+    registrarCarga(document.fonts?.ready ?? Promise.resolve());
+    registrarCarga(documentoCargado());
+    const actualizar = () => {
+      estado.current = estadoCarga();
+      setCompleta(estado.current.completa);
+    };
+    actualizar();
+    const quitarSuscripcion = suscribirCarga(actualizar);
+
+    const conectado = () => setEnLinea(true);
+    const desconectado = () => setEnLinea(false);
+    window.addEventListener('online', conectado);
+    window.addEventListener('offline', desconectado);
+
+    // El tiempo se cuenta desde que se abrió la página, no desde que llegó este código:
+    // en una conexión lenta la espera empezó con la pantalla de carga de index.html.
     let cuadro = 0;
     const tic = () => {
-      setTiempo(performance.now() - inicio);
+      const transcurrido = performance.now();
+      const { total, hechas, completa: lista } = estado.current;
+      const techo = techoDeAvance(total === 0 ? 1 : hechas / total, lista, transcurrido);
+      setAvance((actual) => siguienteAvance(actual, techo, transcurrido));
+      setTiempo(transcurrido);
       cuadro = requestAnimationFrame(tic);
     };
     cuadro = requestAnimationFrame(tic);
     document.documentElement.style.overflow = 'hidden';
     return () => {
-      vigente = false;
+      quitarSuscripcion();
+      window.removeEventListener('online', conectado);
+      window.removeEventListener('offline', desconectado);
       cancelAnimationFrame(cuadro);
       document.documentElement.style.overflow = '';
     };
   }, [visible]);
 
-  // Avanza con el tiempo mínimo y no termina hasta que las fuentes estén listas.
-  const avanceTiempo = Math.min(1, tiempo / DURACION_MINIMA_MS);
-  const avance = tiempo >= ESPERA_MAXIMA_MS ? 1 : fuentesListas ? avanceTiempo : Math.min(0.92, avanceTiempo);
   const listo = avance >= 1;
+  const aviso = avisoDeCarga(tiempo, completa, enLinea);
+
+  const cerrar = () => {
+    cerrarCarga();
+    setVisible(false);
+    try {
+      sessionStorage.setItem(CLAVE_SESION, '1');
+    } catch {
+      /* sin almacenamiento: se mostrará en la próxima visita */
+    }
+  };
 
   useEffect(() => {
     if (!listo || !visible) return;
-    const t = setTimeout(() => {
-      setVisible(false);
-      try {
-        sessionStorage.setItem(CLAVE_SESION, '1');
-      } catch {
-        /* sin almacenamiento: se mostrará en la próxima visita */
-      }
-    }, 650);
-    return () => clearTimeout(t);
+    const espera = setTimeout(cerrar, 650);
+    return () => clearTimeout(espera);
   }, [listo, visible]);
 
   const [hx, hy] = puntoEnSendero(avance);
@@ -150,6 +193,27 @@ export function PantallaCarga() {
             </div>
             <span className="etiqueta text-white/60">{listo ? t.carga.cima : t.carga.subiendo}</span>
             <span className="font-cifras text-sm font-black text-lima-suave tabular-nums">{Math.round(avance * 100)}%</span>
+          </div>
+          <div className="flex min-h-24 max-w-sm flex-col items-center gap-4 px-6 text-center">
+            <AnimatePresence>
+              {aviso !== 'ninguno' && (
+                <motion.p
+                  key={aviso}
+                  role="status"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="m-0 text-sm leading-relaxed text-white/80"
+                >
+                  {aviso === 'lento' ? t.carga.lenta : t.carga.sinConexion}
+                </motion.p>
+              )}
+            </AnimatePresence>
+            {!listo && tiempo >= OFRECER_ENTRAR_MS && (
+              <button type="button" onClick={cerrar} className="rounded-full border border-white/30 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white hover:text-bosque">
+                {t.carga.entrar}
+              </button>
+            )}
           </div>
         </motion.div>
       )}

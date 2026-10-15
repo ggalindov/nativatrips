@@ -7,9 +7,151 @@
     <meta name="theme-color" content="#17201B" />
     <title>NativaTrips — Senderos del páramo de Chingaza</title>
     <meta name="description" content="Reserva senderos ecoturísticos en el PNN Chingaza con cupos limitados por capacidad de carga. Sin crear cuenta." />
+    <!--
+      Pantalla de carga mientras llega el código del sitio. Es la misma escena
+      con la que arranca la pantalla de carga de React (src/features/sitio/PantallaCarga.tsx),
+      que la reemplaza al montarse; en conexiones lentas es lo primero que se ve.
+    -->
+    <style>
+      #carga-inicial {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        background: #13201a;
+        color: #fff;
+        font-family: system-ui, sans-serif;
+      }
+      #carga-inicial svg.escena {
+        width: min(70vw, 320px);
+      }
+      #carga-inicial .marca {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      #carga-inicial .nombre {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.5rem;
+        letter-spacing: -0.025em;
+      }
+      #carga-inicial .etiqueta {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgb(255 255 255 / 0.6);
+      }
+      #carga-inicial .cifra {
+        font-size: 0.875rem;
+        font-weight: 900;
+        color: #ddeb8a;
+      }
+      #carga-inicial .aviso {
+        min-height: 6rem;
+        max-width: 24rem;
+        padding: 0 1.5rem;
+        margin: 0;
+        text-align: center;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        color: rgb(255 255 255 / 0.8);
+      }
+      #carga-inicial .paso {
+        animation: paso 0.45s ease-in-out infinite;
+      }
+      @keyframes paso {
+        50% {
+          transform: translateY(-1.6px);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #carga-inicial .paso {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="carga-inicial" role="progressbar" aria-label="Cargando NativaTrips" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <svg class="escena" viewBox="0 0 220 220" aria-hidden="true">
+          <defs>
+            <linearGradient id="carga-inicial-monte" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2e4036" />
+              <stop offset="1" stop-color="#1e312b" />
+            </linearGradient>
+          </defs>
+          <circle cx="172" cy="44" r="12" fill="#dceb6b" opacity="0.9" />
+          <path d="M0 210 L62 120 L84 146 L160 52 L220 210 Z" fill="url(#carga-inicial-monte)" />
+          <path d="M146 70 L160 52 L174 70 L166 66 L160 74 L153 66 Z" fill="#f5f1e7" opacity="0.85" />
+          <polyline points="40,196 96,178 70,158 128,140 106,126 150,100 136,90 160,62" fill="none" stroke="#a9b7a6" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round" />
+          <g transform="translate(40 196)">
+            <g class="paso">
+              <circle cx="0" cy="-17" r="3.2" fill="#f5f1e7" />
+              <rect x="-4.6" y="-13" width="5" height="7" rx="1.6" fill="#dceb6b" />
+              <path d="M0 -13 L0.6 -4" stroke="#f5f1e7" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M0.6 -4 L-2.4 1 M0.6 -4 L3 1" stroke="#f5f1e7" stroke-width="2.2" stroke-linecap="round" />
+              <path d="M1 -10 L6 -6 L7.5 1" stroke="#f5f1e7" stroke-width="1.4" stroke-linecap="round" fill="none" />
+            </g>
+          </g>
+        </svg>
+        <div class="marca">
+          <div class="nombre">
+            <svg width="34" height="34" viewBox="0 0 48 48" aria-hidden="true">
+              <rect width="48" height="48" rx="15" fill="#dceb6b" />
+              <path d="M5 38 L17.5 17 L24 27 L31 13 L43 38 Z" fill="#13201a" />
+              <path d="M27.4 20.2 L31 13 L34.6 20.2 L32.4 19 L31 21 L29.4 19 Z" fill="#f5f1e7" />
+            </svg>
+            <span><b style="font-weight: 800">Nativa</b><span style="font-weight: 300; color: #dceb6b">Trips</span></span>
+          </div>
+          <span class="etiqueta" id="carga-inicial-texto">Subiendo al páramo</span>
+          <span class="cifra">0%</span>
+        </div>
+        <p class="aviso" id="carga-inicial-aviso" role="status"></p>
+      </div>
+    </div>
+    <script>
+      // Textos de la pantalla de carga antes de que lleguen los diccionarios del sitio
+      // (mismas frases que carga.subiendo, carga.lenta y carga.sinConexion).
+      (function () {
+        var textos = {
+          es: ['Subiendo al páramo', 'La conexión está lenta. La página sigue cargando; si puedes, busca mejor señal o conéctate a una red Wi‑Fi.', 'No hay conexión a internet. Revisa tus datos móviles o el Wi‑Fi.'],
+          en: ['Climbing the páramo', 'Your connection is slow. The page is still loading; if you can, find a better signal or switch to Wi‑Fi.', 'You are offline. Check your mobile data or Wi‑Fi.'],
+          fr: ['Montée vers le páramo', 'La connexion est lente. La page continue de se charger ; si possible, cherchez un meilleur signal ou passez en Wi‑Fi.', 'Pas de connexion internet. Vérifiez vos données mobiles ou le Wi‑Fi.'],
+          pt: ['Subindo ao páramo', 'A conexão está lenta. A página continua carregando; se puder, procure um sinal melhor ou use uma rede Wi‑Fi.', 'Sem conexão com a internet. Verifique seus dados móveis ou o Wi‑Fi.'],
+        };
+        var idioma = 'es';
+        try {
+          var guardado = localStorage.getItem('nativatrips.idioma');
+          var candidatos = guardado ? [guardado] : navigator.languages || [navigator.language || 'es'];
+          for (var i = 0; i < candidatos.length; i++) {
+            var base = String(candidatos[i]).toLowerCase().split('-')[0];
+            if (textos[base]) {
+              idioma = base;
+              break;
+            }
+          }
+        } catch (e) {}
+        var t = textos[idioma];
+        document.documentElement.lang = idioma;
+        document.getElementById('carga-inicial-texto').textContent = t[0];
+        function avisar() {
+          var aviso = document.getElementById('carga-inicial-aviso');
+          if (aviso) aviso.textContent = navigator.onLine === false ? t[2] : t[1];
+        }
+        if (navigator.onLine === false) avisar();
+        window.addEventListener('offline', avisar);
+        setTimeout(avisar, 8000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
