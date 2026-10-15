@@ -59,6 +59,9 @@ export const es = {
     aria: 'Cargando NativaTrips',
     subiendo: 'Subiendo al páramo',
     cima: 'Llegaste a la cima',
+    lenta: 'La conexión está lenta. La página sigue cargando; si puedes, busca mejor señal o conéctate a una red Wi‑Fi.',
+    sinConexion: 'No hay conexión a internet. Revisa tus datos móviles o el Wi‑Fi.',
+    entrar: 'Entrar sin esperar',
   },
   pie: {
     descripcion: 'Reservas de ecoturismo en el Parque Nacional Natural Chingaza, con cupos regulados por la capacidad de carga de cada sendero.',

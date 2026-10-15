@@ -25,7 +25,7 @@ function Transicion() {
 }
 
 /** El asistente no hace falta para ver la página: su código llega después. */
-const Asistente = perezosa(() => import('@/features/asistente/Asistente').then((m) => m.Asistente));
+const Asistente = perezosa(() => import('@/features/asistente/Asistente').then((m) => m.Asistente), { complemento: true });
 
 const ENLACE_PIE = 'inline-flex min-h-8 items-center text-white/80 no-underline hover:text-white';
 
