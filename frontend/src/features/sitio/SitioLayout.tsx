@@ -53,6 +53,7 @@ export function SitioLayout() {
             <Link className={ENLACE_PIE} to="/biblioteca">{t.nav.enlaces.biblioteca.texto}</Link>
             <Link className={ENLACE_PIE} to="/antes-de-subir">{t.nav.enlaces.antes.texto}</Link>
             <Link className={ENLACE_PIE} to="/mi-reserva">{t.nav.enlaces.miReserva.texto}</Link>
+            <Link className={ENLACE_PIE} to="/#como-llegar">{t.pie.comoLlegar}</Link>
             <Link className={ENLACE_PIE} to="/creditos">{t.pie.creditos}</Link>
           </div>
           <div className="flex flex-col gap-2">
