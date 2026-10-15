@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { FOTOS_GALERIA, foto, fotoDeSendero } from '@/contenido/fotos';
+import { atributosFoto, foto, fotoDeSendero, FOTOS_GALERIA } from '@/contenido/fotos';
 import type { FotoConRuta } from '@/contenido/fotos';
 import { cuposLibres } from '@/domain/aforo';
 import { hoyIso, sumarDias } from '@/domain/fechas';
@@ -39,7 +39,7 @@ function Galeria({ fotos, nombre }: { fotos: FotoConRuta[]; nombre: string }) {
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.img
             key={f.id}
-            src={f.src}
+            {...atributosFoto(f, '(min-width: 1024px) 60vw, 100vw')}
             alt={alt(f)}
             initial={{ opacity: 0, scale: 1.08 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -76,7 +76,7 @@ function Galeria({ fotos, nombre }: { fotos: FotoConRuta[]; nombre: string }) {
       </div>
       <Dialogo abierto={visor} onCerrar={() => setVisor(false)} titulo={alt(f)} ancho="max-w-6xl">
         <div className="relative bg-bosque">
-          <img src={f.src} alt={alt(f)} className="max-h-[80vh] w-full object-contain" />
+          <img {...atributosFoto(f)} alt={alt(f)} className="max-h-[80vh] w-full object-contain" />
           <div className="flex items-center justify-between gap-4 p-4 text-white">
             <button type="button" onClick={() => mover(-1)} className="rounded-full bg-white/10 px-4 py-2 font-bold hover:bg-white/20" aria-label={t.ficha.fotoAnterior}>
               ←

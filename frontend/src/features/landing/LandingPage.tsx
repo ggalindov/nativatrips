@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto, MEDIA_PANTALLA } from '@/contenido/fotos';
 import { hoyIso, sumarDias } from '@/domain/fechas';
 import type { Dificultad, Sendero } from '@/domain/sendero';
 import { DIFICULTADES, filtrarPorDificultad, ordenarPorExigencia } from '@/domain/sendero';
@@ -108,7 +108,7 @@ function GuiaVisita() {
     <section id="antes" className="mx-auto grid max-w-7xl items-center gap-14 px-4 py-28 sm:px-8 lg:grid-cols-2 lg:px-12">
       <Aparecer className="relative">
         <div className="relative h-[520px] overflow-hidden rounded-[40px] shadow-2xl">
-          <FotoAnimada src={f.src} alt={alt(f)} kenBurns />
+          <FotoAnimada {...atributosFoto(f, MEDIA_PANTALLA)} alt={alt(f)} kenBurns />
         </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.8, rotate: -6 }}

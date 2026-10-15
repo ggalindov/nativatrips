@@ -106,6 +106,8 @@ export function Marquesina({ children, segundos = 40 }: { children: ReactNode; s
 
 interface FotoAnimadaProps {
   src: string;
+  srcSet?: string;
+  sizes?: string;
   alt: string;
   className?: string;
   /** Acercamiento lento continuo (efecto Ken Burns). */
@@ -114,14 +116,17 @@ interface FotoAnimadaProps {
 }
 
 /** Foto que entra con fundido al cargar y, opcionalmente, se acerca lentamente. */
-export function FotoAnimada({ src, alt, className = '', kenBurns = false, prioridad = false }: FotoAnimadaProps) {
+export function FotoAnimada({ src, srcSet, sizes, alt, className = '', kenBurns = false, prioridad = false }: FotoAnimadaProps) {
   const [cargada, setCargada] = useState(false);
   const reducido = useReducedMotion();
   return (
     <motion.img
       src={src}
+      srcSet={srcSet}
+      sizes={sizes}
       alt={alt}
       loading={prioridad ? 'eager' : 'lazy'}
+      fetchPriority={prioridad ? 'high' : 'auto'}
       decoding="async"
       onLoad={() => setCargada(true)}
       className={`h-full w-full object-cover ${className}`}

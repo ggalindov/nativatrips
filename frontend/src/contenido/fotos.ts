@@ -275,11 +275,28 @@ export interface FotoConRuta extends Foto {
   id: IdFoto;
   src: string;
   srcPequena: string;
+  /** Ambas versiones con su ancho real, para que el navegador elija según la pantalla. */
+  srcSet: string;
 }
 
+/** Cada foto tiene versiones con 720 y 1080 px en su lado más largo, además del original. */
+const VERSIONES = [720, 1080] as const;
+
 export function foto(id: IdFoto): FotoConRuta {
-  return { ...FOTOS[id], id, src: `/fotos/${id}.webp`, srcPequena: `/fotos/${id}-720.webp` };
+  const datos = FOTOS[id];
+  const src = `/fotos/${id}.webp`;
+  const ladoMayor = Math.max(datos.ancho, datos.alto);
+  const versiones = VERSIONES.map((lado) => `/fotos/${id}-${lado}.webp ${Math.round((datos.ancho * lado) / ladoMayor)}w`);
+  return { ...datos, id, src, srcPequena: `/fotos/${id}-720.webp`, srcSet: [...versiones, `${src} ${datos.ancho}w`].join(', ') };
 }
+
+/** Atributos de `<img>` para que cada pantalla descargue solo el tamaño que necesita. */
+export function atributosFoto(f: FotoConRuta, sizes = '100vw') {
+  return { src: f.src, srcSet: f.srcSet, sizes };
+}
+
+/** Tamaño de las fotos que ocupan media pantalla en escritorio y todo el ancho en celular. */
+export const MEDIA_PANTALLA = '(min-width: 1024px) 50vw, 100vw';
 
 function esIdFoto(valor: string): valor is IdFoto {
   return valor in FOTOS;
