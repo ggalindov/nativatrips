@@ -30,6 +30,15 @@ describe('portada', () => {
     expect((await screen.findAllByText('Strenuous')).length).toBeGreaterThan(0);
   });
 
+  it('indica cómo llegar con accesos directos a Waze y Google Maps', () => {
+    renderizarEn();
+    const seccion = screen.getByRole('region', { name: 'Te esperamos en la puerta del páramo' });
+    expect(within(seccion).getByRole('link', { name: /Ir con Waze/ })).toHaveAttribute('href', expect.stringContaining('waze.com/ul?ll=4.7324372,-73.8369286'));
+    expect(within(seccion).getByRole('link', { name: /Abrir en Google Maps/ })).toHaveAttribute('href', expect.stringContaining('destination=4.7324372,-73.8369286'));
+    expect(within(seccion).getByTitle('Mapa de la ubicación de la Reserva Ecopalacio Chingaza')).toBeInTheDocument();
+    expect(within(seccion).getByText('Vda. La Trinidad, Guasca, Cundinamarca')).toBeInTheDocument();
+  });
+
   it('muestra el sitio en francés y portugués', () => {
     const { unmount } = renderizarEn({ idioma: 'fr' });
     expect(screen.getByRole('heading', { level: 1, name: 'Chingaza un páramo qui respire.' })).toBeInTheDocument();

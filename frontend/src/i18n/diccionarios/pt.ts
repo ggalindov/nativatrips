@@ -44,6 +44,18 @@ export const pt: Diccionario = {
     lema: 'PN Chingaza · Colômbia',
     accesoEquipo: 'Acesso da equipe',
     derechos: (anio) => `© ${anio} NativaTrips · Turismo responsável no páramo`,
+    comoLlegar: 'Como chegar',
+  },
+  llegar: {
+    antetitulo: 'Como chegar',
+    titulo: 'Esperamos você na porta do páramo',
+    texto: 'A reserva fica na vereda La Trinidad, com acesso pela estrada de La Calera rumo ao setor Piedras Gordas do Parque Chingaza. Abra a rota no seu aplicativo favorito e saia com antecedência.',
+    waze: 'Ir com o Waze',
+    maps: 'Abrir no Google Maps',
+    ventanaNueva: 'abre em uma nova aba',
+    consejo: 'No páramo o sinal de celular é instável: abra a rota antes de sair de La Calera e chegue com antecedência para o horário de saída.',
+    mapaTitulo: 'Mapa da localização da Reserva Ecopalacio Chingaza',
+    etiquetaMapa: 'Finca Palacio · Guasca',
   },
   dificultad: {
     Fácil: 'Fácil',

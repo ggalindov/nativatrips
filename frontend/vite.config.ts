@@ -22,5 +22,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Los flujos completos de reserva rozan los 5 s por defecto cuando corren en paralelo.
+    testTimeout: 15000,
   },
 })
