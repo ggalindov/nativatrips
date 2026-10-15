@@ -114,7 +114,7 @@ export function BarraNavegacion() {
             transition={{ duration: 0.7, ease: CURVA }}
             className="fixed inset-0 z-40 flex flex-col justify-end overflow-hidden bg-bosque px-6 pt-28 pb-12 text-white lg:hidden"
           >
-            <img src={foto('desde-las-nubes').src} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25" />
+            <img src={foto('desde-las-nubes').srcPequena} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-25" />
             <nav aria-label={t.nav.principalMovil} className="relative flex flex-col gap-2">
               {ENLACES.map((e, i) => (
                 <motion.div key={e.a} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.08, duration: 0.6, ease: CURVA }}>

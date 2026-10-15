@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { fotoDeSendero } from '@/contenido/fotos';
+import { atributosFoto, fotoDeSendero } from '@/contenido/fotos';
 import { ajustarPersonas, cuposLibres, nivelAforo } from '@/domain/aforo';
 import { hoyIso, sumarDias } from '@/domain/fechas';
 import { esExtranjero } from '@/domain/paises';
@@ -179,7 +179,7 @@ export function ReservaPage() {
     <>
       <section className="relative isolate overflow-hidden bg-bosque text-white">
         <div className="absolute inset-0 -z-10">
-          <FotoAnimada src={portada.src} alt="" kenBurns prioridad />
+          <FotoAnimada {...atributosFoto(portada)} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/80 to-bosque/30" />
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-32 pb-14 sm:px-8 md:pt-36 md:pb-20 lg:px-12">

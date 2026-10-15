@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { IdFoto } from '@/contenido/fotos';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto } from '@/contenido/fotos';
 import { esExtranjero } from '@/domain/paises';
 import type { EstadoReserva } from '@/domain/reserva';
 import { es } from '@/i18n/diccionarios/es';
@@ -13,7 +13,7 @@ export function CabeceraPanel({ etiqueta, titulo, fotoId, children }: { etiqueta
   return (
     <div className="relative isolate flex flex-wrap items-end justify-between gap-6 overflow-hidden rounded-[32px] bg-bosque p-6 text-white sm:p-8 md:p-10">
       <div className="absolute inset-0 -z-10">
-        <FotoAnimada src={foto(fotoId).src} alt="" kenBurns prioridad />
+        <FotoAnimada {...atributosFoto(foto(fotoId))} alt="" kenBurns prioridad />
         <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/75 to-bosque/30" />
       </div>
       <div className="flex flex-col gap-2">
