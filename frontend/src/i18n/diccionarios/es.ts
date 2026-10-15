@@ -115,6 +115,7 @@ export const es = {
     titulo: 'El agua de Bogotá nace aquí.',
     elegir: 'Elegir mi sendero',
     credito: 'Video: Parques Nacionales Naturales de Colombia',
+    reproducir: 'Ver el video (ahorro de datos activo)',
   },
   portada: {
     senderosAria: 'Rutas para conectar con el páramo',
