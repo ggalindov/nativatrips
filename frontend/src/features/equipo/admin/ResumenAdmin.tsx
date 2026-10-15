@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta } from '@/services/useConsulta';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto } from '@/contenido/fotos';
 import { FotoAnimada } from '@/ui/movimiento';
 import { METRICAS } from '../ejemplo';
 import { Indicador as IndicadorTendencia } from '../ui';
@@ -73,7 +73,7 @@ export function ResumenAdmin() {
     <div className="flex flex-col gap-11">
       <div className="relative isolate flex flex-col gap-2 overflow-hidden rounded-[32px] bg-bosque p-8 text-white md:p-10">
         <div className="absolute inset-0 -z-10">
-          <FotoAnimada src={foto('desde-las-nubes').src} alt="" kenBurns prioridad />
+          <FotoAnimada {...atributosFoto(foto('desde-las-nubes'))} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-bosque/20" />
         </div>
         <span className="etiqueta text-lima">Indicadores · datos de ejemplo</span>

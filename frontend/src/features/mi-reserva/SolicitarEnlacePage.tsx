@@ -6,7 +6,7 @@ import { useContenido } from '@/i18n/useContenido';
 import { useMensajeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Campo } from '@/ui/Campo';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto, MEDIA_PANTALLA } from '@/contenido/fotos';
 import { Aparecer, FotoAnimada } from '@/ui/movimiento';
 
 export function SolicitarEnlacePage() {
@@ -33,7 +33,7 @@ export function SolicitarEnlacePage() {
   return (
     <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pt-32 pb-16 sm:px-8 lg:grid-cols-2 lg:px-12">
       <Aparecer className="relative hidden h-[560px] overflow-hidden rounded-[40px] shadow-2xl lg:block">
-        <FotoAnimada src={laguna.src} alt={alt(laguna)} kenBurns />
+        <FotoAnimada {...atributosFoto(laguna, MEDIA_PANTALLA)} alt={alt(laguna)} kenBurns />
         <div className="absolute inset-0 bg-gradient-to-t from-bosque/80 to-transparent" />
         <p className="absolute inset-x-8 bottom-8 m-0 font-display text-3xl font-extrabold text-white">{t.solicitar.lema}</p>
       </Aparecer>

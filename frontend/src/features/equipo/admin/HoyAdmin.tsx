@@ -5,7 +5,7 @@ import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta, useMensajeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto } from '@/contenido/fotos';
 import { FotoAnimada } from '@/ui/movimiento';
 
 function Titulo({ id, children, nota }: { id: string; children: string; nota?: string }) {
@@ -48,7 +48,7 @@ export function HoyAdmin() {
     <div className="flex flex-col gap-12">
       <div className="relative isolate flex flex-wrap items-end justify-between gap-6 overflow-hidden rounded-[32px] bg-bosque p-8 text-white md:p-10">
         <div className="absolute inset-0 -z-10">
-          <FotoAnimada src={foto('embalse-chuza').src} alt="" kenBurns prioridad />
+          <FotoAnimada {...atributosFoto(foto('embalse-chuza'))} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/75 to-bosque/30" />
         </div>
         <div className="flex flex-col gap-2">
