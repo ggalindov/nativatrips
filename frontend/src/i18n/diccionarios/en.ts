@@ -36,6 +36,9 @@ export const en: Diccionario = {
     aria: 'Loading NativaTrips',
     subiendo: 'Climbing the páramo',
     cima: 'You reached the summit',
+    lenta: 'Your connection is slow. The page is still loading; if you can, find a better signal or switch to Wi‑Fi.',
+    sinConexion: 'You are offline. Check your mobile data or Wi‑Fi.',
+    entrar: 'Enter without waiting',
   },
   pie: {
     descripcion: 'Ecotourism bookings in Chingaza National Natural Park, with spots capped by the carrying capacity of each trail.',

@@ -36,6 +36,9 @@ export const fr: Diccionario = {
     aria: 'Chargement de NativaTrips',
     subiendo: 'Montée vers le páramo',
     cima: 'Vous êtes au sommet',
+    lenta: 'La connexion est lente. La page continue de se charger ; si possible, cherchez un meilleur signal ou passez en Wi‑Fi.',
+    sinConexion: 'Pas de connexion internet. Vérifiez vos données mobiles ou le Wi‑Fi.',
+    entrar: 'Entrer sans attendre',
   },
   pie: {
     descripcion: 'Réservations d’écotourisme dans le Parc national naturel de Chingaza, avec des places limitées selon la capacité de charge de chaque sentier.',

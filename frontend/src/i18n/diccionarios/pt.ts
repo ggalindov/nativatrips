@@ -36,6 +36,9 @@ export const pt: Diccionario = {
     aria: 'Carregando NativaTrips',
     subiendo: 'Subindo ao páramo',
     cima: 'Você chegou ao topo',
+    lenta: 'A conexão está lenta. A página continua carregando; se puder, procure um sinal melhor ou use uma rede Wi‑Fi.',
+    sinConexion: 'Sem conexão com a internet. Verifique seus dados móveis ou o Wi‑Fi.',
+    entrar: 'Entrar sem esperar',
   },
   pie: {
     descripcion: 'Reservas de ecoturismo no Parque Nacional Natural Chingaza, com vagas limitadas pela capacidade de carga de cada trilha.',
