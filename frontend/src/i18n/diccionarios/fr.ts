@@ -92,6 +92,7 @@ export const fr: Diccionario = {
     titulo: 'L’eau de Bogotá naît ici.',
     elegir: 'Choisir mon sentier',
     credito: 'Vidéo : Parques Nacionales Naturales de Colombia',
+    reproducir: 'Lire la vidéo (économiseur de données activé)',
   },
   portada: {
     senderosAria: 'Des sentiers pour se connecter au páramo',
