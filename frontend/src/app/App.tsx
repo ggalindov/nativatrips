@@ -1,38 +1,42 @@
-import { useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import { MotionConfig } from 'motion/react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import type { Servicios } from '@/services/puertos';
 import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
-import { BibliotecaPage } from '@/features/biblioteca/BibliotecaPage';
-import { AntesDeSubirPage } from '@/features/antes-de-subir/AntesDeSubirPage';
-import { AccesoPage } from '@/features/equipo/AccesoPage';
-import { CapacidadPage } from '@/features/equipo/CapacidadPage';
-import { RecuperarPage } from '@/features/equipo/RecuperarPage';
-import { ReportesPage } from '@/features/equipo/ReportesPage';
-import { BibliotecaAdmin } from '@/features/equipo/admin/BibliotecaAdmin';
-import { ConversacionesAdmin } from '@/features/equipo/admin/ConversacionesAdmin';
-import { HoyAdmin } from '@/features/equipo/admin/HoyAdmin';
-import { RecomendacionesAdmin } from '@/features/equipo/admin/RecomendacionesAdmin';
-import { ReservasAdmin } from '@/features/equipo/admin/ReservasAdmin';
-import { ResumenAdmin } from '@/features/equipo/admin/ResumenAdmin';
-import { SalidasAdmin } from '@/features/equipo/admin/SalidasAdmin';
-import { SenderosAdmin } from '@/features/equipo/admin/SenderosAdmin';
-import { UsuariosAdmin } from '@/features/equipo/admin/UsuariosAdmin';
-import { EquipoLayout } from '@/features/equipo/EquipoLayout';
 import { RutaProtegida } from '@/features/equipo/RutaProtegida';
 import { SesionProvider } from '@/features/equipo/SesionContext';
-import { PanelGuia } from '@/features/equipo/guia/PanelGuia';
 import { LandingPage } from '@/features/landing/LandingPage';
-import { MiReservaPage } from '@/features/mi-reserva/MiReservaPage';
-import { SolicitarEnlacePage } from '@/features/mi-reserva/SolicitarEnlacePage';
-import { ReservaApartadaPage } from '@/features/reservas/ReservaApartadaPage';
-import { ReservaPage } from '@/features/reservas/ReservaPage';
-import { CatalogoPage } from '@/features/senderos/CatalogoPage';
-import { FichaSenderoPage } from '@/features/senderos/FichaSenderoPage';
-import { CreditosPage } from '@/features/sitio/CreditosPage';
 import { PantallaCarga } from '@/features/sitio/PantallaCarga';
 import { SitioLayout } from '@/features/sitio/SitioLayout';
 import { IdiomaProvider } from '@/i18n/IdiomaContext';
+import { CargandoPagina } from '@/ui/Estados';
+import { perezosa } from './perezosa';
+
+/* Cada página se descarga al visitarla; la portada va en el paquete inicial. */
+const BibliotecaPage = perezosa(() => import('@/features/biblioteca/BibliotecaPage').then((m) => m.BibliotecaPage));
+const AntesDeSubirPage = perezosa(() => import('@/features/antes-de-subir/AntesDeSubirPage').then((m) => m.AntesDeSubirPage));
+const AccesoPage = perezosa(() => import('@/features/equipo/AccesoPage').then((m) => m.AccesoPage));
+const CapacidadPage = perezosa(() => import('@/features/equipo/CapacidadPage').then((m) => m.CapacidadPage));
+const RecuperarPage = perezosa(() => import('@/features/equipo/RecuperarPage').then((m) => m.RecuperarPage));
+const ReportesPage = perezosa(() => import('@/features/equipo/ReportesPage').then((m) => m.ReportesPage));
+const BibliotecaAdmin = perezosa(() => import('@/features/equipo/admin/BibliotecaAdmin').then((m) => m.BibliotecaAdmin));
+const ConversacionesAdmin = perezosa(() => import('@/features/equipo/admin/ConversacionesAdmin').then((m) => m.ConversacionesAdmin));
+const HoyAdmin = perezosa(() => import('@/features/equipo/admin/HoyAdmin').then((m) => m.HoyAdmin));
+const RecomendacionesAdmin = perezosa(() => import('@/features/equipo/admin/RecomendacionesAdmin').then((m) => m.RecomendacionesAdmin));
+const ReservasAdmin = perezosa(() => import('@/features/equipo/admin/ReservasAdmin').then((m) => m.ReservasAdmin));
+const ResumenAdmin = perezosa(() => import('@/features/equipo/admin/ResumenAdmin').then((m) => m.ResumenAdmin));
+const SalidasAdmin = perezosa(() => import('@/features/equipo/admin/SalidasAdmin').then((m) => m.SalidasAdmin));
+const SenderosAdmin = perezosa(() => import('@/features/equipo/admin/SenderosAdmin').then((m) => m.SenderosAdmin));
+const UsuariosAdmin = perezosa(() => import('@/features/equipo/admin/UsuariosAdmin').then((m) => m.UsuariosAdmin));
+const EquipoLayout = perezosa(() => import('@/features/equipo/EquipoLayout').then((m) => m.EquipoLayout));
+const PanelGuia = perezosa(() => import('@/features/equipo/guia/PanelGuia').then((m) => m.PanelGuia));
+const MiReservaPage = perezosa(() => import('@/features/mi-reserva/MiReservaPage').then((m) => m.MiReservaPage));
+const SolicitarEnlacePage = perezosa(() => import('@/features/mi-reserva/SolicitarEnlacePage').then((m) => m.SolicitarEnlacePage));
+const ReservaApartadaPage = perezosa(() => import('@/features/reservas/ReservaApartadaPage').then((m) => m.ReservaApartadaPage));
+const ReservaPage = perezosa(() => import('@/features/reservas/ReservaPage').then((m) => m.ReservaPage));
+const CatalogoPage = perezosa(() => import('@/features/senderos/CatalogoPage').then((m) => m.CatalogoPage));
+const FichaSenderoPage = perezosa(() => import('@/features/senderos/FichaSenderoPage').then((m) => m.FichaSenderoPage));
+const CreditosPage = perezosa(() => import('@/features/sitio/CreditosPage').then((m) => m.CreditosPage));
 
 /** Vuelve arriba al cambiar de página, salvo que la URL apunte a una sección. */
 function ScrollAlCambiar() {
@@ -48,7 +52,9 @@ function ScrollAlCambiar() {
 function AreaEquipo() {
   return (
     <IdiomaProvider inicial="es" fijo>
-      <Outlet />
+      <Suspense fallback={<CargandoPagina />}>
+        <Outlet />
+      </Suspense>
     </IdiomaProvider>
   );
 }

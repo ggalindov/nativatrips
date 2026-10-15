@@ -1,7 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { MotionGlobalConfig } from 'motion/react';
+
+/** Las páginas se cargan bajo demanda: la primera importación de cada una tarda más en el entorno de pruebas. */
+configure({ asyncUtilTimeout: 5000 });
 
 /** Las animaciones no aportan a las pruebas y solo las demorarían. */
 MotionGlobalConfig.skipAnimations = true;
