@@ -60,7 +60,7 @@ function OcupacionDiaria({ valores }: { valores: number[] }) {
   );
 }
 
-export function PanelGerencia() {
+export function ResumenAdmin() {
   const { operacion } = useServicios();
   const { estado, recargar } = useConsulta(() => operacion.resumenGerencia('2026-10'), [operacion]);
 
@@ -76,7 +76,7 @@ export function PanelGerencia() {
           <FotoAnimada src={foto('desde-las-nubes').src} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-bosque/20" />
         </div>
-        <span className="etiqueta text-lima">Gerencia · datos de ejemplo</span>
+        <span className="etiqueta text-lima">Indicadores · datos de ejemplo</span>
         <h1 className="m-0 font-display text-4xl font-extrabold tracking-tight sm:text-[44px]">Resumen de octubre</h1>
       </div>
 

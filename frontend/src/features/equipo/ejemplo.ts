@@ -2,6 +2,7 @@
  * Datos de ejemplo de los paneles del personal. Son solo para la interfaz:
  * se reemplazan por los servicios del backend cuando se conecten.
  */
+import type { RolEquipo } from '@/domain/equipo';
 import type { EstadoReserva, Persona, TipoDocumento } from '@/domain/reserva';
 import { SENDEROS } from '@/services/memoria/datos';
 
@@ -212,15 +213,16 @@ export interface CuentaEquipo {
   id: string;
   nombre: string;
   correo: string;
-  rol: 'PERSONAL_ADMINISTRATIVO' | 'GUIA_TURISTICO' | 'GERENCIA';
+  telefono?: string;
+  rol: RolEquipo;
   activa: boolean;
   ultimoAcceso: string;
 }
 
 export const CUENTAS: CuentaEquipo[] = [
-  { id: 'u1', nombre: 'Carlos Palacio', correo: 'gerencia@ecopalacio.co', rol: 'GERENCIA', activa: true, ultimoAcceso: 'hoy 07:58' },
-  { id: 'u2', nombre: 'Andrea Ruiz', correo: 'admin@ecopalacio.co', rol: 'PERSONAL_ADMINISTRATIVO', activa: true, ultimoAcceso: 'hoy 06:40' },
-  { id: 'u3', nombre: 'Felipe Ortiz', correo: 'reservas@ecopalacio.co', rol: 'PERSONAL_ADMINISTRATIVO', activa: true, ultimoAcceso: 'ayer 18:12' },
+  { id: 'u1', nombre: 'Carlos Palacio', correo: 'carlos.palacio@ecopalacio.co', rol: 'ADMINISTRADOR', activa: true, ultimoAcceso: 'hoy 07:58' },
+  { id: 'u2', nombre: 'Andrea Ruiz', correo: 'admin@ecopalacio.co', rol: 'ADMINISTRADOR', activa: true, ultimoAcceso: 'hoy 06:40' },
+  { id: 'u3', nombre: 'Felipe Ortiz', correo: 'reservas@ecopalacio.co', rol: 'ADMINISTRADOR', activa: true, ultimoAcceso: 'ayer 18:12' },
   { id: 'u4', nombre: 'Marta León', correo: 'guia@ecopalacio.co', rol: 'GUIA_TURISTICO', activa: true, ultimoAcceso: 'hoy 05:55' },
   { id: 'u5', nombre: 'Julián Pardo', correo: 'julian.pardo@ecopalacio.co', rol: 'GUIA_TURISTICO', activa: true, ultimoAcceso: 'hoy 06:02' },
   { id: 'u6', nombre: 'Andrés Castro', correo: 'andres.castro@ecopalacio.co', rol: 'GUIA_TURISTICO', activa: true, ultimoAcceso: 'hace 2 días' },
@@ -235,7 +237,7 @@ export const NOTIFICACIONES = [
   { id: 'n4', texto: 'NT-3MZ8 espera revisión: grupo de 18 personas', hace: 'hace 1 h', tipo: 'revision' as const },
 ];
 
-/** Métricas del mes para el tablero de gerencia. */
+/** Métricas del mes para el resumen del administrador. */
 export const METRICAS = {
   mes: '2026-10',
   ingresos: 186_450_000,
