@@ -6,7 +6,7 @@ import { useServicios } from '@/services/ServiciosContext';
 import { useMensajeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
 import { Campo } from '@/ui/Campo';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto, MEDIA_PANTALLA } from '@/contenido/fotos';
 import { Contornos } from '@/ui/Contornos';
 import { FotoAnimada } from '@/ui/movimiento';
 import { Logo } from '@/ui/Logo';
@@ -48,7 +48,7 @@ export function AccesoPage() {
     <div className="grid min-h-screen bg-arena text-bosque lg:grid-cols-[5fr_6fr]">
       <div className="relative flex min-h-[220px] flex-col justify-between gap-8 overflow-hidden bg-bosque p-8 text-arena lg:p-12">
         <div className="absolute inset-0">
-          <FotoAnimada src={foto('monterredondo').src} alt="" kenBurns prioridad />
+          <FotoAnimada {...atributosFoto(foto('monterredondo'), MEDIA_PANTALLA)} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-t from-bosque via-bosque/70 to-bosque/40" />
         </div>
         <Contornos />

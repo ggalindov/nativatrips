@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto } from '@/contenido/fotos';
 import type { CategoriaEquipaje } from '@/domain/clima';
 import { CATEGORIAS_EQUIPAJE, EQUIPAJE, capasRecomendadas, progresoEquipaje, temperaturaEstimada } from '@/domain/clima';
 import { useIdioma } from '@/i18n/IdiomaContext';
@@ -182,7 +182,7 @@ export function AntesDeSubirPage() {
     <>
       <section className="relative isolate overflow-hidden bg-bosque text-white">
         <div className="absolute inset-0 -z-10">
-          <FotoAnimada src={portada.src} alt="" kenBurns prioridad />
+          <FotoAnimada {...atributosFoto(portada)} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-transparent" />
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-36 pb-24 sm:px-8 md:pt-44 md:pb-32 lg:px-12">
@@ -238,7 +238,7 @@ export function AntesDeSubirPage() {
         </div>
 
         <Aparecer className="relative overflow-hidden rounded-[40px]">
-          <img src={foto('lagunas-de-siecha').src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img {...atributosFoto(foto('lagunas-de-siecha'))} loading="lazy" decoding="async" alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-bosque/75" />
           <div className="relative flex flex-col items-start gap-4 p-10 text-white md:p-14">
             <span className="etiqueta text-lima">{a.final.etiqueta}</span>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto, MEDIA_PANTALLA } from '@/contenido/fotos';
 import { Boton } from '@/ui/Boton';
 import { Campo } from '@/ui/Campo';
 import { Contornos } from '@/ui/Contornos';
@@ -31,7 +31,7 @@ export function RecuperarPage() {
     <div className="grid min-h-screen bg-arena text-bosque lg:grid-cols-[5fr_6fr]">
       <div className="relative flex min-h-[200px] flex-col justify-between gap-8 overflow-hidden bg-bosque p-8 text-arena lg:p-12">
         <div className="absolute inset-0">
-          <FotoAnimada src={foto('camino-niebla').src} alt="" kenBurns prioridad />
+          <FotoAnimada {...atributosFoto(foto('camino-niebla'), MEDIA_PANTALLA)} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-t from-bosque via-bosque/70 to-bosque/40" />
         </div>
         <Contornos />

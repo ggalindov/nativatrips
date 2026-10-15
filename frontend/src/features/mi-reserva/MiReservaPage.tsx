@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link, useParams } from 'react-router-dom';
-import { fotoDeSendero } from '@/contenido/fotos';
+import { atributosFoto, fotoDeSendero } from '@/contenido/fotos';
 import { bandera, esExtranjero } from '@/domain/paises';
 import type { ErrorValidacion, Persona, Reserva } from '@/domain/reserva';
 import { PERSONA_VACIA, acompanantesPendientes, pasosRecorrido, puedeCancelarse, validarPersona } from '@/domain/reserva';
@@ -141,7 +141,7 @@ export function MiReservaPage() {
   return (
     <>
       <section className="relative isolate h-56 overflow-hidden bg-bosque md:h-72" aria-hidden="true">
-        <FotoAnimada src={fotoDeSendero(r.senderoId).src} alt="" kenBurns prioridad />
+        <FotoAnimada {...atributosFoto(fotoDeSendero(r.senderoId))} alt="" kenBurns prioridad />
         <div className="absolute inset-0 bg-gradient-to-t from-arena via-arena/20 to-transparent" />
       </section>
       <div className="relative mx-auto -mt-24 flex max-w-7xl flex-col gap-14 px-4 pb-24 sm:px-8 lg:px-12">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { foto, fotoDeSendero } from '@/contenido/fotos';
+import { atributosFoto, foto, fotoDeSendero } from '@/contenido/fotos';
 import type { Dificultad, Sendero } from '@/domain/sendero';
 import { DIFICULTADES, buscarSenderos, filtrarPorDificultad, ordenarPorExigencia } from '@/domain/sendero';
 import { useIdioma } from '@/i18n/IdiomaContext';
@@ -25,7 +25,7 @@ function VistaRapida({ sendero, onCerrar }: { sendero: Sendero | null; onCerrar:
       {sendero && f && (
         <div className="grid md:grid-cols-2">
           <div className="relative h-64 md:h-full">
-            <img src={f.src} alt={c.alt(f)} className="h-full w-full object-cover" />
+            <img {...atributosFoto(f, '(min-width: 768px) 50vw, 100vw')} alt={c.alt(f)} className="h-full w-full object-cover" />
             <div className="absolute top-4 left-4">
               <PildoraDificultad dificultad={sendero.dificultad} />
             </div>
@@ -114,7 +114,7 @@ export function CatalogoPage() {
     <>
       <section className="relative isolate overflow-hidden bg-bosque text-white">
         <div className="absolute inset-0 -z-10">
-          <FotoAnimada src={portada.src} alt="" kenBurns prioridad />
+          <FotoAnimada {...atributosFoto(portada)} alt="" kenBurns prioridad />
           <div className="absolute inset-0 bg-gradient-to-r from-bosque via-bosque/70 to-bosque/20" />
         </div>
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pt-36 pb-24 sm:px-8 md:pt-44 md:pb-32 lg:px-12">

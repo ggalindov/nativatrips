@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
-import { foto } from '@/contenido/fotos';
+import { atributosFoto, foto } from '@/contenido/fotos';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { EnlaceBoton } from '@/ui/Boton';
 import { Aparecer } from '@/ui/movimiento';
@@ -28,7 +28,7 @@ export function VideoPaisajes() {
   return (
     <section ref={seccion} aria-labelledby="video-titulo" className="relative h-[110svh] bg-bosque">
       <motion.div style={{ clipPath: recorte }} className="sticky top-0 h-svh overflow-hidden">
-        {sinVideo && <img src={foto('laguna-chingaza').src} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />}
+        {sinVideo && <img {...atributosFoto(foto('laguna-chingaza'))} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />}
         <motion.video
           ref={video}
           onError={() => setSinVideo(true)}
