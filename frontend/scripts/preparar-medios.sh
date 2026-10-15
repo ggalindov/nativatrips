@@ -5,7 +5,8 @@
 #
 # Video en bucle de la portada: siete tomas limpias de paisaje del video
 # institucional, unidas con fundidos, sin audio, en H.264 con faststart, más
-# su póster.
+# su póster. Se generan dos tamaños: 720p para escritorio y 480p para
+# celulares; la portada elige según el ancho de la pantalla.
 #
 # Los resultados quedan en public/media/, que no se versiona hasta confirmar
 # los derechos de uso de los videos fuente.
@@ -34,8 +35,11 @@ for i in $(seq 1 $((${#TOMAS[@]} - 1))); do
 done
 
 ffmpeg -v error "${entradas[@]}" -filter_complex "${filtro%;}" -map "[$anterior]" -an \
-  -c:v libx264 -preset slow -crf 24 -profile:v high -pix_fmt yuv420p -movflags +faststart \
+  -c:v libx264 -preset slow -crf 27 -profile:v high -pix_fmt yuv420p -movflags +faststart \
   "$SALIDA/chingaza-paisajes.mp4" -y
+ffmpeg -v error "${entradas[@]}" -filter_complex "${filtro%;};[$anterior]scale=-2:480:flags=lanczos[p480]" -map "[p480]" -an \
+  -c:v libx264 -preset slow -crf 29 -profile:v main -pix_fmt yuv420p -movflags +faststart \
+  "$SALIDA/chingaza-paisajes-480.mp4" -y
 ffmpeg -v error -ss 0.5 -i "$SALIDA/chingaza-paisajes.mp4" -frames:v 1 -q:v 4 "$SALIDA/chingaza-paisajes.jpg" -y
 
 echo "Listo: video en bucle en $SALIDA"

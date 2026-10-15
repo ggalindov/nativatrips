@@ -92,6 +92,7 @@ export const en: Diccionario = {
     titulo: 'Bogotá’s water is born here.',
     elegir: 'Choose my trail',
     credito: 'Video: Parques Nacionales Naturales de Colombia',
+    reproducir: 'Play the video (data saver is on)',
   },
   portada: {
     senderosAria: 'Trails to connect with the páramo',

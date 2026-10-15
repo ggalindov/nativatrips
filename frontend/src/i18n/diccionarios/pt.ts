@@ -92,6 +92,7 @@ export const pt: Diccionario = {
     titulo: 'A água de Bogotá nasce aqui.',
     elegir: 'Escolher minha trilha',
     credito: 'Vídeo: Parques Nacionales Naturales de Colombia',
+    reproducir: 'Ver o vídeo (economia de dados ativada)',
   },
   portada: {
     senderosAria: 'Trilhas para se conectar com o páramo',
