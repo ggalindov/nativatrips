@@ -148,8 +148,9 @@ describe('pantallas del personal', () => {
     const usuario = userEvent.setup();
     renderizarEn({ ruta: '/equipo/acceso' });
     await usuario.click(await screen.findByRole('link', { name: '¿Olvidaste tu contraseña?' }));
+    await screen.findByRole('heading', { name: 'Recuperar acceso' });
     await usuario.type(screen.getByLabelText('Correo de trabajo'), 'nadie@ecopalacio.co');
     await usuario.click(screen.getByRole('button', { name: 'Enviarme el enlace' }));
-    expect(screen.getByRole('status')).toHaveTextContent('Si nadie@ecopalacio.co pertenece a una cuenta');
+    expect(await screen.findByRole('status')).toHaveTextContent('Si nadie@ecopalacio.co pertenece a una cuenta');
   });
 });
