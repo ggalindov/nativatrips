@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent } from 'react';
-import { AnimatePresence, MotionConfig, motion, useInView, useMotionValueEvent, useScroll, useSpring, useTransform } from 'motion/react';
+import { AnimatePresence, MotionConfig, motion, useInView, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform } from 'motion/react';
 import type { MotionValue } from 'motion/react';
 import { siguienteDato } from '@/domain/paramo';
 import { useIdioma } from '@/i18n/IdiomaContext';
@@ -59,25 +59,39 @@ function Nube({ y, s, duracion, retraso }: { y: number; s: number; duracion: num
   );
 }
 
-/** Capa con paralaje: se desplaza según el puntero y el scroll, más mientras más cerca está. */
-function Capa({
-  profundidad,
-  px,
-  py,
-  scroll,
-  children,
-}: {
-  profundidad: number;
+/** Movimiento compartido por las capas de la escena. */
+interface Escena {
+  vista: string;
   px: MotionValue<number>;
   py: MotionValue<number>;
   scroll: MotionValue<number>;
-  children: React.ReactNode;
-}) {
-  const x = useTransform(px, (v) => v * profundidad);
-  const yPuntero = useTransform(py, (v) => v * profundidad * 0.5);
-  const yScroll = useTransform(scroll, (v) => v * profundidad * -1.5);
-  const y = useTransform(() => yPuntero.get() + yScroll.get());
-  return <motion.g style={{ x, y }}>{children}</motion.g>;
+  /** Píxeles de pantalla por unidad del dibujo. */
+  escala: MotionValue<number>;
+}
+
+const EscenaContext = createContext<Escena | null>(null);
+
+/**
+ * Capa con paralaje: se desplaza según el puntero y el scroll, más mientras
+ * más cerca está. Cada capa es un SVG propio movido con una transformación
+ * CSS: mientras se desplaza la página sus bucles están en pausa, así que la
+ * tarjeta gráfica solo la mueve, sin volver a pintar el dibujo.
+ */
+function Capa({ profundidad, children }: { profundidad: number; children: React.ReactNode }) {
+  const { vista, px, py, scroll, escala } = useContext(EscenaContext)!;
+  const x = useTransform(() => px.get() * profundidad * escala.get());
+  const y = useTransform(() => (py.get() * profundidad * 0.5 - scroll.get() * profundidad * 1.5) * escala.get());
+  return (
+    <motion.svg
+      viewBox={vista}
+      preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"
+      className="absolute inset-0 h-full w-full overflow-visible will-change-transform"
+      style={{ x, y }}
+    >
+      {children}
+    </motion.svg>
+  );
 }
 
 /**
@@ -108,16 +122,36 @@ export function ParamoVivo() {
   });
   // La cámara se acerca a la laguna; se escribe directo en el atributo
   // `transform` del grupo SVG para no pasar por los estilos CSS.
-  const camara = useRef<SVGGElement>(null);
-  const encuadrar = (v: number) => camara.current?.setAttribute('transform', `translate(840 700) scale(${1 + v * 0.3}) translate(-840 -700)`);
-  useMotionValueEvent(progreso, 'change', encuadrar);
+  // La cámara se acerca a la laguna (punto 840, 700 del dibujo) con una
+  // transformación CSS sobre todas las capas.
+  const zoom = useTransform(progreso, [0, 1], [1, 1.3]);
+  const vista = angosta ? '0 -360 1600 1480' : '0 0 1600 900';
+  const marco = useRef<HTMLDivElement>(null);
+  const escala = useMotionValue(1);
+  const [origen, setOrigen] = useState('52.5% 77.8%');
 
   // Fuera de la pantalla la ilustración se desmonta: sus animaciones en bucle
   // dejan de ocupar el procesador, algo que se nota en celulares modestos.
   const activo = useInView(seccion, { margin: '200px 0px' });
+  // El dibujo cubre la pantalla recortándose (slice): se calcula cuántos
+  // píxeles mide una unidad y dónde queda la laguna para centrar el acercamiento.
   useEffect(() => {
-    if (activo) encuadrar(progreso.get());
-  }, [activo]);
+    const nodo = marco.current;
+    if (!nodo) return;
+    const [vx, vy, vw, vh] = vista.split(' ').map(Number);
+    const medir = () => {
+      const { width, height } = nodo.getBoundingClientRect();
+      if (!width || !height) return;
+      const s = Math.max(width / vw, height / vh);
+      escala.set(s);
+      setOrigen(`${(width - vw * s) / 2 + (840 - vx) * s}px ${height - vh * s + (700 - vy) * s}px`);
+    };
+    medir();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observador = new ResizeObserver(medir);
+    observador.observe(nodo);
+    return () => observador.disconnect();
+  }, [vista, escala]);
   const tarde = useTransform(progreso, [0, 1], [0, 0.6]);
   const solY = useTransform(progreso, [0, 1], [0, 170]);
   const vueloCondor = useTransform(progreso, [0, 1], [0, angosta ? 0 : 90]);
@@ -171,33 +205,35 @@ export function ParamoVivo() {
   return (
     <MotionConfig reducedMotion="never">
       <section ref={seccion} id="inicio" aria-label={t.paramo.aria} className="relative h-[150vh]">
-        <div onPointerMove={mover} className="sticky top-0 h-svh min-h-[600px] overflow-hidden bg-[linear-gradient(180deg,#9ec4d4_0%,#d8e4e0_45%,#f3ead8_70%)]">
+        <div ref={marco} onPointerMove={mover} className="sticky top-0 h-svh min-h-[600px] overflow-hidden bg-[linear-gradient(180deg,#9ec4d4_0%,#d8e4e0_45%,#f3ead8_70%)]">
           <motion.div
             aria-hidden="true"
             style={{ opacity: tarde }}
             className="absolute inset-0 bg-[linear-gradient(180deg,#e9b98a_0%,#f2cf9c_40%,#f6dcb0_65%,transparent_85%)]"
           />
           {activo && (
-            <svg
-              viewBox={angosta ? '0 -360 1600 1480' : '0 0 1600 900'}
-              preserveAspectRatio="xMidYMax slice"
-              className="absolute inset-0 h-full w-full"
-              role="img"
-              aria-label={t.paramo.ilustracion}
-            >
-              <defs>
-                <linearGradient id="pv-laguna" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#5d93a1" />
-                  <stop offset="1" stopColor="#24505e" />
-                </linearGradient>
-                <radialGradient id="pv-sol">
-                  <stop offset="0" stopColor="#fffbe8" />
-                  <stop offset="0.45" stopColor="#f7e9ad" stopOpacity="0.9" />
-                  <stop offset="1" stopColor="#f7e9ad" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-              <g ref={camara}>
-                <Capa profundidad={4} px={px} py={py} scroll={scrollYProgress}>
+            <EscenaContext.Provider value={{ vista, px, py, scroll: scrollYProgress, escala }}>
+              <motion.div
+                role="img"
+                aria-label={t.paramo.ilustracion}
+                className="absolute inset-0 will-change-transform"
+                style={{ scale: zoom, transformOrigin: origen }}
+              >
+                {/* Degradados compartidos por las capas */}
+                <svg aria-hidden="true" className="absolute h-0 w-0">
+                  <defs>
+                    <linearGradient id="pv-laguna" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="#5d93a1" />
+                      <stop offset="1" stopColor="#24505e" />
+                    </linearGradient>
+                    <radialGradient id="pv-sol">
+                      <stop offset="0" stopColor="#fffbe8" />
+                      <stop offset="0.45" stopColor="#f7e9ad" stopOpacity="0.9" />
+                      <stop offset="1" stopColor="#f7e9ad" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+                </svg>
+                <Capa profundidad={4}>
                   <motion.circle cx="1240" cy="180" r="150" fill="url(#pv-sol)" style={{ y: solY }} />
                   <Nube y={150} s={1.2} duracion={90} retraso={20} />
                   <Nube y={250} s={0.8} duracion={70} retraso={45} />
@@ -207,14 +243,14 @@ export function ParamoVivo() {
                   </motion.g>
                 </Capa>
 
-                <Capa profundidad={8} px={px} py={py} scroll={scrollYProgress}>
+                <Capa profundidad={8}>
                   <path
                     d="M-100 520 C 120 430 260 470 420 420 C 600 360 760 450 920 400 C 1100 340 1260 430 1420 390 C 1560 360 1640 400 1700 420 L1700 900 L-100 900 Z"
                     fill="#a9b9b1"
                   />
                 </Capa>
 
-                <Capa profundidad={14} px={px} py={py} scroll={scrollYProgress}>
+                <Capa profundidad={14}>
                   <path d="M-100 600 C 150 520 300 580 520 530 C 720 490 860 560 1060 520 C 1260 480 1420 550 1700 510 L1700 900 L-100 900 Z" fill="#8ea397" />
                   {/* Sendero con una persona que sube a lo lejos */}
                   <path
@@ -235,13 +271,15 @@ export function ParamoVivo() {
                       </g>
                 </Capa>
 
-                {/* Niebla que cruza a media altura */}
-                <g className="bucle bucle-niebla" opacity="0.4">
-                  <ellipse cx="400" cy="600" rx="420" ry="30" fill="#ffffff" />
-                  <ellipse cx="1250" cy="570" rx="380" ry="24" fill="#ffffff" />
+                {/* Niebla que cruza a media altura, sin paralaje */}
+                <svg viewBox={vista} preserveAspectRatio="xMidYMax slice" aria-hidden="true" className="absolute inset-0 h-full w-full overflow-visible">
+                  <g className="bucle bucle-niebla" opacity="0.4">
+                    <ellipse cx="400" cy="600" rx="420" ry="30" fill="#ffffff" />
+                    <ellipse cx="1250" cy="570" rx="380" ry="24" fill="#ffffff" />
                   </g>
+                </svg>
 
-                <Capa profundidad={20} px={px} py={py} scroll={scrollYProgress}>
+                <Capa profundidad={20}>
                   <path d="M-100 660 C 200 600 420 640 640 630 C 900 618 1100 600 1320 620 C 1480 634 1600 620 1700 630 L1700 900 L-100 900 Z" fill="#6f8557" />
                   {[90, 230, 380, 500, 1180, 1300, 1420, 1540].map((x, i) => (
                     <Frailejon key={x} x={x} y={664 + (i % 3) * 8} s={0.44 + (i % 3) * 0.07} retraso={i * 0.7} />
@@ -275,7 +313,7 @@ export function ParamoVivo() {
                   <Rana x={990} y={748} s={1.1} />
                 </Capa>
 
-                <Capa profundidad={32} px={px} py={py} scroll={scrollYProgress}>
+                <Capa profundidad={32}>
                   <path d="M-100 780 C 200 740 500 770 800 760 C 1100 750 1400 730 1700 760 L1700 1300 L-100 1300 Z" fill="#3d5a3a" />
                   {[120, 300, 460, 1150, 1290, 1460].map((x, i) => (
                     <path
@@ -300,8 +338,8 @@ export function ParamoVivo() {
                     ]}
                   />
                 </Capa>
-              </g>
-            </svg>
+              </motion.div>
+            </EscenaContext.Provider>
           )}
 
           <motion.div
