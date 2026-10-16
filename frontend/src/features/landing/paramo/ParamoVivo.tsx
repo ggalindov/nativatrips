@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { PointerEvent } from 'react';
+import type { CSSProperties, PointerEvent } from 'react';
 import { AnimatePresence, MotionConfig, motion, useInView, useMotionValueEvent, useScroll, useSpring, useTransform } from 'motion/react';
 import type { MotionValue } from 'motion/react';
 import { siguienteDato } from '@/domain/paramo';
@@ -8,6 +8,7 @@ import { EnlaceBoton } from '@/ui/Boton';
 import { BotonReservar } from '@/ui/BotonReservar';
 import { CURVA } from '@/ui/movimiento';
 import { Colibri, Condor, OsoAndino, PatoParamo, Rana, Venado } from './Animales';
+import './paramo.css';
 
 const ROTACION_MS = 9000;
 
@@ -31,16 +32,7 @@ function Frailejon({ x, y, s, retraso }: { x: number; y: number; s: number; retr
     <g transform={`translate(${x} ${y}) scale(${s})`}>
       <path d="M-7 0 L-6 -110 L6 -110 L7 0 Z" fill="#5b4c3c" />
       <path d="M-7 -20 L7 -28 M-7 -50 L7 -58 M-7 -80 L7 -88" stroke="#776652" strokeWidth="3" />
-      <motion.g
-        animate={{ rotate: [-3, 3, -3] }}
-        transition={{
-          duration: 5 + retraso,
-          repeat: Infinity,
-          ease: 'easeInOut',
-          delay: retraso,
-        }}
-        style={{ originX: 0.5, originY: 1 }}
-      >
+      <g className="bucle bucle-frailejon" style={{ animationDuration: `${5 + retraso}s`, animationDelay: `${retraso}s` }}>
         {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((a) => (
           <ellipse key={a} cx="0" cy="-134" rx="8" ry="26" fill={a % 60 === 0 ? '#c3cdb0' : '#a7b593'} transform={`rotate(${a} 0 -120)`} />
         ))}
@@ -49,30 +41,21 @@ function Frailejon({ x, y, s, retraso }: { x: number; y: number; s: number; retr
         <circle cx="-12" cy="-178" r="7" fill="#e3c64a" />
         <circle cx="12" cy="-180" r="6" fill="#e8cf5c" />
         <circle cx="0" cy="-185" r="6.5" fill="#e3c64a" />
-      </motion.g>
+        </g>
     </g>
   );
 }
 
 function Nube({ y, s, duracion, retraso }: { y: number; s: number; duracion: number; retraso: number }) {
   return (
-    <motion.g
-      initial={{ x: -400 }}
-      animate={{ x: [-400, 2000] }}
-      transition={{
-        duration: duracion,
-        repeat: Infinity,
-        ease: 'linear',
-        delay: -retraso,
-      }}
-    >
+    <g className="bucle bucle-nube" style={{ animationDuration: `${duracion}s`, animationDelay: `${-retraso}s` }}>
       <g transform={`translate(0 ${y}) scale(${s})`} fill="#ffffff" opacity="0.85">
         <ellipse cx="0" cy="0" rx="90" ry="26" />
         <ellipse cx="-50" cy="8" rx="60" ry="18" />
         <ellipse cx="56" cy="6" rx="70" ry="20" />
         <ellipse cx="10" cy="-14" rx="46" ry="22" />
-      </g>
-    </motion.g>
+        </g>
+        </g>
   );
 }
 
@@ -157,6 +140,25 @@ export function ParamoVivo() {
     return () => clearInterval(t);
   }, []);
 
+  // Mientras la persona desplaza la página, los bucles de la escena se pausan
+  // y el scroll tiene todo el procesador; al detenerse siguen desde donde
+  // quedaron. Lo que responde al scroll (cámara, tarde, cóndor) no se pausa.
+  useEffect(() => {
+    const nodo = seccion.current;
+    if (!nodo) return;
+    let espera = 0;
+    const alDesplazar = () => {
+      nodo.classList.add('paramo-desplazando');
+      window.clearTimeout(espera);
+      espera = window.setTimeout(() => nodo.classList.remove('paramo-desplazando'), 160);
+    };
+    window.addEventListener('scroll', alDesplazar, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', alDesplazar);
+      window.clearTimeout(espera);
+    };
+  }, []);
+
   const mover = (e: PointerEvent<HTMLElement>) => {
     if (e.pointerType !== 'mouse') return;
     const r = e.currentTarget.getBoundingClientRect();
@@ -224,39 +226,20 @@ export function ParamoVivo() {
                     strokeLinecap="round"
                     opacity="0.8"
                   />
-                  <motion.g
-                    animate={{
-                      x: [0, 130, 260],
-                      y: [0, -80, -144],
-                      opacity: [0, 1, 0],
-                    }}
-                    transition={{
-                      duration: 24,
-                      repeat: Infinity,
-                      ease: 'linear',
-                    }}
-                  >
+                  <g className="bucle bucle-caminante">
                     <g transform="translate(1240 640)">
                       <circle cx="0" cy="-15" r="3" fill="#c89b78" />
                       <path d="M0 -12 L0 -4" stroke="#dceb6b" strokeWidth="5" strokeLinecap="round" />
                       <path d="M0 -4 L-2 2 M0 -4 L2 2" stroke="#1e312b" strokeWidth="2.5" strokeLinecap="round" />
-                    </g>
-                  </motion.g>
+                      </g>
+                      </g>
                 </Capa>
 
                 {/* Niebla que cruza a media altura */}
-                <motion.g
-                  animate={{ x: [-200, 200, -200] }}
-                  transition={{
-                    duration: 30,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  opacity="0.4"
-                >
+                <g className="bucle bucle-niebla" opacity="0.4">
                   <ellipse cx="400" cy="600" rx="420" ry="30" fill="#ffffff" />
                   <ellipse cx="1250" cy="570" rx="380" ry="24" fill="#ffffff" />
-                </motion.g>
+                  </g>
 
                 <Capa profundidad={20} px={px} py={py} scroll={scrollYProgress}>
                   <path d="M-100 660 C 200 600 420 640 640 630 C 900 618 1100 600 1320 620 C 1480 634 1600 620 1700 630 L1700 900 L-100 900 Z" fill="#6f8557" />
@@ -278,19 +261,14 @@ export function ParamoVivo() {
                   <ellipse cx="840" cy="700" rx="300" ry="46" fill="#3d5d3f" opacity="0.5" />
                   <ellipse cx="840" cy="694" rx="280" ry="38" fill="url(#pv-laguna)" />
                   {[0, 1, 2].map((i) => (
-                    <motion.path
+                    <path
                       key={i}
                       d={`M${700 + i * 90} ${684 + i * 8} h${60 - i * 10}`}
                       stroke="#e2eef0"
                       strokeWidth="3"
                       strokeLinecap="round"
-                      animate={{ opacity: [0.2, 0.8, 0.2], x: [0, 14, 0] }}
-                      transition={{
-                        duration: 4 + i,
-                        repeat: Infinity,
-                        ease: 'easeInOut',
-                        delay: i,
-                      }}
+                      className="bucle bucle-reflejo"
+                      style={{ animationDuration: `${4 + i}s`, animationDelay: `${i}s` } as CSSProperties}
                     />
                   ))}
                   <PatoParamo x={690} y={700} s={1.3} />
