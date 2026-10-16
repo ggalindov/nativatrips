@@ -1,0 +1,307 @@
+/*
+ * Animaciones en bucle del páramo vivo (fauna, frailejones, nubes, niebla).
+ * Van en CSS para que el navegador las ejecute sin JavaScript en cada cuadro
+ * y para poder pausarlas mientras la persona desplaza la página: así el
+ * scroll tiene todo el procesador y, al soltarlo, cada animal sigue desde
+ * donde quedó. Mismos tiempos y curvas que tenían con motion.
+ *
+ * Las transformaciones se miden sobre la caja de cada figura (fill-box), y
+ * los px equivalen a unidades del dibujo SVG.
+ */
+.bucle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.paramo-desplazando .bucle {
+  animation-play-state: paused;
+}
+
+/* Patas: oscilan desde la cadera. --fase es 1 o -1. */
+.bucle-pata {
+  transform-origin: 50% 0%;
+  animation-name: pata;
+}
+@keyframes pata {
+  0%,
+  100% {
+    transform: rotate(calc(var(--fase) * 14deg));
+  }
+  50% {
+    transform: rotate(calc(var(--fase) * -14deg));
+  }
+}
+
+/* Venado: camina por la loma, se detiene, da la vuelta y regresa. */
+.bucle-venado {
+  animation: venado 20s ease-in-out infinite;
+}
+@keyframes venado {
+  0% {
+    transform: translateX(0) scaleX(1);
+  }
+  30%,
+  55% {
+    transform: translateX(120px) scaleX(1);
+  }
+  58% {
+    transform: translateX(120px) scaleX(-1);
+  }
+  90% {
+    transform: translateX(0) scaleX(-1);
+  }
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+/* Cuello del venado: se agacha a pastar. */
+.bucle-venado-cabeza {
+  transform-origin: 12% 94%;
+  animation: venado-cabeza 20s ease-in-out infinite;
+}
+@keyframes venado-cabeza {
+  0%,
+  32%,
+  55%,
+  100% {
+    transform: rotate(0deg);
+  }
+  37%,
+  50% {
+    transform: rotate(52deg);
+  }
+  44% {
+    transform: rotate(46deg);
+  }
+}
+
+/* Oso andino: sale de los arbustos y vuelve. */
+.bucle-oso {
+  animation: oso 16s ease-in-out infinite;
+}
+@keyframes oso {
+  0%,
+  76%,
+  100% {
+    transform: translateX(70px);
+  }
+  16%,
+  40%,
+  60% {
+    transform: translateX(0);
+  }
+}
+
+/* Cabeza del oso: mira alrededor. */
+.bucle-oso-cabeza {
+  transform-origin: 80% 70%;
+  animation: oso-cabeza 16s ease-in-out infinite;
+}
+@keyframes oso-cabeza {
+  0%,
+  18%,
+  44%,
+  100% {
+    transform: rotate(0deg);
+  }
+  26% {
+    transform: rotate(-10deg);
+  }
+  36% {
+    transform: rotate(8deg);
+  }
+}
+
+/* Cóndor: grandes arcos de --ancho por --alto unidades, inclinándose en las vueltas. */
+.bucle-condor {
+  animation: condor 30s ease-in-out infinite;
+}
+@keyframes condor {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(calc(var(--ancho) * 0.5px), calc(var(--alto) * -1px)) rotate(-4deg);
+  }
+  50% {
+    transform: translate(calc(var(--ancho) * 1px), calc(var(--alto) * 0.2px)) rotate(0deg);
+  }
+  75% {
+    transform: translate(calc(var(--ancho) * 0.5px), calc(var(--alto) * 1px)) rotate(5deg);
+  }
+}
+
+.bucle-alas {
+  animation: alas 4s ease-in-out infinite;
+}
+@keyframes alas {
+  50% {
+    transform: scaleY(0.8);
+  }
+}
+
+/* Colibrí: el recorrido entre flores se genera en el componente; aquí el aleteo. */
+.bucle-colibri-vuelo {
+  animation: colibri-vuelo 0.6s ease-in-out infinite;
+}
+@keyframes colibri-vuelo {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.bucle-colibri-ala {
+  transform-origin: 50% 100%;
+  animation: colibri-ala 0.09s ease-in-out infinite;
+}
+@keyframes colibri-ala {
+  50% {
+    transform: scaleY(0.15);
+  }
+}
+
+/* Pato: nada de un lado a otro de la laguna. */
+.bucle-pato {
+  animation: pato 24s ease-in-out infinite;
+}
+@keyframes pato {
+  0%,
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+  46% {
+    transform: translateX(200px) scaleX(1);
+  }
+  50% {
+    transform: translateX(200px) scaleX(-1);
+  }
+  96% {
+    transform: translateX(0) scaleX(-1);
+  }
+}
+
+.bucle-pato-estela {
+  animation: pato-estela 2s ease-in-out infinite;
+}
+@keyframes pato-estela {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.2;
+    transform: translateX(-6px);
+  }
+}
+
+.bucle-pato-flota {
+  animation: pato-flota 1.8s ease-in-out infinite;
+}
+@keyframes pato-flota {
+  50% {
+    transform: translateY(1.5px);
+  }
+}
+
+/* Rana: salta de un lado a otro de su roca. */
+.bucle-rana {
+  animation: rana 9s ease-in-out infinite;
+}
+@keyframes rana {
+  0%,
+  40%,
+  100% {
+    transform: translate(-8px, 0);
+  }
+  45%,
+  95% {
+    transform: translate(4px, -26px);
+  }
+  50%,
+  90% {
+    transform: translate(14px, 0);
+  }
+}
+
+/* Frailejón: se mece con el viento desde la base. */
+.bucle-frailejon {
+  transform-origin: 50% 100%;
+  animation-name: frailejon;
+}
+@keyframes frailejon {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Nubes: cruzan el cielo de izquierda a derecha. */
+.bucle-nube {
+  animation-name: nube;
+  animation-timing-function: linear;
+}
+@keyframes nube {
+  from {
+    transform: translateX(-400px);
+  }
+  to {
+    transform: translateX(2000px);
+  }
+}
+
+/* Persona que sube por el sendero lejano. */
+.bucle-caminante {
+  animation: caminante 24s linear infinite;
+}
+@keyframes caminante {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(130px, -80px);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(260px, -144px);
+    opacity: 0;
+  }
+}
+
+/* Niebla que cruza a media altura. */
+.bucle-niebla {
+  animation: niebla 30s ease-in-out infinite;
+}
+@keyframes niebla {
+  0%,
+  100% {
+    transform: translateX(-200px);
+  }
+  50% {
+    transform: translateX(200px);
+  }
+}
+
+/* Reflejos sobre la laguna. */
+.bucle-reflejo {
+  animation-name: reflejo;
+}
+@keyframes reflejo {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(14px);
+  }
+}

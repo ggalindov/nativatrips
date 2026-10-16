@@ -115,8 +115,9 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Los bucles del páramo vivo quedan fuera: la fauna es el contenido de la portada. */
   @media (prefers-reduced-motion: reduce) {
-    *,
+    *:not(.bucle),
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
