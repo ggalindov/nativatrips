@@ -1,0 +1,63 @@
+# Revisión semanal de dependencias. Las actualizaciones menores y de parche llegan en un solo PR
+# por ecosistema; las mayores llegan por separado para revisarlas con calma. Java 21 y
+# PostgreSQL 16 son versiones fijas del proyecto: no se proponen saltos mayores de las imágenes.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build(deps)
+    groups:
+      backend-menores:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build(deps)
+    groups:
+      frontend-menores:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: America/Bogota
+    commit-message:
+      prefix: ci(deps)
+    groups:
+      acciones:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: America/Bogota
+    commit-message:
+      prefix: build(deps)
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: America/Bogota
+    commit-message:
+      prefix: build(deps)
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
