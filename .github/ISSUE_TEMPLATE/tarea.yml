@@ -1,0 +1,30 @@
+name: Tarea técnica
+description: Trabajo de infraestructura, integración continua, deuda técnica o documentación
+labels: ["tarea"]
+body:
+  - type: textarea
+    id: que
+    attributes:
+      label: Qué hay que hacer
+    validations:
+      required: true
+  - type: textarea
+    id: por-que
+    attributes:
+      label: Por qué
+    validations:
+      required: true
+  - type: textarea
+    id: terminado
+    attributes:
+      label: Cuándo está terminada
+      description: Evidencia que demuestra que se cumplió.
+      placeholder: |
+        - [ ] ...
+    validations:
+      required: true
+  - type: input
+    id: jira
+    attributes:
+      label: Incidencia en Jira
+      placeholder: NAT-
