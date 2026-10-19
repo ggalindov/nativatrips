@@ -51,6 +51,14 @@ anthropic:
   base-url: ${ANTHROPIC_BASE_URL:https://api.anthropic.com}
   max-tokens: ${ANTHROPIC_MAX_TOKENS:1024}
 
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:true}
+    path: /swagger-ui.html
+  paths-to-match: /api/**
+
 management:
   endpoints:
     web:

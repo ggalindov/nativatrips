@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
+                        // Contrato OpenAPI y Swagger UI: se apagan en produccion con SPRINGDOC_ENABLED=false.
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/senderos/**").permitAll() // RF-01/02: catalogo publico
                         // Webhook de PayU: no puede enviar JWT: la autenticidad se valida con la
                         // firma MD5 de PayU dentro de PagoService, no con Spring Security.
