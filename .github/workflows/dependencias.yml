@@ -1,0 +1,42 @@
+name: Dependencias
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  revision:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Falla si el PR agrega una dependencia con una vulnerabilidad alta o crítica conocida.
+      - name: Revisar dependencias nuevas
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: never
+
+  auditoria-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Solo las dependencias que llegan al navegador del turista; las de desarrollo las vigila Dependabot.
+      - name: Auditar dependencias de producción
+        run: npm audit --omit=dev --audit-level=high
