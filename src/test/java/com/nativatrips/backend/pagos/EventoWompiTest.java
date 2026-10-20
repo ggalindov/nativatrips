@@ -119,6 +119,8 @@ class EventoWompiTest {
                 .hasSize(1);
         assertThat(eventoRepository.findByPagoId(pagoRepository.findByReferenciaPayu(referencia).orElseThrow().getId()))
                 .hasSize(1);
+        verify(notificacionService, org.mockito.Mockito.times(1))
+                .enviarCorreo(eq(correo), org.mockito.ArgumentMatchers.startsWith("Comprobante de pago"), anyString());
     }
 
     @Test
