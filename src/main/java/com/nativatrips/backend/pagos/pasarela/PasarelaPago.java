@@ -1,6 +1,7 @@
 package com.nativatrips.backend.pagos.pasarela;
 
 import com.nativatrips.backend.pagos.model.Pago;
+import java.time.Instant;
 
 /**
  * ADR-005: lo que cambia de una pasarela a otra. PagoService no conoce a PayU ni a Wompi; cada
@@ -8,6 +9,10 @@ import com.nativatrips.backend.pagos.model.Pago;
  */
 public interface PasarelaPago {
 
-    /** Datos para llevar al turista al checkout por el monto del pago. */
-    CheckoutPago prepararCheckout(Pago pago, String descripcion, String correoComprador);
+    /**
+     * Datos para llevar al turista al checkout por el monto del pago.
+     *
+     * @param venceEn hasta cuando se puede pagar: el vencimiento del apartado del cupo.
+     */
+    CheckoutPago prepararCheckout(Pago pago, Instant venceEn, String correoComprador);
 }

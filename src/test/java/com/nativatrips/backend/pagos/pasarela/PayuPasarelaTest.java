@@ -6,16 +6,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.config.PayuProperties;
 import com.nativatrips.backend.pagos.dto.ConfirmacionPayuPayload;
-import com.nativatrips.backend.pagos.dto.IniciarPagoResponse;
 import com.nativatrips.backend.pagos.model.EstadoPago;
-import com.nativatrips.backend.pagos.model.Pago;
 import com.nativatrips.backend.pagos.service.PayuSignatureService;
-import java.math.BigDecimal;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/** El adaptador de PayU firma el formulario y solo entrega resultados con firma valida. */
+/** El webhook de PayU solo entrega resultados con firma valida (hasta que se retire PayU). */
 class PayuPasarelaTest {
 
     private PayuSignatureService signatureService;
@@ -31,20 +27,7 @@ class PayuPasarelaTest {
         propiedades.setTestMode(true);
         propiedades.setCheckoutUrlSandbox("https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/");
         signatureService = new PayuSignatureService(propiedades);
-        pasarela = new PayuPasarela(signatureService, propiedades);
-    }
-
-    @Test
-    void elCheckoutLlevaElMontoYLaFirmaDelPago() {
-        Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("150000"), "COP");
-
-        IniciarPagoResponse checkout = (IniciarPagoResponse) pasarela.prepararCheckout(pago, "Reserva", "turista@example.com");
-
-        assertThat(checkout.amount()).isEqualTo("150000.0");
-        assertThat(checkout.merchantId()).isEqualTo("508029");
-        assertThat(checkout.signature()).isEqualTo(signatureService.generarFirmaSolicitud("REF-1", new BigDecimal("150000"), "COP"));
-        assertThat(checkout.checkoutUrl()).isEqualTo("https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/");
-        assertThat(checkout.test()).isEqualTo("1");
+        pasarela = new PayuPasarela(signatureService);
     }
 
     @Test

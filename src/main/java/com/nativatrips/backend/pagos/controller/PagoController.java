@@ -17,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,6 +38,13 @@ public class PagoController {
     @PreAuthorize("hasRole('TURISTA')")
     public CheckoutPago iniciarPago(@PathVariable UUID id, @AuthenticationPrincipal AuthenticatedUser principal) {
         return pagoService.iniciarPago(id, principal.id(), principal.email());
+    }
+
+    /** HU-03: pago del total desde el enlace magico (cabecera X-Enlace-Reserva, como en mi reserva). */
+    @PostMapping("/api/v1/mi-reserva/pago")
+    public CheckoutPago iniciarPagoConEnlace(
+            @RequestHeader(value = "X-Enlace-Reserva", required = false) String token, HttpServletRequest request) {
+        return pagoService.iniciarPagoConEnlace(token, request.getRemoteAddr());
     }
 
     @GetMapping("/api/v1/reservas/{id}/pago")
