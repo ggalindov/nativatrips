@@ -52,7 +52,7 @@ class AvisosDePagoTest {
                 new TitularReserva("Laura Gomez", TipoDocumento.CC, "1020304050", "CO", "laura@example.com", "57", "3001234567"));
         ReflectionTestUtils.setField(reserva, "id", UUID.randomUUID());
         pago = new Pago(reserva.getId(), "NT-7Q4KX2-ABCD1234", new BigDecimal("135000"), "COP");
-        pago.setTransactionIdPayu("1234-1610641025-49201");
+        pago.setTransaccionId("1234-1610641025-49201");
     }
 
     @Test

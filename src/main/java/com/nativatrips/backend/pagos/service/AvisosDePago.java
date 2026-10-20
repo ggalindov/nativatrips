@@ -59,8 +59,8 @@ class AvisosDePago {
                         + (punto == null ? "" : "Punto de encuentro: " + punto + "\n")
                         + "Personas: " + reserva.getCantidadPersonas() + "\n"
                         + "Valor pagado: " + pesos(pago) + "\n"
-                        + "Transaccion Wompi: " + pago.getTransactionIdPayu() + "\n"
-                        + "Referencia: " + pago.getReferenciaPayu() + "\n"
+                        + "Transaccion Wompi: " + pago.getTransaccionId() + "\n"
+                        + "Referencia: " + pago.getReferencia() + "\n"
                         + "Fecha del pago: " + FECHA_Y_HORA.format(aprobadoEn) + " (hora de Colombia)\n\n"
                         + "Este correo es tu comprobante. No hay reembolsos; si necesitas cambiar la fecha, solicita la"
                         + " reprogramacion desde el enlace de tu reserva.");

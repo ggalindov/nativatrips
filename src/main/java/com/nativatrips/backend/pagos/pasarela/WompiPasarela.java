@@ -39,13 +39,13 @@ public class WompiPasarela implements PasarelaPago {
         long montoEnCentavos = enCentavos(pago.getMonto());
         String expiracion = DateTimeFormatter.ISO_INSTANT.format(venceEn.truncatedTo(ChronoUnit.MILLIS));
         String firma = FirmasWompi.integridad(
-                pago.getReferenciaPayu(), montoEnCentavos, pago.getMoneda(), expiracion, propiedades.getSecretoIntegridad());
+                pago.getReferencia(), montoEnCentavos, pago.getMoneda(), expiracion, propiedades.getSecretoIntegridad());
 
         UriComponentsBuilder url = UriComponentsBuilder.fromUriString(propiedades.getUrlCheckout())
                 .queryParam("public-key", propiedades.getLlavePublica())
                 .queryParam("currency", pago.getMoneda())
                 .queryParam("amount-in-cents", montoEnCentavos)
-                .queryParam("reference", pago.getReferenciaPayu())
+                .queryParam("reference", pago.getReferencia())
                 .queryParam("signature:integrity", firma)
                 .queryParam("expiration-time", expiracion)
                 .queryParam("redirect-url", urlRedireccion);
@@ -56,7 +56,7 @@ public class WompiPasarela implements PasarelaPago {
         return new CheckoutWompi(
                 url.encode().build().toUriString(),
                 propiedades.getLlavePublica(),
-                pago.getReferenciaPayu(),
+                pago.getReferencia(),
                 montoEnCentavos,
                 pago.getMoneda(),
                 firma,

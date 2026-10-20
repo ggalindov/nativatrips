@@ -4,7 +4,7 @@ import com.nativatrips.backend.pagos.model.Pago;
 import java.time.Instant;
 
 /**
- * ADR-005: lo que cambia de una pasarela a otra. PagoService no conoce a PayU ni a Wompi; cada
+ * ADR-005: lo que cambia de una pasarela a otra. PagoService no conoce a la pasarela; cada
  * adaptador arma su checkout y verifica la firma de sus eventos antes de entregar un ResultadoPago.
  */
 public interface PasarelaPago {

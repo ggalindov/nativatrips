@@ -9,7 +9,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.nativatrips.backend.common.exception.BusinessRuleException;
-import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.config.WompiProperties;
 import com.nativatrips.backend.pagos.model.EstadoPago;
 import com.nativatrips.backend.pagos.model.Pago;
@@ -21,7 +20,6 @@ import com.nativatrips.backend.pagos.repository.PagoEstadoHistorialRepository;
 import com.nativatrips.backend.pagos.repository.PagoRepository;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.Reserva;
-import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
 import com.nativatrips.backend.reservas.service.EnlaceReservaService;
 import com.nativatrips.backend.reservas.service.ReservaService;
@@ -81,60 +79,45 @@ class PagoServiceTest {
     }
 
     @Test
-    void iniciarPagoRechazaSiLaReservaNoEstaPendienteDePago() {
-        UUID turistaId = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, turistaId, LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
+    void pagarRechazaSiLaReservaNoEstaPendienteDePago() {
+        Reserva reserva = reservaSinCuenta(2, Instant.now().plusSeconds(900));
         reserva.setEstado(EstadoReserva.CONFIRMADA);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+        given(enlaceService.abrir("token", "PAGAR", "190.1.1.1")).willReturn(reserva);
 
-        assertThatThrownBy(() -> pagoService.iniciarPago(reservaId, turistaId, "turista@example.com"))
+        assertThatThrownBy(() -> pagoService.iniciarPagoConEnlace("token", "190.1.1.1"))
                 .isInstanceOf(BusinessRuleException.class);
         verify(pagoRepository, never()).save(any());
     }
 
     @Test
-    void iniciarPagoRechazaSiElBloqueoTemporalYaVencio() {
-        UUID turistaId = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, turistaId, LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR,
-                Instant.now().minusSeconds(60));
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+    void pagarRechazaSiElApartadoDelCupoYaVencio() {
+        given(enlaceService.abrir("token", "PAGAR", "190.1.1.1")).willReturn(reservaSinCuenta(2, Instant.now().minusSeconds(60)));
 
-        assertThatThrownBy(() -> pagoService.iniciarPago(reservaId, turistaId, "turista@example.com"))
+        assertThatThrownBy(() -> pagoService.iniciarPagoConEnlace("token", "190.1.1.1"))
                 .isInstanceOf(BusinessRuleException.class);
+        verify(pagoRepository, never()).save(any());
     }
 
     @Test
-    void iniciarPagoRechazaReservaDeOtroUsuario() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR,
-                Instant.now().plusSeconds(900));
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+    void sinUnEnlaceValidoNoSeArmaElCobro() {
+        given(enlaceService.abrir("falso", "PAGAR", "190.1.1.1"))
+                .willThrow(new BusinessRuleException(org.springframework.http.HttpStatus.NOT_FOUND, "enlace invalido"));
 
-        assertThatThrownBy(() -> pagoService.iniciarPago(reservaId, UUID.randomUUID(), "otro@example.com"))
-                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> pagoService.iniciarPagoConEnlace("falso", "190.1.1.1"))
+                .isInstanceOf(BusinessRuleException.class);
+        verify(pasarela, never()).prepararCheckout(any(), any(), any());
     }
 
     @Test
-    void iniciarPagoCreaUnPagoNuevoYCalculaElMontoDesdeElSendero() {
-        UUID turistaId = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, turistaId, LocalDate.now().plusDays(1), 3, TipoGrupo.ESTANDAR,
-                Instant.now().plusSeconds(900));
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-        given(pagoRepository.findFirstByReservaIdAndEstadoOrderByCreatedAtDesc(reservaId, EstadoPago.PENDIENTE))
+    void pagarCreaUnPagoPorElTotalYLoCobraAlCorreoDelTitular() {
+        Reserva reserva = reservaSinCuenta(3, Instant.now().plusSeconds(900));
+        given(enlaceService.abrir("token", "PAGAR", "190.1.1.1")).willReturn(reserva);
+        given(pagoRepository.findFirstByReservaIdAndEstadoOrderByCreatedAtDesc(reserva.getId(), EstadoPago.PENDIENTE))
                 .willReturn(Optional.empty());
-
         Sendero sendero = new Sendero(
                 "Sendero", null, NivelDificultad.FACIL, 60, "ECOTURISMO", null, new BigDecimal("50000"));
         ReflectionTestUtils.setField(sendero, "id", 1L);
         given(senderoRepository.findById(1L)).willReturn(Optional.of(sendero));
-
         given(pagoRepository.save(any())).willAnswer(invocation -> {
             Pago pago = invocation.getArgument(0);
             ReflectionTestUtils.setField(pago, "id", UUID.randomUUID());
@@ -143,14 +126,27 @@ class PagoServiceTest {
         CheckoutPago checkout = new CheckoutPago() { };
         given(pasarela.prepararCheckout(any(), any(), anyString())).willReturn(checkout);
 
-        CheckoutPago response = pagoService.iniciarPago(reservaId, turistaId, "turista@example.com");
+        CheckoutPago response = pagoService.iniciarPagoConEnlace("token", "190.1.1.1");
 
         assertThat(response).isSameAs(checkout);
         ArgumentCaptor<Pago> pago = ArgumentCaptor.forClass(Pago.class);
-        verify(pasarela).prepararCheckout(pago.capture(), org.mockito.ArgumentMatchers.eq(reserva.getBloqueoExpiraEn()), org.mockito.ArgumentMatchers.eq("turista@example.com"));
-        assertThat(pago.getValue().getMoneda()).isEqualTo("COP");
+        verify(pasarela).prepararCheckout(
+                pago.capture(),
+                org.mockito.ArgumentMatchers.eq(reserva.getBloqueoExpiraEn()),
+                org.mockito.ArgumentMatchers.eq("laura@example.com"));
         assertThat(pago.getValue().getMonto()).isEqualByComparingTo("150000");
+        assertThat(pago.getValue().getMoneda()).isEqualTo("COP");
+        assertThat(pago.getValue().getReferencia()).startsWith("NT-7Q4KX2-");
         verify(historialRepository).save(any());
+    }
+
+    private static Reserva reservaSinCuenta(int personas, Instant venceEn) {
+        Reserva reserva = Reserva.sinCuenta(1L, LocalDate.now().plusDays(1), personas, venceEn, "NT-7Q4KX2",
+                new com.nativatrips.backend.reservas.model.TitularReserva("Laura Gomez",
+                        com.nativatrips.backend.reservas.model.TipoDocumento.CC, "1020304050", "CO", "laura@example.com",
+                        "57", "3001234567"));
+        ReflectionTestUtils.setField(reserva, "id", UUID.randomUUID());
+        return reserva;
     }
 
     @Test

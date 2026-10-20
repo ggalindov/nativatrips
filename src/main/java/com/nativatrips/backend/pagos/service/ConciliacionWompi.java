@@ -51,9 +51,9 @@ class ConciliacionWompi implements ConciliacionPago {
         for (Pago pago : pendientes) {
             List<ClienteWompi.Transaccion> transacciones;
             try {
-                transacciones = clienteWompi.transaccionesPorReferencia(pago.getReferenciaPayu());
+                transacciones = clienteWompi.transaccionesPorReferencia(pago.getReferencia());
             } catch (RestClientException ex) {
-                log.warn("Wompi no respondio la consulta de la referencia {}", pago.getReferenciaPayu(), ex);
+                log.warn("Wompi no respondio la consulta de la referencia {}", pago.getReferencia(), ex);
                 return Resultado.SIN_RESPUESTA;
             }
             for (ClienteWompi.Transaccion t : transacciones) {

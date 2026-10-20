@@ -83,15 +83,6 @@ public class PagoService {
         this.avisos = avisos;
     }
 
-    /** RF-06: datos para llevar al turista al checkout de la pasarela por el total de la reserva. */
-    @Transactional
-    public CheckoutPago iniciarPago(UUID reservaId, UUID turistaId, String buyerEmail) {
-        Reserva reserva = reservaRepository.findById(reservaId)
-                .filter(r -> turistaId.equals(r.getTuristaId()))
-                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
-        return checkout(reserva, buyerEmail);
-    }
-
     /** HU-03 y HU-18: el titular paga el total desde el enlace magico de su reserva, sin cuenta. */
     @Transactional(noRollbackFor = BusinessRuleException.class)
     public CheckoutPago iniciarPagoConEnlace(String token, String ip) {
@@ -165,7 +156,7 @@ public class PagoService {
         EstadoPago nuevoEstado = resultado.estado();
         EstadoPago anterior = pago.getEstado();
         pago.setEstado(nuevoEstado);
-        pago.setTransactionIdPayu(resultado.transaccionId());
+        pago.setTransaccionId(resultado.transaccionId());
         pago.setRespuestaConfirmacion(resultado.respuestaCruda());
 
         historialRepository.save(new PagoEstadoHistorial(pago.getId(), anterior, nuevoEstado, resultado.detalle()));
@@ -206,15 +197,11 @@ public class PagoService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public Optional<PagoResponse> obtenerUltimoPago(UUID reservaId, UUID turistaId) {
-        boolean esDelTurista = reservaRepository.findById(reservaId)
-                .filter(r -> turistaId.equals(r.getTuristaId()))
-                .isPresent();
-        if (!esDelTurista) {
-            throw new ResourceNotFoundException("Reserva no encontrada");
-        }
-        return pagoRepository.findByReservaIdOrderByCreatedAtDesc(reservaId).stream()
+    /** El titular consulta el estado de su ultimo pago desde el enlace (p. ej. al volver de Wompi). */
+    @Transactional(noRollbackFor = BusinessRuleException.class)
+    public Optional<PagoResponse> ultimoPagoConEnlace(String token, String ip) {
+        Reserva reserva = enlaceService.abrir(token, "CONSULTAR_PAGO", ip);
+        return pagoRepository.findByReservaIdOrderByCreatedAtDesc(reserva.getId()).stream()
                 .findFirst()
                 .map(PagoResponse::from);
     }
