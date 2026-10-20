@@ -3,18 +3,23 @@ package com.nativatrips.backend.reservas.service;
 import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
 import com.nativatrips.backend.capacidad.service.CapacidadService;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
+import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.reservas.dto.HistorialEntradaResponse;
 import com.nativatrips.backend.reservas.dto.IntegranteResponse;
+import com.nativatrips.backend.reservas.dto.ReservaApartadaResponse;
 import com.nativatrips.backend.reservas.dto.ReservaRequest;
 import com.nativatrips.backend.reservas.dto.ReservaResponse;
+import com.nativatrips.backend.reservas.dto.ReservaSinCuentaRequest;
+import com.nativatrips.backend.reservas.dto.TitularRequest;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.OrigenCambioEstado;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.model.ReservaEstadoHistorial;
 import com.nativatrips.backend.reservas.model.ReservaIntegrante;
 import com.nativatrips.backend.reservas.model.TipoGrupo;
+import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
 import com.nativatrips.backend.reservas.repository.ReservaIntegranteRepository;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
@@ -25,8 +30,10 @@ import com.nativatrips.backend.usuarios.model.Usuario;
 import com.nativatrips.backend.usuarios.repository.UsuarioRepository;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -41,6 +48,9 @@ public class ReservaService {
 
     /** Tiempo que se retiene el cupo mientras el turista completa el pago (RF-05). */
     static final long BLOQUEO_MINUTOS = 15;
+
+    private static final DateTimeFormatter HORA =
+            DateTimeFormatter.ofPattern("HH:mm").withZone(RelojConfig.ZONA_OPERACION);
 
     /** RF-08/RF-09: estos tipos de grupo no pasan directo a pago, requieren aprobacion del administrador. */
     private static final List<TipoGrupo> TIPOS_QUE_REQUIEREN_REVISION =
@@ -57,6 +67,7 @@ public class ReservaService {
     private final UsuarioRepository usuarioRepository;
     private final CapacidadService capacidadService;
     private final NotificacionService notificacionService;
+    private final GeneradorCodigoReserva generadorCodigo;
 
     public ReservaService(
             ReservaRepository reservaRepository,
@@ -65,7 +76,8 @@ public class ReservaService {
             SenderoRepository senderoRepository,
             UsuarioRepository usuarioRepository,
             CapacidadService capacidadService,
-            NotificacionService notificacionService) {
+            NotificacionService notificacionService,
+            GeneradorCodigoReserva generadorCodigo) {
         this.reservaRepository = reservaRepository;
         this.reservaIntegranteRepository = reservaIntegranteRepository;
         this.historialRepository = historialRepository;
@@ -73,21 +85,13 @@ public class ReservaService {
         this.usuarioRepository = usuarioRepository;
         this.capacidadService = capacidadService;
         this.notificacionService = notificacionService;
+        this.generadorCodigo = generadorCodigo;
     }
 
     @Transactional
     public ReservaResponse crearReserva(ReservaRequest request, UUID turistaId) {
-        Sendero sendero = senderoRepository.findById(request.senderoId())
-                .filter(Sendero::isActivo)
-                .orElseThrow(() -> new ResourceNotFoundException("Sendero no encontrado"));
-
         int cantidadPersonas = request.integrantes().size();
-        capacidadService.verificarVentanaDeReserva(request.fechaTour());
-        // El bloqueo va antes de contar la ocupacion; sin el, dos reservas simultaneas ven la misma
-        // ocupacion y ambas pasan (BUG-01).
-        capacidadService.bloquearCapacidadDelDia(sendero.getId(), request.fechaTour());
-        int ocupacionActual = ocupacionActual(sendero.getId(), request.fechaTour());
-        capacidadService.verificarCupoSuficiente(sendero.getId(), request.fechaTour(), ocupacionActual, cantidadPersonas);
+        Sendero sendero = apartarCupo(request.senderoId(), request.fechaTour(), cantidadPersonas);
 
         boolean requiereRevision = TIPOS_QUE_REQUIEREN_REVISION.contains(request.tipoGrupo());
         Instant bloqueoExpiraEn = requiereRevision ? null : Instant.now().plus(BLOQUEO_MINUTOS, ChronoUnit.MINUTES);
@@ -116,6 +120,91 @@ public class ReservaService {
         }
 
         return ReservaResponse.from(reservaGuardada, integrantes.stream().map(IntegranteResponse::from).toList());
+    }
+
+    /**
+     * HU-02 (ADR-004): reserva sin cuenta. Aparta el cupo con el mismo bloqueo que la reserva con
+     * cuenta y envia el codigo al correo del titular; los acompanantes se agregan despues.
+     */
+    @Transactional
+    public ReservaApartadaResponse crearReservaSinCuenta(ReservaSinCuentaRequest request) {
+        TitularRequest datos = request.titular();
+        validarDocumentoYCelular(datos);
+        Sendero sendero = apartarCupo(request.senderoId(), request.fechaTour(), request.personas());
+
+        TitularReserva titular = new TitularReserva(
+                datos.nombre().trim(), datos.tipoDocumento(), datos.documento().trim(), datos.nacionalidad(),
+                datos.correo().trim().toLowerCase(Locale.ROOT), datos.indicativo(), datos.celular());
+        Reserva reserva = reservaRepository.save(Reserva.sinCuenta(
+                sendero.getId(),
+                request.fechaTour(),
+                request.personas(),
+                Instant.now().plus(BLOQUEO_MINUTOS, ChronoUnit.MINUTES),
+                codigoNuevo(),
+                titular));
+
+        reservaIntegranteRepository.save(
+                new ReservaIntegrante(reserva.getId(), titular.getNombre(), titular.getDocumento()));
+        historialRepository.save(new ReservaEstadoHistorial(
+                reserva.getId(), null, EstadoReserva.PENDIENTE_PAGO, "Reserva sin cuenta creada, pendiente de pago",
+                OrigenCambioEstado.TURISTA, null));
+
+        notificarCupoApartado(reserva, sendero);
+        return ReservaApartadaResponse.from(reserva);
+    }
+
+    /** El sendero existe y esta activo, la fecha esta en la ventana y alcanza el cupo del dia. */
+    private Sendero apartarCupo(Long senderoId, LocalDate fecha, int personas) {
+        Sendero sendero = senderoRepository.findById(senderoId)
+                .filter(Sendero::isActivo)
+                .orElseThrow(() -> new ResourceNotFoundException("Sendero no encontrado"));
+
+        capacidadService.verificarVentanaDeReserva(fecha);
+        // El bloqueo va antes de contar la ocupacion; sin el, dos reservas simultaneas ven la misma
+        // ocupacion y ambas pasan (BUG-01).
+        capacidadService.bloquearCapacidadDelDia(sendero.getId(), fecha);
+        int ocupacionActual = ocupacionActual(sendero.getId(), fecha);
+        capacidadService.verificarCupoSuficiente(sendero.getId(), fecha, ocupacionActual, personas);
+        return sendero;
+    }
+
+    /** Las mismas reglas del formulario: el documento depende de la nacionalidad y el celular del indicativo. */
+    private static void validarDocumentoYCelular(TitularRequest titular) {
+        boolean colombiano = "CO".equals(titular.nacionalidad());
+        if (titular.tipoDocumento().esNacional() != colombiano) {
+            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, colombiano
+                    ? "Para colombianos el documento debe ser cedula o tarjeta de identidad"
+                    : "Para extranjeros el documento debe ser pasaporte, cedula de extranjeria, PPT o DNI");
+        }
+        if (!titular.tipoDocumento().esAlfanumerico() && !titular.documento().matches("\\d{5,12}")) {
+            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "El numero de documento debe tener solo digitos");
+        }
+        if ("57".equals(titular.indicativo()) && !titular.celular().matches("3\\d{9}")) {
+            throw new BusinessRuleException(
+                    HttpStatus.BAD_REQUEST, "El celular colombiano debe tener 10 digitos y empezar por 3");
+        }
+    }
+
+    /** Un choque es casi imposible (887 millones de codigos), pero se reintenta en vez de fallar. */
+    private String codigoNuevo() {
+        for (int intento = 0; intento < 5; intento++) {
+            String codigo = generadorCodigo.generar();
+            if (!reservaRepository.existsByCodigoReserva(codigo)) {
+                return codigo;
+            }
+        }
+        throw new IllegalStateException("No se pudo generar un codigo de reserva unico");
+    }
+
+    private void notificarCupoApartado(Reserva reserva, Sendero sendero) {
+        String venceA = HORA.format(reserva.getBloqueoExpiraEn());
+        notificacionService.enviarCorreo(
+                reserva.getTitular().getCorreo(),
+                "Tu cupo esta apartado - NativaTrips " + reserva.getCodigoReserva(),
+                "Hola " + reserva.getTitular().getNombre() + ". Apartamos " + reserva.getCantidadPersonas()
+                        + " cupo(s) en " + sendero.getNombre() + " para el " + reserva.getFechaTour()
+                        + ". Tu codigo de reserva es " + reserva.getCodigoReserva()
+                        + ". El cupo se guarda hasta las " + venceA + " (hora de Colombia) mientras completas el pago.");
     }
 
     /**
