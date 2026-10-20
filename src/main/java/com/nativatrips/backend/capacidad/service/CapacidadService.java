@@ -3,6 +3,7 @@ package com.nativatrips.backend.capacidad.service;
 import com.nativatrips.backend.capacidad.dto.CapacidadDiaRequest;
 import com.nativatrips.backend.capacidad.dto.CapacidadDiaResponse;
 import com.nativatrips.backend.capacidad.dto.CargaCapacidadRequest;
+import com.nativatrips.backend.capacidad.dto.DiaCalendarioResponse;
 import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
 import com.nativatrips.backend.capacidad.model.CapacidadDia;
 import com.nativatrips.backend.capacidad.repository.CapacidadDiaRepository;
@@ -17,6 +18,9 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -33,6 +37,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class CapacidadService {
 
     static final short UMBRAL_ALERTA_POR_DEFECTO = 80;
+
+    /** Dias que puede pedir el calendario publico de un sendero en una consulta. */
+    public static final int MAX_DIAS_CALENDARIO = 21;
 
     private final CapacidadDiaRepository capacidadDiaRepository;
     private final SenderoRepository senderoRepository;
@@ -115,6 +122,42 @@ public class CapacidadService {
             guardado = existente;
         }
         return CapacidadDiaResponse.from(guardado, ocupacion);
+    }
+
+    /**
+     * Calendario publico de un sendero (HU-01): cada dia dice si tiene capacidad publicada, cuantos
+     * cupos quedan y si hoy se puede reservar. Los dias sin capacidad aparecen como no publicados.
+     */
+    @Transactional(readOnly = true)
+    public List<DiaCalendarioResponse> calendario(Long senderoId, LocalDate desde, int dias) {
+        if (dias < 1 || dias > MAX_DIAS_CALENDARIO) {
+            throw new BusinessRuleException(
+                    HttpStatus.BAD_REQUEST, "El calendario admite entre 1 y " + MAX_DIAS_CALENDARIO + " dias");
+        }
+        if (!senderoRepository.existsById(senderoId)) {
+            throw new ResourceNotFoundException("Sendero no encontrado");
+        }
+        LocalDate hasta = desde.plusDays(dias - 1L);
+        Map<LocalDate, CapacidadDia> publicados = capacidadDiaRepository
+                .findBySenderoIdAndFechaBetweenOrderByFechaAsc(senderoId, desde, hasta).stream()
+                .collect(Collectors.toMap(CapacidadDia::getFecha, Function.identity()));
+        LocalDate hoy = LocalDate.now(reloj);
+        LocalDate ultimoDia = ultimoDiaReservable();
+
+        return desde.datesUntil(hasta.plusDays(1))
+                .map(fecha -> {
+                    CapacidadDia dia = publicados.get(fecha);
+                    if (dia == null) {
+                        return new DiaCalendarioResponse(fecha, false, false, 0, 0, 0, false);
+                    }
+                    int ocupacion = ocupacionDelDia.personasReservadas(senderoId, fecha);
+                    int libres = Math.max(dia.getCupoMaximo() - ocupacion, 0);
+                    boolean enVentana = !fecha.isBefore(hoy) && !fecha.isAfter(ultimoDia);
+                    return new DiaCalendarioResponse(
+                            fecha, true, enVentana && libres > 0, dia.getCupoMaximo(), ocupacion, libres,
+                            dia.umbralSuperadoCon(ocupacion));
+                })
+                .toList();
     }
 
     /**
