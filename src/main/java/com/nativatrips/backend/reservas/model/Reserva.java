@@ -2,6 +2,7 @@ package com.nativatrips.backend.reservas.model;
 
 import com.nativatrips.backend.common.model.Auditable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -27,8 +28,12 @@ public class Reserva extends Auditable {
     @Column(name = "sendero_id", nullable = false)
     private Long senderoId;
 
-    @Column(name = "turista_id", nullable = false)
+    /** Solo en reservas hechas con la cuenta TURISTA anterior; las nuevas llevan titular (ADR-004). */
+    @Column(name = "turista_id")
     private UUID turistaId;
+
+    @Embedded
+    private TitularReserva titular;
 
     @Column(name = "guia_id")
     private UUID guiaId;
@@ -73,6 +78,20 @@ public class Reserva extends Auditable {
         this.bloqueoExpiraEn = bloqueoExpiraEn;
     }
 
+    /** HU-02: reserva sin cuenta, identificada por su codigo y por el correo del titular. */
+    public static Reserva sinCuenta(
+            Long senderoId,
+            LocalDate fechaTour,
+            int cantidadPersonas,
+            Instant bloqueoExpiraEn,
+            String codigoReserva,
+            TitularReserva titular) {
+        Reserva reserva = new Reserva(senderoId, null, fechaTour, cantidadPersonas, TipoGrupo.ESTANDAR, bloqueoExpiraEn);
+        reserva.codigoReserva = codigoReserva;
+        reserva.titular = titular;
+        return reserva;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -91,6 +110,10 @@ public class Reserva extends Auditable {
 
     public UUID getTuristaId() {
         return turistaId;
+    }
+
+    public TitularReserva getTitular() {
+        return titular;
     }
 
     public UUID getGuiaId() {

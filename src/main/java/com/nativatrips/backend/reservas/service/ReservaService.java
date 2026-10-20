@@ -232,7 +232,7 @@ public class ReservaService {
 
     private Reserva buscarDelTurista(UUID reservaId, UUID turistaId) {
         return reservaRepository.findById(reservaId)
-                .filter(r -> r.getTuristaId().equals(turistaId))
+                .filter(r -> turistaId.equals(r.getTuristaId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
     }
 
