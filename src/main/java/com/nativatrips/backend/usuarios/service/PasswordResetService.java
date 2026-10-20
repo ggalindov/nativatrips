@@ -2,22 +2,17 @@ package com.nativatrips.backend.usuarios.service;
 
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
+import com.nativatrips.backend.common.seguridad.TokenSeguro;
 import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.usuarios.model.PasswordResetToken;
 import com.nativatrips.backend.usuarios.model.Usuario;
 import com.nativatrips.backend.usuarios.repository.PasswordResetTokenRepository;
 import com.nativatrips.backend.usuarios.repository.UsuarioRepository;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-import java.util.HexFormat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,7 +37,6 @@ public class PasswordResetService {
     private final NotificacionService notificacionService;
     private final Clock reloj;
     private final String urlFrontend;
-    private final SecureRandom azar = new SecureRandom();
 
     public PasswordResetService(
             UsuarioRepository usuarioRepository,
@@ -65,9 +59,9 @@ public class PasswordResetService {
         usuarioRepository.findByEmail(email).ifPresent(usuario -> {
             tokenRepository.findByUsuarioIdAndUsadoFalse(usuario.getId()).forEach(PasswordResetToken::marcarUsado);
 
-            String token = tokenAleatorio();
+            String token = TokenSeguro.generar();
             Instant expiraEn = reloj.instant().plus(EXPIRACION_MINUTOS, ChronoUnit.MINUTES);
-            tokenRepository.save(new PasswordResetToken(usuario.getId(), hash(token), expiraEn));
+            tokenRepository.save(new PasswordResetToken(usuario.getId(), TokenSeguro.hash(token), expiraEn));
 
             notificacionService.enviarCorreo(
                     usuario.getEmail(),
@@ -82,7 +76,7 @@ public class PasswordResetService {
 
     @Transactional
     public void restablecerPassword(String token, String nuevaPassword) {
-        PasswordResetToken resetToken = tokenRepository.findByToken(hash(token))
+        PasswordResetToken resetToken = tokenRepository.findByToken(TokenSeguro.hash(token))
                 .filter(t -> t.estaVigente(reloj.instant()))
                 .orElseThrow(() -> new BusinessRuleException(
                         HttpStatus.BAD_REQUEST, "El enlace es invalido, ya fue usado o vencio; pide uno nuevo"));
@@ -96,21 +90,5 @@ public class PasswordResetService {
         resetToken.marcarUsado();
         // Sin llamadas a save(): ambas entidades estan gestionadas dentro de la transaccion
         // y JPA hace flush de los cambios (dirty checking) al confirmar.
-    }
-
-    /** 32 bytes al azar en Base64 para URL: 256 bits, imposible de adivinar. */
-    private String tokenAleatorio() {
-        byte[] bytes = new byte[32];
-        azar.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    static String hash(String token) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("SHA-256 no esta disponible en la JVM", ex);
-        }
     }
 }
