@@ -34,7 +34,9 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -106,6 +108,24 @@ class ReservaServiceTest {
         assertThatThrownBy(() -> reservaService.crearReserva(request, UUID.randomUUID()))
                 .isInstanceOf(BusinessRuleException.class);
         verify(reservaRepository, never()).save(any());
+    }
+
+    @Test
+    void bloqueaLaCapacidadDelDiaAntesDeContarLaOcupacion() {
+        LocalDate fecha = LocalDate.now().plusDays(1);
+        given(senderoRepository.findById(1L)).willReturn(Optional.of(unSendero()));
+        given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(0);
+        given(reservaRepository.save(any())).willAnswer(this::conIdGenerado);
+        given(reservaIntegranteRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+
+        reservaService.crearReserva(
+                new ReservaRequest(1L, fecha, TipoGrupo.ESTANDAR, List.of(new IntegranteRequest("Juan", "123"))),
+                UUID.randomUUID());
+
+        InOrder orden = Mockito.inOrder(capacidadService, reservaRepository);
+        orden.verify(capacidadService).bloquearLimiteVigente(1L, fecha);
+        orden.verify(reservaRepository).sumarPersonasActivas(anyLong(), any(), any());
+        orden.verify(capacidadService).verificarCupoSuficiente(1L, fecha, 0, 1);
     }
 
     @Test
