@@ -23,6 +23,8 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 - Revisión de accesibilidad con axe y Lighthouse (accesibilidad ≥ 95) en la CI (#14).
 - Este archivo de cambios (#15).
 - Análisis estático con CodeQL para Java, TypeScript y los flujos de GitHub Actions (#53).
+- README con la descripción, instalación, ejecución, pruebas, flujo de trabajo y estado del
+  proyecto; licencia propietaria y política de seguridad con reporte privado (#54).
 
 ### Seguridad
 
