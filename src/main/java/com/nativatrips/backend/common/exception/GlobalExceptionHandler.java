@@ -21,7 +21,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
-        return build(ex.getStatus(), ex.getMessage(), request);
+        ApiErrorResponse body = ApiErrorResponse.of(
+                ex.getStatus().value(), ex.getStatus().getReasonPhrase(), ex.getMessage(), request.getRequestURI(),
+                ex.getCodigo(), ex.getDetalles());
+        return ResponseEntity.status(ex.getStatus()).body(body);
     }
 
     // Compatibilidad con codigo que todavia use ResponseStatusException directamente.
