@@ -42,9 +42,6 @@ public class ReservaService {
     /** Tiempo que se retiene el cupo mientras el turista completa el pago (RF-05). */
     static final long BLOQUEO_MINUTOS = 15;
 
-    private static final List<EstadoReserva> ESTADOS_QUE_OCUPAN_CUPO =
-            List.of(EstadoReserva.PENDIENTE_PAGO, EstadoReserva.EN_REVISION, EstadoReserva.CONFIRMADA);
-
     /** RF-08/RF-09: estos tipos de grupo no pasan directo a pago, requieren aprobacion del administrador. */
     private static final List<TipoGrupo> TIPOS_QUE_REQUIEREN_REVISION =
             List.of(TipoGrupo.GRUPO_CORPORATIVO, TipoGrupo.NECESIDAD_ESPECIAL);
@@ -248,7 +245,7 @@ public class ReservaService {
     }
 
     private int ocupacionActual(Long senderoId, LocalDate fecha) {
-        return reservaRepository.sumarPersonasActivas(senderoId, fecha, ESTADOS_QUE_OCUPAN_CUPO);
+        return reservaRepository.sumarPersonasActivas(senderoId, fecha, EstadoReserva.queOcupanCupo());
     }
 
     /** RF-11: el administrador asigna un guia a una reserva ya confirmada. */
