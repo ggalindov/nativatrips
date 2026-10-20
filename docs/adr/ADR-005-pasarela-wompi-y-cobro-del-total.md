@@ -37,16 +37,17 @@ Además, el manejo actual del resultado tiene dos problemas:
 6. **Conciliación antes de liberar:** cuando vence el apartado de una reserva con un pago
    pendiente, el backend consulta la transacción en la API de Wompi antes de expirarla, por si
    el evento se perdió (HU-03, criterio 5).
-7. **La pasarela queda detrás de una interfaz** (`PasarelaPago`): el servicio de pagos no conoce
-   a Wompi. PayU se retira cuando Wompi esté completo, sin dejar `main` sin pagos.
+7. **Wompi es la única pasarela.** El código de la integración anterior se retira por completo
+   (adaptador, firma MD5, webhook, propiedades y textos). La parte propia de Wompi queda en un
+   adaptador detrás de `PasarelaPago`, para probar el servicio de pagos sin la red.
 8. **Llaves solo en variables de entorno** del servidor (`WOMPI_LLAVE_PUBLICA`,
    `WOMPI_LLAVE_PRIVADA`, `WOMPI_SECRETO_INTEGRIDAD`, `WOMPI_SECRETO_EVENTOS`): el repositorio es
    público. En desarrollo se usan las llaves del sandbox (`pub_test_…`).
 
 ## Consecuencias
 
-- El turista sin cuenta paga desde el enlace mágico de su reserva (HU-18); el pago con sesión de
-  turista se retira con PayU.
+- El turista sin cuenta paga desde el enlace mágico de su reserva (HU-18); no hay pago con sesión
+  de turista.
 - Cambia el contrato del pago: el frontend recibe una URL de checkout, no un formulario para
   enviar.
 - Se necesita una tabla de eventos recibidos y un contador de intentos por reserva.
