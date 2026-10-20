@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
-import com.nativatrips.backend.config.PayuProperties;
+import com.nativatrips.backend.config.WompiProperties;
 import com.nativatrips.backend.pagos.model.EstadoPago;
 import com.nativatrips.backend.pagos.model.Pago;
 import com.nativatrips.backend.pagos.pasarela.CheckoutPago;
@@ -22,6 +22,7 @@ import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
+import com.nativatrips.backend.reservas.service.EnlaceReservaService;
 import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.model.Sendero;
@@ -60,24 +61,16 @@ class PagoServiceTest {
     @Mock
     private PasarelaPago pasarela;
 
+    @Mock
+    private EnlaceReservaService enlaceService;
+
     private PagoService pagoService;
-    private PayuProperties payuProperties;
 
     @BeforeEach
     void setUp() {
-        payuProperties = new PayuProperties();
-        payuProperties.setApiKey("4Vj8eK4rloUd272L48hsrarnUA");
-        payuProperties.setMerchantId("508029");
-        payuProperties.setAccountId("512321");
-        payuProperties.setCurrency("COP");
-        payuProperties.setTestMode(true);
-        payuProperties.setCheckoutUrlSandbox("https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/");
-        payuProperties.setResponseUrl("http://localhost:3000/pagos/respuesta");
-        payuProperties.setConfirmationUrl("http://localhost:8080/api/v1/pagos/confirmacion");
-
         pagoService = new PagoService(
                 pagoRepository, historialRepository, reservaRepository, senderoRepository,
-                reservaService, pasarela, payuProperties);
+                reservaService, pasarela, new WompiProperties(), enlaceService);
     }
 
     @Test
@@ -141,13 +134,14 @@ class PagoServiceTest {
             return pago;
         });
         CheckoutPago checkout = new CheckoutPago() { };
-        given(pasarela.prepararCheckout(any(), anyString(), anyString())).willReturn(checkout);
+        given(pasarela.prepararCheckout(any(), any(), anyString())).willReturn(checkout);
 
         CheckoutPago response = pagoService.iniciarPago(reservaId, turistaId, "turista@example.com");
 
         assertThat(response).isSameAs(checkout);
         ArgumentCaptor<Pago> pago = ArgumentCaptor.forClass(Pago.class);
-        verify(pasarela).prepararCheckout(pago.capture(), anyString(), org.mockito.ArgumentMatchers.eq("turista@example.com"));
+        verify(pasarela).prepararCheckout(pago.capture(), org.mockito.ArgumentMatchers.eq(reserva.getBloqueoExpiraEn()), org.mockito.ArgumentMatchers.eq("turista@example.com"));
+        assertThat(pago.getValue().getMoneda()).isEqualTo("COP");
         assertThat(pago.getValue().getMonto()).isEqualByComparingTo("150000");
         verify(historialRepository).save(any());
     }

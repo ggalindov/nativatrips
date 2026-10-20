@@ -59,6 +59,12 @@ services:
       MAIL_REMITENTE: ${MAIL_REMITENTE:-Eco Palacio Chingaza <reservas@ecopalacio.co>}
       MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
       MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      # ADR-005 - Wompi. Sin llaves, pagar responde 503; el resto funciona igual.
+      WOMPI_LLAVE_PUBLICA: ${WOMPI_LLAVE_PUBLICA:-}
+      WOMPI_LLAVE_PRIVADA: ${WOMPI_LLAVE_PRIVADA:-}
+      WOMPI_SECRETO_INTEGRIDAD: ${WOMPI_SECRETO_INTEGRIDAD:-}
+      WOMPI_SECRETO_EVENTOS: ${WOMPI_SECRETO_EVENTOS:-}
+      WOMPI_URL_API: ${WOMPI_URL_API:-https://sandbox.wompi.co/v1}
       # Asistente conversacional. Sin ANTHROPIC_API_KEY el chat responde 503; lo demas funciona igual.
       ASISTENTE_MENSAJES_POR_HORA: ${ASISTENTE_MENSAJES_POR_HORA:-20}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
