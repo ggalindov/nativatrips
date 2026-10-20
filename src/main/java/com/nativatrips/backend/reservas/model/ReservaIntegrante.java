@@ -2,6 +2,8 @@ package com.nativatrips.backend.reservas.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,6 +27,12 @@ public class ReservaIntegrante {
     @Column(name = "documento_identidad", nullable = false)
     private String documentoIdentidad;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_documento")
+    private TipoDocumento tipoDocumento;
+
+    private String nacionalidad;
+
     protected ReservaIntegrante() {
         // requerido por JPA
     }
@@ -33,6 +41,13 @@ public class ReservaIntegrante {
         this.reservaId = reservaId;
         this.nombreCompleto = nombreCompleto;
         this.documentoIdentidad = documentoIdentidad;
+    }
+
+    public ReservaIntegrante(
+            UUID reservaId, String nombreCompleto, TipoDocumento tipoDocumento, String documentoIdentidad, String nacionalidad) {
+        this(reservaId, nombreCompleto, documentoIdentidad);
+        this.tipoDocumento = tipoDocumento;
+        this.nacionalidad = nacionalidad;
     }
 
     public UUID getId() {
@@ -49,5 +64,13 @@ public class ReservaIntegrante {
 
     public String getDocumentoIdentidad() {
         return documentoIdentidad;
+    }
+
+    public TipoDocumento getTipoDocumento() {
+        return tipoDocumento;
+    }
+
+    public String getNacionalidad() {
+        return nacionalidad;
     }
 }

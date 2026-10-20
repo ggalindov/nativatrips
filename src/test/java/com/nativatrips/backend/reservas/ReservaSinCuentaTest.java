@@ -147,6 +147,40 @@ class ReservaSinCuentaTest {
                 .isEqualTo(List.of());
     }
 
+    @Test
+    void losAcompanantesQueYaSeConocenQuedanComoIntegrantesConSuNacionalidad() throws Exception {
+        String acompanantes = """
+                [{"nombre": "Pierre Martin", "tipoDocumento": "PASAPORTE", "documento": "19AB12345", "nacionalidad": "FR"},
+                 {"nombre": "Sofia Gomez", "tipoDocumento": "TI", "documento": "1098765432", "nacionalidad": "CO"}]""";
+
+        String respuesta = reservar(3, titular("CO", "CC", "1020304050", "57", "3001234567"), acompanantes)
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        String codigo = JsonPath.read(respuesta, "$.codigoReserva");
+        Reserva guardada = reservaRepository.findAll().stream()
+                .filter(r -> codigo.equals(r.getCodigoReserva()))
+                .findFirst().orElseThrow();
+        assertThat(integranteRepository.findByReservaId(guardada.getId()))
+                .extracting(i -> i.getNombreCompleto() + "/" + i.getTipoDocumento() + "/" + i.getNacionalidad())
+                .containsExactlyInAnyOrder("Laura Gomez/CC/CO", "Pierre Martin/PASAPORTE/FR", "Sofia Gomez/TI/CO");
+    }
+
+    @Test
+    void noPuedeHaberMasAcompanantesQuePersonasNiDocumentosQueNoCorrespondan() throws Exception {
+        String dos = """
+                [{"nombre": "Pierre Martin", "tipoDocumento": "PASAPORTE", "documento": "19AB12345", "nacionalidad": "FR"},
+                 {"nombre": "Sofia Gomez", "tipoDocumento": "TI", "documento": "1098765432", "nacionalidad": "CO"}]""";
+        reservar(2, titular("CO", "CC", "1020304050", "57", "3001234567"), dos).andExpect(status().isBadRequest());
+
+        String extranjeroConCedula = """
+                [{"nombre": "Pierre Martin", "tipoDocumento": "CC", "documento": "1020304050", "nacionalidad": "FR"}]""";
+        reservar(2, titular("CO", "CC", "1020304050", "57", "3001234567"), extranjeroConCedula)
+                .andExpect(status().isBadRequest());
+
+        assertThat(reservaRepository.sumarPersonasActivas(senderoId, fecha, EstadoReserva.queOcupanCupo())).isZero();
+    }
+
     private static String titular(String nacionalidad, String tipoDocumento, String documento, String indicativo, String celular) {
         return """
                 {"nombre": "Laura Gomez", "tipoDocumento": "%s", "documento": "%s", "nacionalidad": "%s",
@@ -155,9 +189,13 @@ class ReservaSinCuentaTest {
     }
 
     private ResultActions reservar(int personas, String titular) throws Exception {
+        return reservar(personas, titular, "[]");
+    }
+
+    private ResultActions reservar(int personas, String titular, String acompanantes) throws Exception {
         return mockMvc.perform(post("/api/v1/reservas/sin-cuenta")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"senderoId\": " + senderoId + ", \"fechaTour\": \"" + fecha + "\", \"personas\": " + personas
-                        + ", \"titular\": " + titular + "}"));
+                        + ", \"titular\": " + titular + ", \"acompanantes\": " + acompanantes + "}"));
     }
 }
