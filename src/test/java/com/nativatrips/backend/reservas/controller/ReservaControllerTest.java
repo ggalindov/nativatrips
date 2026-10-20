@@ -83,8 +83,8 @@ class ReservaControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PERSONAL_ADMINISTRATIVO")
-    void crearComoPersonalAdministrativoEsRechazado() throws Exception {
+    @WithMockUser(roles = "ADMINISTRADOR")
+    void crearComoAdministradorEsRechazado() throws Exception {
         mockMvc.perform(post("/api/v1/reservas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(RESERVA_JSON))

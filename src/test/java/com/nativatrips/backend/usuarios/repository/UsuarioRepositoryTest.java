@@ -44,7 +44,7 @@ class UsuarioRepositoryTest {
                 "admin@example.com",
                 "hash-no-real-solo-de-prueba",
                 "Admin de Prueba",
-                Rol.PERSONAL_ADMINISTRATIVO));
+                Rol.ADMINISTRADOR));
 
         assertThat(usuarioRepository.existsByEmail("admin@example.com")).isTrue();
         assertThat(usuarioRepository.existsByEmail("no-existe@example.com")).isFalse();

@@ -73,8 +73,8 @@ class AsistenteControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PERSONAL_ADMINISTRATIVO")
-    void conversarComoPersonalAdministrativoEsRechazado() throws Exception {
+    @WithMockUser(roles = "ADMINISTRADOR")
+    void conversarComoAdministradorEsRechazado() throws Exception {
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON))
