@@ -67,7 +67,7 @@ public class PagoService {
     @Transactional
     public IniciarPagoResponse iniciarPago(UUID reservaId, UUID turistaId, String buyerEmail) {
         Reserva reserva = reservaRepository.findById(reservaId)
-                .filter(r -> r.getTuristaId().equals(turistaId))
+                .filter(r -> turistaId.equals(r.getTuristaId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
 
         if (reserva.getEstado() != EstadoReserva.PENDIENTE_PAGO) {
@@ -165,7 +165,7 @@ public class PagoService {
     @Transactional(readOnly = true)
     public Optional<PagoResponse> obtenerUltimoPago(UUID reservaId, UUID turistaId) {
         boolean esDelTurista = reservaRepository.findById(reservaId)
-                .filter(r -> r.getTuristaId().equals(turistaId))
+                .filter(r -> turistaId.equals(r.getTuristaId()))
                 .isPresent();
         if (!esDelTurista) {
             throw new ResourceNotFoundException("Reserva no encontrada");
