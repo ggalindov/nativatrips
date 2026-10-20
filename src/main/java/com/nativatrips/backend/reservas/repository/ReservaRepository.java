@@ -5,6 +5,7 @@ import com.nativatrips.backend.reservas.model.Reserva;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
     List<Reserva> findByTuristaIdOrderByFechaTourDesc(UUID turistaId);
 
     boolean existsByCodigoReserva(String codigoReserva);
+
+    Optional<Reserva> findByCodigoReserva(String codigoReserva);
 
     List<Reserva> findByEstadoOrderByCreatedAtAsc(EstadoReserva estado);
 
