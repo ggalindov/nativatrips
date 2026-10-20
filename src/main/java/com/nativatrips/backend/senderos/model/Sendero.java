@@ -1,15 +1,22 @@
 package com.nativatrips.backend.senderos.model;
 
 import com.nativatrips.backend.common.model.Auditable;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "senderos")
@@ -42,6 +49,16 @@ public class Sendero extends Auditable {
 
     @Column(nullable = false)
     private boolean activo = true;
+
+    @Embedded
+    private FichaTecnica ficha = FichaTecnica.sinDatos();
+
+    /** Puntos destacados del recorrido, en el orden en que se muestran. */
+    @ElementCollection
+    @CollectionTable(name = "sendero_destacados", joinColumns = @JoinColumn(name = "sendero_id"))
+    @OrderColumn(name = "orden")
+    @Column(name = "texto", nullable = false)
+    private List<String> destacados = new ArrayList<>();
 
     protected Sendero() {
         // requerido por JPA
@@ -131,5 +148,24 @@ public class Sendero extends Auditable {
 
     public void setActivo(boolean activo) {
         this.activo = activo;
+    }
+
+    public FichaTecnica getFicha() {
+        return ficha;
+    }
+
+    public void setFicha(FichaTecnica ficha) {
+        this.ficha = ficha != null ? ficha : FichaTecnica.sinDatos();
+    }
+
+    public List<String> getDestacados() {
+        return List.copyOf(destacados);
+    }
+
+    public void reemplazarDestacados(List<String> nuevos) {
+        destacados.clear();
+        if (nuevos != null) {
+            destacados.addAll(nuevos);
+        }
     }
 }
