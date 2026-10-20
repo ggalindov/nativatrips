@@ -183,20 +183,31 @@ class PagoServiceTest {
     }
 
     @Test
-    void aplicarResultadoRechazadaCancelaLaReserva() {
+    void unPrimerRechazoDejaLaReservaPendienteParaReintentar() {
         UUID reservaId = UUID.randomUUID();
         Pago pago = new Pago(reservaId, "REF-1", new BigDecimal("50000.0"), "COP");
         given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
+        given(pagoRepository.countByReservaIdAndEstadoIn(any(), any())).willReturn(1L);
 
-        var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.RECHAZADO, new BigDecimal("50000.0"), "COP", "detalle", "{}");
-
-        pagoService.aplicarResultado(resultado);
+        pagoService.aplicarResultado(new ResultadoPago("REF-1", "TX-1", EstadoPago.RECHAZADO, new BigDecimal("50000.0"), "COP", "detalle", "{}"));
 
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.RECHAZADO);
+        verify(reservaService, never()).transicionarEstado(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void elTercerRechazoCancelaLaReservaYLiberaElCupo() {
+        UUID reservaId = UUID.randomUUID();
+        Pago pago = new Pago(reservaId, "REF-1", new BigDecimal("50000.0"), "COP");
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
+        given(pagoRepository.countByReservaIdAndEstadoIn(any(), any())).willReturn(3L);
+
+        pagoService.aplicarResultado(new ResultadoPago("REF-1", "TX-1", EstadoPago.RECHAZADO, new BigDecimal("50000.0"), "COP", "detalle", "{}"));
+
         verify(reservaService).transicionarEstado(
                 org.mockito.ArgumentMatchers.eq(reservaId),
                 org.mockito.ArgumentMatchers.eq(EstadoReserva.CANCELADA),
-                anyString(),
+                org.mockito.ArgumentMatchers.contains("intento 3 de 3"),
                 any(),
                 org.mockito.ArgumentMatchers.isNull());
     }
