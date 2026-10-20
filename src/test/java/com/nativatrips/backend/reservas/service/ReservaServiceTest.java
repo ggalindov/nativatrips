@@ -76,7 +76,8 @@ class ReservaServiceTest {
                 senderoRepository,
                 usuarioRepository,
                 capacidadService,
-                notificacionService);
+                notificacionService,
+                new GeneradorCodigoReserva());
     }
 
     @Test

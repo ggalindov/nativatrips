@@ -14,6 +14,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
 
     List<Reserva> findByTuristaIdOrderByFechaTourDesc(UUID turistaId);
 
+    boolean existsByCodigoReserva(String codigoReserva);
+
     List<Reserva> findByEstadoOrderByCreatedAtAsc(EstadoReserva estado);
 
     List<Reserva> findByGuiaIdOrderByFechaTourAsc(UUID guiaId);
