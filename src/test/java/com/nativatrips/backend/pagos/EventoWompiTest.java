@@ -15,7 +15,9 @@ import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.pagos.model.EstadoPago;
 import com.nativatrips.backend.pagos.pasarela.EventoWompiDePrueba;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
+import com.nativatrips.backend.pagos.repository.EventoPagoRepository;
 import com.nativatrips.backend.pagos.repository.PagoRepository;
+import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
 import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.model.Sendero;
@@ -67,6 +69,12 @@ class EventoWompiTest {
     @Autowired
     private PagoRepository pagoRepository;
 
+    @Autowired
+    private EventoPagoRepository eventoRepository;
+
+    @Autowired
+    private ReservaEstadoHistorialRepository historialReservaRepository;
+
     @MockitoBean
     private NotificacionService notificacionService;
 
@@ -94,6 +102,23 @@ class EventoWompiTest {
 
         assertThat(reservaRepository.findByCodigoReserva(codigo).orElseThrow().getEstado()).isEqualTo(EstadoReserva.CONFIRMADA);
         assertThat(pagoRepository.findByReferenciaPayu(referencia).orElseThrow().getEstado()).isEqualTo(EstadoPago.APROBADO);
+    }
+
+    @Test
+    void elMismoEventoRepetidoSoloSeAplicaUnaVez() throws Exception {
+        String codigo = reservar(1);
+        String referencia = iniciarPago();
+        String evento = EventoWompiDePrueba.firmado("TX-REPETIDA-" + UUID.randomUUID(), referencia, "APPROVED", 4_500_000);
+
+        enviar(evento).andExpect(status().isOk());
+        enviar(evento).andExpect(status().isOk());
+
+        UUID reservaId = reservaRepository.findByCodigoReserva(codigo).orElseThrow().getId();
+        assertThat(historialReservaRepository.findByReservaIdOrderByCreatedAtAsc(reservaId))
+                .filteredOn(h -> h.getEstadoNuevo() == EstadoReserva.CONFIRMADA)
+                .hasSize(1);
+        assertThat(eventoRepository.findByPagoId(pagoRepository.findByReferenciaPayu(referencia).orElseThrow().getId()))
+                .hasSize(1);
     }
 
     @Test
