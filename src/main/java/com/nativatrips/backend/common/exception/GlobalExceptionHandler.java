@@ -63,7 +63,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-        log.error("Error no controlado en {}", request.getRequestURI(), ex);
+        // Sin saltos de linea: la ruta la escribe el cliente y no debe poder falsificar entradas del registro.
+        log.error("Error no controlado en {}", request.getRequestURI().replaceAll("[\r\n]", "_"), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrio un error inesperado", request);
     }
 
