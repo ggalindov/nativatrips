@@ -53,7 +53,7 @@ describe('ficha del sendero', () => {
     await usuario.click(continuar);
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Lagunas de Siecha' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Apartar cupo y pagar con PayU' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Apartar cupo y pagar con Wompi' })).toBeInTheDocument();
     const elegida = within(await screen.findByRole('group', { name: 'Elegir fecha' }))
       .getAllByRole('button')
       .find((b) => b.getAttribute('aria-pressed') === 'true');
