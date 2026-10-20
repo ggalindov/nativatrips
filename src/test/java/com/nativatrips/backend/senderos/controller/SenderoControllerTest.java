@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.nativatrips.backend.capacidad.dto.DiaCalendarioResponse;
+import com.nativatrips.backend.capacidad.service.CapacidadService;
 import com.nativatrips.backend.config.JwtProperties;
 import com.nativatrips.backend.config.SecurityConfig;
 import com.nativatrips.backend.reservas.service.ReservaService;
@@ -17,6 +19,7 @@ import com.nativatrips.backend.senderos.service.SenderoService;
 import com.nativatrips.backend.usuarios.security.JwtAuthenticationFilter;
 import com.nativatrips.backend.usuarios.security.JwtTokenProvider;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -48,6 +51,9 @@ class SenderoControllerTest {
 
     @MockitoBean
     private ReservaService reservaService;
+
+    @MockitoBean
+    private CapacidadService capacidadService;
 
     @TestConfiguration
     static class TestSecurityBeans {
@@ -106,6 +112,18 @@ class SenderoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(SENDERO_JSON))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void elCalendarioEsPublicoYUsaCatorceDiasPorDefecto() throws Exception {
+        LocalDate desde = LocalDate.of(2026, 10, 26);
+        given(capacidadService.calendario(1L, desde, 14))
+                .willReturn(List.of(new DiaCalendarioResponse(desde, true, true, 20, 5, 15, false)));
+
+        mockMvc.perform(get("/api/v1/senderos/1/calendario").param("desde", "2026-10-26"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].reservable").value(true))
+                .andExpect(jsonPath("$[0].cupoDisponible").value(15));
     }
 
     @Test
