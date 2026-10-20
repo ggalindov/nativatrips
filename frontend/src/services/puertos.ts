@@ -112,7 +112,8 @@ export type CodigoError =
   | 'noDisponible'
   | 'cuentaNoEquipo'
   | 'asistenteNoDisponible'
-  | 'datosInvalidos';
+  | 'datosInvalidos'
+  | 'servidor';
 
 /**
  * Error esperable de negocio. `codigo` permite mostrarlo en el idioma de la

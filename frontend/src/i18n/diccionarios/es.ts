@@ -529,6 +529,7 @@ export const es = {
     cuentaNoEquipo: 'Esta cuenta no pertenece al equipo.',
     asistenteNoDisponible: 'El asistente no está disponible en este momento.',
     datosInvalidos: 'Revisa los datos del formulario.',
+    servidor: 'Tuvimos un problema en el servidor. Intenta de nuevo en unos minutos.',
   } satisfies Record<CodigoError | 'generico', string>,
   /** Traducciones de los senderos; en español se usa el texto original. */
   senderos: {} as Partial<Record<string, SenderoTraducido>>,

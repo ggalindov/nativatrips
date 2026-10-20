@@ -4,6 +4,8 @@ import { sumarDias } from '@/domain/fechas';
 import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
 import type { Servicios } from '../puertos';
+import { crearClienteHttp } from './clienteHttp';
+import type { OpcionesCliente } from './clienteHttp';
 
 interface SenderoApi {
   id: number;
@@ -54,23 +56,8 @@ function aSendero(s: SenderoApi): Sendero {
  * enlace y los paneles dependen de endpoints definidos en el ADR-004 que el
  * backend aún no expone; mientras tanto responden con un error explícito.
  */
-export function crearServiciosHttp(baseUrl: string): Servicios {
-  async function pedir<T>(ruta: string, init?: RequestInit): Promise<T> {
-    let respuesta: Response;
-    try {
-      respuesta = await fetch(`${baseUrl}${ruta}`, {
-        ...init,
-        headers: { 'Content-Type': 'application/json', ...init?.headers },
-      });
-    } catch {
-      throw new ErrorServicio('No hay conexión con el servidor.', 'sinConexion');
-    }
-    if (!respuesta.ok) {
-      const cuerpo = (await respuesta.json().catch(() => null)) as { message?: string } | null;
-      throw new ErrorServicio(cuerpo?.message ?? `El servidor respondió ${respuesta.status}.`);
-    }
-    return (await respuesta.json()) as T;
-  }
+export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
+  const { pedir } = crearClienteHttp(opciones);
 
   const pendiente = (): never => {
     throw new ErrorServicio('Pendiente en el backend: reservas por enlace (ADR-004).', 'noDisponible');

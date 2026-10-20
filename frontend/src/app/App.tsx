@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'rea
 import type { Servicios } from '@/services/puertos';
 import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
 import { RutaProtegida } from '@/features/equipo/RutaProtegida';
-import { SesionProvider } from '@/features/equipo/SesionContext';
+import { SesionProvider, leerSesionGuardada } from '@/features/equipo/SesionContext';
 import { LandingPage } from '@/features/landing/LandingPage';
 import { PantallaCarga } from '@/features/sitio/PantallaCarga';
 import { SitioLayout } from '@/features/sitio/SitioLayout';
@@ -108,8 +108,14 @@ export function Rutas() {
   );
 }
 
+/** El idioma lo fija IdiomaProvider en <html lang>; la sesión del equipo, SesionProvider. */
+const OPCIONES_SERVICIOS = {
+  idioma: () => document.documentElement.lang || 'es',
+  token: () => leerSesionGuardada()?.token ?? null,
+};
+
 export function App({ servicios }: { servicios?: Servicios }) {
-  const instancia = useMemo(() => servicios ?? crearServicios(), [servicios]);
+  const instancia = useMemo(() => servicios ?? crearServicios(OPCIONES_SERVICIOS), [servicios]);
   return (
     <MotionConfig reducedMotion="user">
     <IdiomaProvider>
