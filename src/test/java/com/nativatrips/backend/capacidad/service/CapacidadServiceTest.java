@@ -101,6 +101,24 @@ class CapacidadServiceTest {
     }
 
     @Test
+    void bloquearLimiteVigenteDevuelveElLimiteBloqueadoDelDia() {
+        LocalDate fecha = LocalDate.now().plusDays(2);
+        LimiteCapacidad limite = new LimiteCapacidad(1L, fecha, fecha, 20, (short) 80, UUID.randomUUID(), null);
+        given(limiteCapacidadRepository.findVigenteParaConBloqueo(1L, fecha)).willReturn(Optional.of(limite));
+
+        assertThat(capacidadService.bloquearLimiteVigente(1L, fecha)).isSameAs(limite);
+    }
+
+    @Test
+    void bloquearLimiteVigenteRechazaSiNoHayLimiteParaLaFecha() {
+        LocalDate fecha = LocalDate.now().plusDays(2);
+        given(limiteCapacidadRepository.findVigenteParaConBloqueo(1L, fecha)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> capacidadService.bloquearLimiteVigente(1L, fecha))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
     void creaLimiteConUsuarioInternoCuandoNoSeIndicaOrigenExterno() {
         Long senderoId = 1L;
         given(senderoRepository.existsById(senderoId)).willReturn(true);
