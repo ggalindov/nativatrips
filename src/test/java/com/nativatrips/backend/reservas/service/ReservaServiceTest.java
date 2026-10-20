@@ -225,8 +225,8 @@ class ReservaServiceTest {
         given(reservaRepository.save(any())).willAnswer(this::conIdGenerado);
         given(reservaIntegranteRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
         var admin = new com.nativatrips.backend.usuarios.model.Usuario(
-                "admin@example.com", "hash", "Admin", com.nativatrips.backend.usuarios.model.Rol.PERSONAL_ADMINISTRATIVO);
-        given(usuarioRepository.findByRolAndActivoTrue(com.nativatrips.backend.usuarios.model.Rol.PERSONAL_ADMINISTRATIVO))
+                "admin@example.com", "hash", "Admin", com.nativatrips.backend.usuarios.model.Rol.ADMINISTRADOR);
+        given(usuarioRepository.findByRolAndActivoTrue(com.nativatrips.backend.usuarios.model.Rol.ADMINISTRADOR))
                 .willReturn(List.of(admin));
 
         var request = new ReservaRequest(

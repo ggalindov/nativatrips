@@ -108,8 +108,17 @@ class SenderoControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "PERSONAL_ADMINISTRATIVO")
-    void crearComoPersonalAdministrativoEsAceptado() throws Exception {
+    @WithMockUser(roles = "GUIA_TURISTICO")
+    void crearComoGuiaEsRechazado() throws Exception {
+        mockMvc.perform(post("/api/v1/senderos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(SENDERO_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR")
+    void crearComoAdministradorEsAceptado() throws Exception {
         given(senderoService.crear(any())).willReturn(unSendero());
 
         mockMvc.perform(post("/api/v1/senderos")
