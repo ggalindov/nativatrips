@@ -39,7 +39,18 @@ class AsistenteServiceTest {
     @BeforeEach
     void setUp() {
         asistenteService = new AsistenteService(anthropicClient, tools);
-        given(tools.definiciones()).willReturn(List.of());
+        org.mockito.Mockito.lenient().when(tools.definiciones(org.mockito.ArgumentMatchers.anyBoolean())).thenReturn(List.of());
+    }
+
+    @Test
+    void aUnVisitanteSinSesionLePideLasHerramientasSinReservas() {
+        given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList())).willReturn(
+                new AnthropicResponse("msg_v", "assistant", List.of(ContentBlock.texto("Hola")), "end_turn",
+                        new AnthropicResponse.Usage(5, 2)));
+
+        asistenteService.conversar(new ChatRequest(List.of(new MensajeChat("user", "Hola"))), null);
+
+        org.mockito.Mockito.verify(tools).definiciones(false);
     }
 
     @Test

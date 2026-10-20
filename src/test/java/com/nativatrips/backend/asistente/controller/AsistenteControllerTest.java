@@ -1,7 +1,9 @@
 package com.nativatrips.backend.asistente.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -65,20 +67,28 @@ class AsistenteControllerTest {
             """;
 
     @Test
-    void conversarSinAutenticarEsRechazado() throws Exception {
+    void unVisitanteSinSesionEsAtendidoSinIdentidadDeTurista() throws Exception {
+        given(asistenteService.conversar(any(), isNull())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
+
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
+
+        verify(asistenteService).conversar(any(), isNull());
     }
 
     @Test
     @WithMockUser(roles = "ADMINISTRADOR")
-    void conversarComoAdministradorEsRechazado() throws Exception {
+    void unaCuentaDelEquipoConversaComoVisitanteSinAccesoAReservas() throws Exception {
+        given(asistenteService.conversar(any(), isNull())).willReturn(ChatResponse.deAsistente("Hola"));
+
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
+
+        verify(asistenteService).conversar(any(), isNull());
     }
 
     @Test
