@@ -39,3 +39,11 @@ build/
 NativaTrips_Matriz_Requerimientos_v2.xlsx
 Documentos_Proyecto/
 
+
+### Diagramas y presentaciones (se mantienen fuera del repositorio) ###
+docs/architecture/
+docs/diagramas*/
+*.drawio
+*.drawio.png
+*.drawio.svg
+*.pptx
