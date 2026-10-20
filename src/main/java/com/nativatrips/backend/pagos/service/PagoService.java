@@ -5,11 +5,13 @@ import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.config.WompiProperties;
 import com.nativatrips.backend.pagos.dto.PagoResponse;
 import com.nativatrips.backend.pagos.model.EstadoPago;
+import com.nativatrips.backend.pagos.model.EventoPago;
 import com.nativatrips.backend.pagos.model.Pago;
 import com.nativatrips.backend.pagos.model.PagoEstadoHistorial;
 import com.nativatrips.backend.pagos.pasarela.CheckoutPago;
 import com.nativatrips.backend.pagos.pasarela.PasarelaPago;
 import com.nativatrips.backend.pagos.pasarela.ResultadoPago;
+import com.nativatrips.backend.pagos.repository.EventoPagoRepository;
 import com.nativatrips.backend.pagos.repository.PagoEstadoHistorialRepository;
 import com.nativatrips.backend.pagos.repository.PagoRepository;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
@@ -43,6 +45,7 @@ public class PagoService {
 
     private final PagoRepository pagoRepository;
     private final PagoEstadoHistorialRepository historialRepository;
+    private final EventoPagoRepository eventoRepository;
     private final ReservaRepository reservaRepository;
     private final SenderoRepository senderoRepository;
     private final ReservaService reservaService;
@@ -53,6 +56,7 @@ public class PagoService {
     public PagoService(
             PagoRepository pagoRepository,
             PagoEstadoHistorialRepository historialRepository,
+            EventoPagoRepository eventoRepository,
             ReservaRepository reservaRepository,
             SenderoRepository senderoRepository,
             ReservaService reservaService,
@@ -61,6 +65,7 @@ public class PagoService {
             EnlaceReservaService enlaceService) {
         this.pagoRepository = pagoRepository;
         this.historialRepository = historialRepository;
+        this.eventoRepository = eventoRepository;
         this.reservaRepository = reservaRepository;
         this.senderoRepository = senderoRepository;
         this.reservaService = reservaService;
@@ -119,11 +124,12 @@ public class PagoService {
 
     /**
      * RF-07: aplica un resultado cuya firma ya verifico el adaptador. El monto y la moneda deben
-     * ser los del pago; si no, alguien altero el cobro y no se toca nada.
+     * ser los del pago; si no, alguien altero el cobro y no se toca nada. Un evento repetido o uno
+     * que llega despues de la aprobacion no cambia nada (ADR-005 punto 4).
      */
     @Transactional
     public void aplicarResultado(ResultadoPago resultado) {
-        Pago pago = pagoRepository.findByReferenciaPayu(resultado.referencia())
+        Pago pago = pagoRepository.findByReferenciaConBloqueo(resultado.referencia())
                 .orElseThrow(() -> new ResourceNotFoundException("Pago no encontrado para la referencia " + resultado.referencia()));
 
         if (resultado.monto().compareTo(pago.getMonto()) != 0 || !pago.getMoneda().equals(resultado.moneda())) {
@@ -131,6 +137,20 @@ public class PagoService {
                     "Monto de confirmacion ({} {}) no coincide con el esperado ({} {}) para el pago {}",
                     resultado.monto(), resultado.moneda(), pago.getMonto(), pago.getMoneda(), pago.getId());
             throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "El monto confirmado no coincide con el monto del pago");
+        }
+
+        if (resultado.transaccionId() == null || resultado.transaccionId().isBlank()) {
+            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "El evento no trae el identificador de la transaccion");
+        }
+        if (eventoRepository.existsByTransaccionIdAndEstado(resultado.transaccionId(), resultado.estado())) {
+            log.info("Evento repetido de la transaccion {} ({}); no se vuelve a aplicar",
+                    resultado.transaccionId(), resultado.estado());
+            return;
+        }
+        eventoRepository.save(new EventoPago(pago.getId(), resultado.transaccionId(), resultado.estado(), Instant.now()));
+        if (pago.getEstado() == EstadoPago.APROBADO) {
+            log.warn("Evento {} para el pago {} ya aprobado; se registra y no se reabre", resultado.estado(), pago.getId());
+            return;
         }
 
         EstadoPago nuevoEstado = resultado.estado();

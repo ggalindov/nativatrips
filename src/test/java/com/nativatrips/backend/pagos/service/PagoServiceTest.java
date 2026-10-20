@@ -16,6 +16,7 @@ import com.nativatrips.backend.pagos.model.Pago;
 import com.nativatrips.backend.pagos.pasarela.CheckoutPago;
 import com.nativatrips.backend.pagos.pasarela.PasarelaPago;
 import com.nativatrips.backend.pagos.pasarela.ResultadoPago;
+import com.nativatrips.backend.pagos.repository.EventoPagoRepository;
 import com.nativatrips.backend.pagos.repository.PagoEstadoHistorialRepository;
 import com.nativatrips.backend.pagos.repository.PagoRepository;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
@@ -50,6 +51,9 @@ class PagoServiceTest {
     private PagoEstadoHistorialRepository historialRepository;
 
     @Mock
+    private EventoPagoRepository eventoRepository;
+
+    @Mock
     private ReservaRepository reservaRepository;
 
     @Mock
@@ -69,7 +73,7 @@ class PagoServiceTest {
     @BeforeEach
     void setUp() {
         pagoService = new PagoService(
-                pagoRepository, historialRepository, reservaRepository, senderoRepository,
+                pagoRepository, historialRepository, eventoRepository, reservaRepository, senderoRepository,
                 reservaService, pasarela, new WompiProperties(), enlaceService);
     }
 
@@ -149,7 +153,7 @@ class PagoServiceTest {
     @Test
     void aplicarResultadoRechazaMontoQueNoCoincide() {
         Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
-        given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
 
         var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.APROBADO, new BigDecimal("999999.0"), "COP", "detalle", "{}");
 
@@ -163,7 +167,7 @@ class PagoServiceTest {
     void aplicarResultadoAprobadaConfirmaLaReserva() {
         UUID reservaId = UUID.randomUUID();
         Pago pago = new Pago(reservaId, "REF-1", new BigDecimal("50000.0"), "COP");
-        given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
 
         var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.APROBADO, new BigDecimal("50000.0"), "COP", "detalle", "{}");
 
@@ -182,7 +186,7 @@ class PagoServiceTest {
     void aplicarResultadoRechazadaCancelaLaReserva() {
         UUID reservaId = UUID.randomUUID();
         Pago pago = new Pago(reservaId, "REF-1", new BigDecimal("50000.0"), "COP");
-        given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
 
         var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.RECHAZADO, new BigDecimal("50000.0"), "COP", "detalle", "{}");
 
@@ -200,7 +204,7 @@ class PagoServiceTest {
     @Test
     void aplicarResultadoRechazaUnaMonedaDistintaALaDelPago() {
         Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
-        given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
 
         var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.APROBADO, new BigDecimal("50000.0"), "USD", "detalle", "{}");
 
@@ -211,13 +215,39 @@ class PagoServiceTest {
     @Test
     void aplicarResultadoPendienteNoModificaLaReserva() {
         Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
-        given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
 
         var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.PENDIENTE, new BigDecimal("50000.0"), "COP", "detalle", "{}");
 
         pagoService.aplicarResultado(resultado);
 
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
+        verify(reservaService, never()).transicionarEstado(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void unEventoRepetidoNoSeVuelveAAplicar() {
+        Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
+        given(eventoRepository.existsByTransaccionIdAndEstado("TX-1", EstadoPago.APROBADO)).willReturn(true);
+
+        pagoService.aplicarResultado(new ResultadoPago("REF-1", "TX-1", EstadoPago.APROBADO, new BigDecimal("50000.0"), "COP", "detalle", "{}"));
+
+        assertThat(pago.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
+        verify(historialRepository, never()).save(any());
+        verify(reservaService, never()).transicionarEstado(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void unPagoAprobadoNoSeReabreConUnEventoPosterior() {
+        Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
+        pago.setEstado(EstadoPago.APROBADO);
+        given(pagoRepository.findByReferenciaConBloqueo("REF-1")).willReturn(Optional.of(pago));
+
+        pagoService.aplicarResultado(new ResultadoPago("REF-1", "TX-1", EstadoPago.RECHAZADO, new BigDecimal("50000.0"), "COP", "detalle", "{}"));
+
+        assertThat(pago.getEstado()).isEqualTo(EstadoPago.APROBADO);
+        verify(eventoRepository).save(any());
         verify(reservaService, never()).transicionarEstado(any(), any(), any(), any(), any());
     }
 }
