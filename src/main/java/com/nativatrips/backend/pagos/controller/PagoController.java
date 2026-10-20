@@ -1,8 +1,9 @@
 package com.nativatrips.backend.pagos.controller;
 
 import com.nativatrips.backend.pagos.dto.ConfirmacionPayuPayload;
-import com.nativatrips.backend.pagos.dto.IniciarPagoResponse;
 import com.nativatrips.backend.pagos.dto.PagoResponse;
+import com.nativatrips.backend.pagos.pasarela.CheckoutPago;
+import com.nativatrips.backend.pagos.pasarela.PayuPasarela;
 import com.nativatrips.backend.pagos.service.PagoService;
 import com.nativatrips.backend.usuarios.security.AuthenticatedUser;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,14 +26,16 @@ public class PagoController {
     private static final Logger log = LoggerFactory.getLogger(PagoController.class);
 
     private final PagoService pagoService;
+    private final PayuPasarela payuPasarela;
 
-    public PagoController(PagoService pagoService) {
+    public PagoController(PagoService pagoService, PayuPasarela payuPasarela) {
         this.pagoService = pagoService;
+        this.payuPasarela = payuPasarela;
     }
 
     @PostMapping("/api/v1/reservas/{id}/pago")
     @PreAuthorize("hasRole('TURISTA')")
-    public IniciarPagoResponse iniciarPago(@PathVariable UUID id, @AuthenticationPrincipal AuthenticatedUser principal) {
+    public CheckoutPago iniciarPago(@PathVariable UUID id, @AuthenticationPrincipal AuthenticatedUser principal) {
         return pagoService.iniciarPago(id, principal.id(), principal.email());
     }
 
@@ -61,7 +64,7 @@ public class PagoController {
                 request.getParameterMap().toString());
 
         try {
-            pagoService.procesarConfirmacion(payload);
+            pagoService.aplicarResultado(payuPasarela.verificar(payload));
         } catch (Exception ex) {
             // PayU reintenta si no recibe 200; registramos el error pero no lo propagamos como
             // 500 automatico para no generar reintentos infinitos sobre una firma invalida.
