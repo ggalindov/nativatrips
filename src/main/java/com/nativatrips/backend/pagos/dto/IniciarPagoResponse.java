@@ -1,5 +1,7 @@
 package com.nativatrips.backend.pagos.dto;
 
+import com.nativatrips.backend.pagos.pasarela.CheckoutPago;
+
 /**
  * Campos exactos que el frontend debe enviar como un formulario HTML POST (no JSON, no fetch)
  * al campo {@code checkoutUrl} de PayU WebCheckout — es una redireccion de navegador, PayU
@@ -19,5 +21,5 @@ public record IniciarPagoResponse(
         String test,
         String buyerEmail,
         String responseUrl,
-        String confirmationUrl) {
+        String confirmationUrl) implements CheckoutPago {
 }

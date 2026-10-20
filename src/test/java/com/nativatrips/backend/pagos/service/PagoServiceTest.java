@@ -11,9 +11,11 @@ import static org.mockito.Mockito.verify;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.config.PayuProperties;
-import com.nativatrips.backend.pagos.dto.ConfirmacionPayuPayload;
 import com.nativatrips.backend.pagos.model.EstadoPago;
 import com.nativatrips.backend.pagos.model.Pago;
+import com.nativatrips.backend.pagos.pasarela.CheckoutPago;
+import com.nativatrips.backend.pagos.pasarela.PasarelaPago;
+import com.nativatrips.backend.pagos.pasarela.ResultadoPago;
 import com.nativatrips.backend.pagos.repository.PagoEstadoHistorialRepository;
 import com.nativatrips.backend.pagos.repository.PagoRepository;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
@@ -32,6 +34,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -55,7 +58,7 @@ class PagoServiceTest {
     private ReservaService reservaService;
 
     @Mock
-    private PayuSignatureService signatureService;
+    private PasarelaPago pasarela;
 
     private PagoService pagoService;
     private PayuProperties payuProperties;
@@ -74,7 +77,7 @@ class PagoServiceTest {
 
         pagoService = new PagoService(
                 pagoRepository, historialRepository, reservaRepository, senderoRepository,
-                reservaService, signatureService, payuProperties);
+                reservaService, pasarela, payuProperties);
     }
 
     @Test
@@ -137,58 +140,40 @@ class PagoServiceTest {
             ReflectionTestUtils.setField(pago, "id", UUID.randomUUID());
             return pago;
         });
-        given(signatureService.generarFirmaSolicitud(anyString(), any(), anyString())).willReturn("firma-simulada");
-        given(signatureService.formatearMonto(any())).willReturn("150000.0");
+        CheckoutPago checkout = new CheckoutPago() { };
+        given(pasarela.prepararCheckout(any(), anyString(), anyString())).willReturn(checkout);
 
-        var response = pagoService.iniciarPago(reservaId, turistaId, "turista@example.com");
+        CheckoutPago response = pagoService.iniciarPago(reservaId, turistaId, "turista@example.com");
 
-        assertThat(response.amount()).isEqualTo("150000.0");
-        assertThat(response.merchantId()).isEqualTo("508029");
-        assertThat(response.signature()).isEqualTo("firma-simulada");
-        assertThat(response.checkoutUrl()).isEqualTo("https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/");
-        assertThat(response.test()).isEqualTo("1");
+        assertThat(response).isSameAs(checkout);
+        ArgumentCaptor<Pago> pago = ArgumentCaptor.forClass(Pago.class);
+        verify(pasarela).prepararCheckout(pago.capture(), anyString(), org.mockito.ArgumentMatchers.eq("turista@example.com"));
+        assertThat(pago.getValue().getMonto()).isEqualByComparingTo("150000");
         verify(historialRepository).save(any());
     }
 
     @Test
-    void procesarConfirmacionRechazaFirmaInvalida() {
-        given(signatureService.validarFirmaConfirmacion(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .willReturn(false);
-
-        var payload = new ConfirmacionPayuPayload("REF-1", "50000.0", "COP", "4", "firma-mala", "TX-1", "{}");
-
-        assertThatThrownBy(() -> pagoService.procesarConfirmacion(payload))
-                .isInstanceOf(BusinessRuleException.class);
-        verify(pagoRepository, never()).findByReferenciaPayu(any());
-        verify(reservaService, never()).transicionarEstado(any(), any(), any(), any(), any());
-    }
-
-    @Test
-    void procesarConfirmacionRechazaMontoQueNoCoincide() {
-        given(signatureService.validarFirmaConfirmacion(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .willReturn(true);
+    void aplicarResultadoRechazaMontoQueNoCoincide() {
         Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
         given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
 
-        var payload = new ConfirmacionPayuPayload("REF-1", "999999.0", "COP", "4", "firma", "TX-1", "{}");
+        var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.APROBADO, new BigDecimal("999999.0"), "COP", "detalle", "{}");
 
-        assertThatThrownBy(() -> pagoService.procesarConfirmacion(payload))
+        assertThatThrownBy(() -> pagoService.aplicarResultado(resultado))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("monto");
         verify(reservaService, never()).transicionarEstado(any(), any(), any(), any(), any());
     }
 
     @Test
-    void procesarConfirmacionAprobadaConfirmaLaReserva() {
-        given(signatureService.validarFirmaConfirmacion(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .willReturn(true);
+    void aplicarResultadoAprobadaConfirmaLaReserva() {
         UUID reservaId = UUID.randomUUID();
         Pago pago = new Pago(reservaId, "REF-1", new BigDecimal("50000.0"), "COP");
         given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
 
-        var payload = new ConfirmacionPayuPayload("REF-1", "50000.0", "COP", "4", "firma", "TX-1", "{}");
+        var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.APROBADO, new BigDecimal("50000.0"), "COP", "detalle", "{}");
 
-        pagoService.procesarConfirmacion(payload);
+        pagoService.aplicarResultado(resultado);
 
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.APROBADO);
         verify(reservaService).transicionarEstado(
@@ -200,16 +185,14 @@ class PagoServiceTest {
     }
 
     @Test
-    void procesarConfirmacionRechazadaCancelaLaReserva() {
-        given(signatureService.validarFirmaConfirmacion(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .willReturn(true);
+    void aplicarResultadoRechazadaCancelaLaReserva() {
         UUID reservaId = UUID.randomUUID();
         Pago pago = new Pago(reservaId, "REF-1", new BigDecimal("50000.0"), "COP");
         given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
 
-        var payload = new ConfirmacionPayuPayload("REF-1", "50000.0", "COP", "6", "firma", "TX-1", "{}");
+        var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.RECHAZADO, new BigDecimal("50000.0"), "COP", "detalle", "{}");
 
-        pagoService.procesarConfirmacion(payload);
+        pagoService.aplicarResultado(resultado);
 
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.RECHAZADO);
         verify(reservaService).transicionarEstado(
@@ -221,15 +204,24 @@ class PagoServiceTest {
     }
 
     @Test
-    void procesarConfirmacionPendienteNoModificaLaReserva() {
-        given(signatureService.validarFirmaConfirmacion(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .willReturn(true);
+    void aplicarResultadoRechazaUnaMonedaDistintaALaDelPago() {
         Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
         given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
 
-        var payload = new ConfirmacionPayuPayload("REF-1", "50000.0", "COP", "7", "firma", "TX-1", "{}");
+        var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.APROBADO, new BigDecimal("50000.0"), "USD", "detalle", "{}");
 
-        pagoService.procesarConfirmacion(payload);
+        assertThatThrownBy(() -> pagoService.aplicarResultado(resultado)).isInstanceOf(BusinessRuleException.class);
+        assertThat(pago.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
+    }
+
+    @Test
+    void aplicarResultadoPendienteNoModificaLaReserva() {
+        Pago pago = new Pago(UUID.randomUUID(), "REF-1", new BigDecimal("50000.0"), "COP");
+        given(pagoRepository.findByReferenciaPayu("REF-1")).willReturn(Optional.of(pago));
+
+        var resultado = new ResultadoPago("REF-1", "TX-1", EstadoPago.PENDIENTE, new BigDecimal("50000.0"), "COP", "detalle", "{}");
+
+        pagoService.aplicarResultado(resultado);
 
         assertThat(pago.getEstado()).isEqualTo(EstadoPago.PENDIENTE);
         verify(reservaService, never()).transicionarEstado(any(), any(), any(), any(), any());
