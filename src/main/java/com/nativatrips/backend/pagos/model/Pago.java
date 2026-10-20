@@ -23,11 +23,11 @@ public class Pago extends Auditable {
     @Column(name = "reserva_id", nullable = false)
     private UUID reservaId;
 
-    @Column(name = "referencia_payu", nullable = false, unique = true)
-    private String referenciaPayu;
+    @Column(nullable = false, unique = true)
+    private String referencia;
 
-    @Column(name = "transaction_id_payu")
-    private String transactionIdPayu;
+    @Column(name = "transaccion_id")
+    private String transaccionId;
 
     @Column(nullable = false)
     private BigDecimal monto;
@@ -46,9 +46,9 @@ public class Pago extends Auditable {
         // requerido por JPA
     }
 
-    public Pago(UUID reservaId, String referenciaPayu, BigDecimal monto, String moneda) {
+    public Pago(UUID reservaId, String referencia, BigDecimal monto, String moneda) {
         this.reservaId = reservaId;
-        this.referenciaPayu = referenciaPayu;
+        this.referencia = referencia;
         this.monto = monto;
         this.moneda = moneda;
         this.estado = EstadoPago.PENDIENTE;
@@ -62,16 +62,16 @@ public class Pago extends Auditable {
         return reservaId;
     }
 
-    public String getReferenciaPayu() {
-        return referenciaPayu;
+    public String getReferencia() {
+        return referencia;
     }
 
-    public String getTransactionIdPayu() {
-        return transactionIdPayu;
+    public String getTransaccionId() {
+        return transaccionId;
     }
 
-    public void setTransactionIdPayu(String transactionIdPayu) {
-        this.transactionIdPayu = transactionIdPayu;
+    public void setTransaccionId(String transaccionId) {
+        this.transaccionId = transaccionId;
     }
 
     public BigDecimal getMonto() {

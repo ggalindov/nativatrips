@@ -101,7 +101,7 @@ class EventoWompiTest {
                 .andExpect(status().isOk());
 
         assertThat(reservaRepository.findByCodigoReserva(codigo).orElseThrow().getEstado()).isEqualTo(EstadoReserva.CONFIRMADA);
-        assertThat(pagoRepository.findByReferenciaPayu(referencia).orElseThrow().getEstado()).isEqualTo(EstadoPago.APROBADO);
+        assertThat(pagoRepository.findByReferencia(referencia).orElseThrow().getEstado()).isEqualTo(EstadoPago.APROBADO);
     }
 
     @Test
@@ -117,7 +117,7 @@ class EventoWompiTest {
         assertThat(historialReservaRepository.findByReservaIdOrderByCreatedAtAsc(reservaId))
                 .filteredOn(h -> h.getEstadoNuevo() == EstadoReserva.CONFIRMADA)
                 .hasSize(1);
-        assertThat(eventoRepository.findByPagoId(pagoRepository.findByReferenciaPayu(referencia).orElseThrow().getId()))
+        assertThat(eventoRepository.findByPagoId(pagoRepository.findByReferencia(referencia).orElseThrow().getId()))
                 .hasSize(1);
         verify(notificacionService, org.mockito.Mockito.times(1))
                 .enviarCorreo(eq(correo), org.mockito.ArgumentMatchers.startsWith("Comprobante de pago"), anyString());
@@ -152,7 +152,7 @@ class EventoWompiTest {
                 .andExpect(status().isUnauthorized());
 
         assertThat(reservaRepository.findByCodigoReserva(codigo).orElseThrow().getEstado()).isEqualTo(EstadoReserva.PENDIENTE_PAGO);
-        assertThat(pagoRepository.findByReferenciaPayu(referencia).orElseThrow().getEstado()).isEqualTo(EstadoPago.PENDIENTE);
+        assertThat(pagoRepository.findByReferencia(referencia).orElseThrow().getEstado()).isEqualTo(EstadoPago.PENDIENTE);
     }
 
     @Test
