@@ -74,6 +74,9 @@ public class JwtTokenProvider {
 
     /** Identificador unico del token, el que se guarda al revocarlo (BUG-02). */
     public UUID obtenerJti(Claims claims) {
+        if (claims.getId() == null) {
+            throw new IllegalArgumentException("Token emitido sin identificador");
+        }
         return UUID.fromString(claims.getId());
     }
 
