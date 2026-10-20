@@ -233,7 +233,41 @@ class CapacidadServiceTest {
                 new CapacidadDia(1L, HOY, 20, (short) 80, UUID.randomUUID())));
 
         assertThatThrownBy(() -> capacidadService.verificarCupoSuficiente(1L, HOY, 18, 5))
-                .isInstanceOf(BusinessRuleException.class);
+                .isInstanceOfSatisfying(BusinessRuleException.class, ex -> {
+                    assertThat(ex.getCodigo()).isEqualTo(CapacidadService.CUPO_INSUFICIENTE);
+                    assertThat(ex.getDetalles()).containsEntry("cupoDisponible", 2).containsEntry("personasSolicitadas", 5);
+                    assertThat(ex.getMessage()).contains("Solo quedan 2 cupos").contains("5 personas");
+                });
+    }
+
+    @Test
+    void verificarCupoSuficienteExplicaQueElDiaEstaLleno() {
+        given(capacidadDiaRepository.findBySenderoIdAndFecha(1L, HOY)).willReturn(Optional.of(
+                new CapacidadDia(1L, HOY, 20, (short) 80, UUID.randomUUID())));
+
+        assertThatThrownBy(() -> capacidadService.verificarCupoSuficiente(1L, HOY, 20, 1))
+                .isInstanceOfSatisfying(BusinessRuleException.class, ex -> {
+                    assertThat(ex.getCodigo()).isEqualTo(CapacidadService.CUPO_AGOTADO);
+                    assertThat(ex.getDetalles()).containsEntry("cupoDisponible", 0);
+                    assertThat(ex.getMessage()).contains("Ya no quedan cupos");
+                });
+    }
+
+    @Test
+    void sinCapacidadPublicadaYFueraDeLaVentanaTienenSuCodigo() {
+        given(capacidadDiaRepository.findBySenderoIdAndFecha(1L, HOY)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> capacidadService.verificarCupoSuficiente(1L, HOY, 0, 1))
+                .isInstanceOfSatisfying(BusinessRuleException.class, ex -> {
+                    assertThat(ex.getCodigo()).isEqualTo(CapacidadService.SIN_CAPACIDAD_PUBLICADA);
+                    assertThat(ex.getMessage()).contains("ningun cobro");
+                });
+        assertThatThrownBy(() -> capacidadService.verificarVentanaDeReserva(capacidadService.ultimoDiaReservable().plusDays(1)))
+                .isInstanceOfSatisfying(BusinessRuleException.class, ex -> {
+                    assertThat(ex.getCodigo()).isEqualTo(CapacidadService.FUERA_DE_VENTANA);
+                    assertThat(ex.getDetalles())
+                            .containsEntry("ultimoDiaReservable", capacidadService.ultimoDiaReservable().toString());
+                });
     }
 
     @Test
