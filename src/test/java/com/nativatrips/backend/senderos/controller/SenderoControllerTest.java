@@ -17,6 +17,7 @@ import com.nativatrips.backend.senderos.service.SenderoService;
 import com.nativatrips.backend.usuarios.security.JwtAuthenticationFilter;
 import com.nativatrips.backend.usuarios.security.JwtTokenProvider;
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,6 +109,30 @@ class SenderoControllerTest {
     }
 
     @Test
+    void obtenerDevuelveLaFichaTecnicaYLosDestacados() throws Exception {
+        given(senderoService.obtener(1L)).willReturn(unSendero());
+
+        mockMvc.perform(get("/api/v1/senderos/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.distanciaKm").value(8.5))
+                .andExpect(jsonPath("$.horaSalida").value("07:00:00"))
+                .andExpect(jsonPath("$.destacados", hasSize(2)));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR")
+    void crearConMasDeOchoDestacadosEsRechazadoPorValidacion() throws Exception {
+        String conNueveDestacados = SENDERO_JSON.replace(
+                "\"precio\": 50000",
+                "\"precio\": 50000, \"destacados\": [\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\",\"9\"]");
+
+        mockMvc.perform(post("/api/v1/senderos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(conNueveDestacados))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @WithMockUser(roles = "GUIA_TURISTICO")
     void crearComoGuiaEsRechazado() throws Exception {
         mockMvc.perform(post("/api/v1/senderos")
@@ -137,6 +162,13 @@ class SenderoControllerTest {
                 "ECOTURISMO",
                 "Botas de trekking",
                 new BigDecimal("50000"),
-                true);
+                true,
+                new BigDecimal("8.5"),
+                650,
+                3550,
+                "Laguna de Siecha",
+                LocalTime.of(7, 0),
+                "Portería principal",
+                List.of("Lagunas glaciares", "Frailejonales"));
     }
 }
