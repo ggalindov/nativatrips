@@ -58,6 +58,7 @@ public class PagoService {
     private final PasarelaPago pasarela;
     private final WompiProperties wompiProperties;
     private final EnlaceReservaService enlaceService;
+    private final AvisosDePago avisos;
 
     public PagoService(
             PagoRepository pagoRepository,
@@ -68,7 +69,8 @@ public class PagoService {
             ReservaService reservaService,
             PasarelaPago pasarela,
             WompiProperties wompiProperties,
-            EnlaceReservaService enlaceService) {
+            EnlaceReservaService enlaceService,
+            AvisosDePago avisos) {
         this.pagoRepository = pagoRepository;
         this.historialRepository = historialRepository;
         this.eventoRepository = eventoRepository;
@@ -78,6 +80,7 @@ public class PagoService {
         this.pasarela = pasarela;
         this.wompiProperties = wompiProperties;
         this.enlaceService = enlaceService;
+        this.avisos = avisos;
     }
 
     /** RF-06: datos para llevar al turista al checkout de la pasarela por el total de la reserva. */
@@ -168,9 +171,12 @@ public class PagoService {
         historialRepository.save(new PagoEstadoHistorial(pago.getId(), anterior, nuevoEstado, resultado.detalle()));
 
         switch (nuevoEstado) {
-            case APROBADO -> reservaService.transicionarEstado(
-                    pago.getReservaId(), EstadoReserva.CONFIRMADA, "Pago aprobado por la pasarela",
-                    OrigenCambioEstado.PAGO, null);
+            case APROBADO -> {
+                Reserva confirmada = reservaService.transicionarEstado(
+                        pago.getReservaId(), EstadoReserva.CONFIRMADA, "Pago aprobado por la pasarela",
+                        OrigenCambioEstado.PAGO, null);
+                avisos.comprobante(confirmada, pago, Instant.now());
+            }
             case RECHAZADO, EXPIRADO -> registrarIntentoFallido(pago, nuevoEstado);
             default -> {
                 // PENDIENTE (p.ej. PSE en proceso) o ERROR: no se toca el estado de la reserva,
@@ -186,14 +192,17 @@ public class PagoService {
     private void registrarIntentoFallido(Pago pago, EstadoPago estado) {
         long fallidos = pagoRepository.countByReservaIdAndEstadoIn(pago.getReservaId(), INTENTOS_FALLIDOS);
         if (fallidos >= MAXIMO_INTENTOS) {
-            reservaService.transicionarEstado(
+            Reserva cancelada = reservaService.transicionarEstado(
                     pago.getReservaId(), EstadoReserva.CANCELADA,
                     "Pago " + estado.name().toLowerCase() + " por la pasarela en el intento " + fallidos + " de "
                             + MAXIMO_INTENTOS + "; se libera el cupo",
                     OrigenCambioEstado.PAGO, null);
+            avisos.rechazo(cancelada, pago, 0);
         } else {
             log.info("Intento de pago {} de {} fallido para la reserva {}; puede reintentar",
                     fallidos, MAXIMO_INTENTOS, pago.getReservaId());
+            reservaRepository.findById(pago.getReservaId())
+                    .ifPresent(reserva -> avisos.rechazo(reserva, pago, MAXIMO_INTENTOS - fallidos));
         }
     }
 
