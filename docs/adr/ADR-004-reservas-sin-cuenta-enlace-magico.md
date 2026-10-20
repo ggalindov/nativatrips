@@ -1,6 +1,6 @@
 # ADR-004 — Reservas sin cuenta con enlace mágico
 
-- **Estado:** propuesta
+- **Estado:** aceptada (2026-10-15)
 - **Fecha:** 2026-10-13
 - **Decisores:** Juan David Galindo Calderón, Gonzalo Alberto Ayala Almeciga
 
