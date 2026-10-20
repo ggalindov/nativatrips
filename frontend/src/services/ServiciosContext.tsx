@@ -1,13 +1,14 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { crearServiciosHttp } from './http/serviciosHttp';
+import type { OpcionesCliente } from './http/clienteHttp';
 import { crearServiciosEnMemoria } from './memoria/serviciosEnMemoria';
 import type { Servicios } from './puertos';
 
 /** Elige el adaptador según VITE_FUENTE_DATOS; por defecto, datos en memoria. */
-export function crearServicios(): Servicios {
+export function crearServicios(opciones: Pick<OpcionesCliente, 'idioma' | 'token'>): Servicios {
   if (import.meta.env.VITE_FUENTE_DATOS === 'http') {
-    return crearServiciosHttp(import.meta.env.VITE_API_URL ?? 'http://localhost:8080');
+    return crearServiciosHttp({ baseUrl: import.meta.env.VITE_API_URL ?? 'http://localhost:8080', ...opciones });
   }
   return crearServiciosEnMemoria();
 }
