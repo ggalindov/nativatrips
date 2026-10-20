@@ -122,6 +122,26 @@ class EventoWompiTest {
     }
 
     @Test
+    void conDosRechazosSePuedeReintentarYAlTerceroSeCancelaLaReserva() throws Exception {
+        String codigo = reservar(1);
+        String token = tokenDelCorreo();
+        java.util.Set<String> referencias = new java.util.HashSet<>();
+
+        for (int intento = 1; intento <= 3; intento++) {
+            String referencia = iniciarPago(token);
+            referencias.add(referencia);
+            enviar(EventoWompiDePrueba.firmado("TX-RECHAZO-" + intento + "-" + UUID.randomUUID(), referencia, "DECLINED", 4_500_000))
+                    .andExpect(status().isOk());
+            EstadoReserva esperado = intento < 3 ? EstadoReserva.PENDIENTE_PAGO : EstadoReserva.CANCELADA;
+            assertThat(reservaRepository.findByCodigoReserva(codigo).orElseThrow().getEstado())
+                    .as("estado tras el rechazo %d", intento).isEqualTo(esperado);
+        }
+
+        assertThat(referencias).as("una referencia por intento").hasSize(3);
+        mockMvc.perform(post("/api/v1/mi-reserva/pago").header("X-Enlace-Reserva", token)).andExpect(status().isConflict());
+    }
+
+    @Test
     void unEventoFalsificadoNoCambiaNada() throws Exception {
         String codigo = reservar(1);
         String referencia = iniciarPago();
@@ -144,7 +164,11 @@ class EventoWompiTest {
     }
 
     private String iniciarPago() throws Exception {
-        String respuesta = mockMvc.perform(post("/api/v1/mi-reserva/pago").header("X-Enlace-Reserva", tokenDelCorreo()))
+        return iniciarPago(tokenDelCorreo());
+    }
+
+    private String iniciarPago(String token) throws Exception {
+        String respuesta = mockMvc.perform(post("/api/v1/mi-reserva/pago").header("X-Enlace-Reserva", token))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return JsonPath.read(respuesta, "$.referencia");
