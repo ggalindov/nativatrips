@@ -2,7 +2,7 @@ package com.nativatrips.backend.pagos.service;
 
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
-import com.nativatrips.backend.config.PayuProperties;
+import com.nativatrips.backend.config.WompiProperties;
 import com.nativatrips.backend.pagos.dto.PagoResponse;
 import com.nativatrips.backend.pagos.model.EstadoPago;
 import com.nativatrips.backend.pagos.model.Pago;
@@ -16,6 +16,7 @@ import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.OrigenCambioEstado;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
+import com.nativatrips.backend.reservas.service.EnlaceReservaService;
 import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
@@ -46,7 +47,8 @@ public class PagoService {
     private final SenderoRepository senderoRepository;
     private final ReservaService reservaService;
     private final PasarelaPago pasarela;
-    private final PayuProperties payuProperties;
+    private final WompiProperties wompiProperties;
+    private final EnlaceReservaService enlaceService;
 
     public PagoService(
             PagoRepository pagoRepository,
@@ -55,14 +57,16 @@ public class PagoService {
             SenderoRepository senderoRepository,
             ReservaService reservaService,
             PasarelaPago pasarela,
-            PayuProperties payuProperties) {
+            WompiProperties wompiProperties,
+            EnlaceReservaService enlaceService) {
         this.pagoRepository = pagoRepository;
         this.historialRepository = historialRepository;
         this.reservaRepository = reservaRepository;
         this.senderoRepository = senderoRepository;
         this.reservaService = reservaService;
         this.pasarela = pasarela;
-        this.payuProperties = payuProperties;
+        this.wompiProperties = wompiProperties;
+        this.enlaceService = enlaceService;
     }
 
     /** RF-06: datos para llevar al turista al checkout de la pasarela por el total de la reserva. */
@@ -71,7 +75,17 @@ public class PagoService {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .filter(r -> turistaId.equals(r.getTuristaId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
+        return checkout(reserva, buyerEmail);
+    }
 
+    /** HU-03 y HU-18: el titular paga el total desde el enlace magico de su reserva, sin cuenta. */
+    @Transactional(noRollbackFor = BusinessRuleException.class)
+    public CheckoutPago iniciarPagoConEnlace(String token, String ip) {
+        Reserva reserva = enlaceService.abrir(token, "PAGAR", ip);
+        return checkout(reserva, reserva.getTitular() == null ? null : reserva.getTitular().getCorreo());
+    }
+
+    private CheckoutPago checkout(Reserva reserva, String correoComprador) {
         if (reserva.getEstado() != EstadoReserva.PENDIENTE_PAGO) {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT, "La reserva no esta pendiente de pago (estado actual: " + reserva.getEstado() + ")");
@@ -82,10 +96,10 @@ public class PagoService {
         }
 
         Pago pago = pagoRepository
-                .findFirstByReservaIdAndEstadoOrderByCreatedAtDesc(reservaId, EstadoPago.PENDIENTE)
+                .findFirstByReservaIdAndEstadoOrderByCreatedAtDesc(reserva.getId(), EstadoPago.PENDIENTE)
                 .orElseGet(() -> crearPagoPendiente(reserva));
 
-        return pasarela.prepararCheckout(pago, "Reserva NativaTrips " + reserva.getId(), buyerEmail);
+        return pasarela.prepararCheckout(pago, reserva.getBloqueoExpiraEn(), correoComprador);
     }
 
     private Pago crearPagoPendiente(Reserva reserva) {
@@ -93,9 +107,12 @@ public class PagoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Sendero no encontrado"));
         BigDecimal monto = sendero.getPrecio().multiply(BigDecimal.valueOf(reserva.getCantidadPersonas()));
 
-        String referencia = "NATIVATRIPS-" + reserva.getId().toString().replace("-", "").substring(0, 12).toUpperCase()
-                + "-" + System.currentTimeMillis();
-        Pago pago = pagoRepository.save(new Pago(reserva.getId(), referencia, monto, payuProperties.getCurrency()));
+        // Una referencia por intento: Wompi no acepta repetir la de una transaccion ya procesada.
+        String prefijo = reserva.getCodigoReserva() != null
+                ? reserva.getCodigoReserva()
+                : "NT-" + reserva.getId().toString().replace("-", "").substring(0, 12).toUpperCase();
+        String referencia = prefijo + "-" + Long.toString(System.currentTimeMillis(), 36).toUpperCase();
+        Pago pago = pagoRepository.save(new Pago(reserva.getId(), referencia, monto, wompiProperties.getMoneda()));
         historialRepository.save(new PagoEstadoHistorial(pago.getId(), null, EstadoPago.PENDIENTE, "Pago iniciado"));
         return pago;
     }
