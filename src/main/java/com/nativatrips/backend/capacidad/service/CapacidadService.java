@@ -38,6 +38,12 @@ public class CapacidadService {
 
     static final short UMBRAL_ALERTA_POR_DEFECTO = 80;
 
+    /** Codigos de rechazo por aforo que el frontend traduce (HU-10). */
+    public static final String CUPO_AGOTADO = "CUPO_AGOTADO";
+    public static final String CUPO_INSUFICIENTE = "CUPO_INSUFICIENTE";
+    public static final String SIN_CAPACIDAD_PUBLICADA = "SIN_CAPACIDAD_PUBLICADA";
+    public static final String FUERA_DE_VENTANA = "FUERA_DE_VENTANA";
+
     /** Dias que puede pedir el calendario publico de un sendero en una consulta. */
     public static final int MAX_DIAS_CALENDARIO = 21;
 
@@ -174,7 +180,9 @@ public class CapacidadService {
         if (fecha.isAfter(ultimoDia)) {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT,
-                    "Por ahora se puede reservar hasta el " + ultimoDia + "; la capacidad de fechas posteriores aun no se publica");
+                    "Por ahora se puede reservar hasta el " + ultimoDia + "; la capacidad de fechas posteriores aun no se publica",
+                    FUERA_DE_VENTANA,
+                    Map.of("ultimoDiaReservable", ultimoDia.toString()));
         }
     }
 
@@ -205,15 +213,28 @@ public class CapacidadService {
     }
 
     /**
-     * @throws BusinessRuleException si no hay cupo suficiente para la cantidad solicitada.
+     * HU-10: si no alcanza, el turista sabe por que y cuantos cupos quedan.
+     *
+     * @throws BusinessRuleException CUPO_AGOTADO si el dia esta lleno; CUPO_INSUFICIENTE si quedan menos de los pedidos.
      */
     @Transactional(readOnly = true)
     public void verificarCupoSuficiente(Long senderoId, LocalDate fecha, int ocupacionActual, int cantidadSolicitada) {
         CapacidadDia dia = capacidadDelDia(senderoId, fecha);
-        if (ocupacionActual + cantidadSolicitada > dia.getCupoMaximo()) {
+        int disponibles = Math.max(dia.getCupoMaximo() - ocupacionActual, 0);
+        if (disponibles == 0) {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT,
-                    "El cupo maximo del sendero para esta fecha ha sido excedido");
+                    "Ya no quedan cupos para el " + fecha + " en este sendero. El aforo protege el paramo: elige otra fecha",
+                    CUPO_AGOTADO,
+                    Map.of("fecha", fecha.toString(), "cupoDisponible", 0));
+        }
+        if (cantidadSolicitada > disponibles) {
+            throw new BusinessRuleException(
+                    HttpStatus.CONFLICT,
+                    "Solo quedan " + disponibles + " cupos para el " + fecha + " y la reserva es de "
+                            + cantidadSolicitada + " personas",
+                    CUPO_INSUFICIENTE,
+                    Map.of("fecha", fecha.toString(), "cupoDisponible", disponibles, "personasSolicitadas", cantidadSolicitada));
         }
     }
 
@@ -224,6 +245,10 @@ public class CapacidadService {
 
     private static BusinessRuleException sinCapacidadCargada(LocalDate fecha) {
         return new BusinessRuleException(
-                HttpStatus.CONFLICT, "El sendero aun no tiene capacidad de carga publicada para el " + fecha);
+                HttpStatus.CONFLICT,
+                "Todavia no hay capacidad de carga publicada para el " + fecha
+                        + ". No se aparto ningun cupo ni se hizo ningun cobro; elige otra fecha",
+                SIN_CAPACIDAD_PUBLICADA,
+                Map.of("fecha", fecha.toString()));
     }
 }
