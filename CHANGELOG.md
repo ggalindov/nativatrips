@@ -16,11 +16,17 @@ Se publica como `v0.3.0-sprint3` al cierre del Sprint 3 (25 de octubre de 2026).
   paneles del administrador y del guía (#4).
 - Sitio en español, inglés, francés y portugués, con registro de visitantes extranjeros (#4).
 - Apartado «cómo llegar» con Waze, Google Maps y el mapa de la reserva (#8).
-- Contrato OpenAPI en `/v3/api-docs` y Swagger UI; la CI publica `openapi.json` en cada corrida.
-- Plantillas de PR e incidencias y `CODEOWNERS` para la revisión cruzada.
-- Escaneo de secretos con gitleaks sobre todo el historial en cada PR.
-- Dependabot y revisión de dependencias vulnerables en cada PR.
-- Revisión de accesibilidad con axe y Lighthouse (accesibilidad ≥ 95) en la CI.
+- Contrato OpenAPI en `/v3/api-docs` y Swagger UI; la CI publica `openapi.json` en cada corrida (#13).
+- Plantillas de PR e incidencias y `CODEOWNERS` para la revisión cruzada (#9).
+- Escaneo de secretos con gitleaks sobre todo el historial en cada PR (#10).
+- Dependabot y revisión de dependencias vulnerables en cada PR (#11).
+- Revisión de accesibilidad con axe y Lighthouse (accesibilidad ≥ 95) en la CI (#14).
+- Este archivo de cambios (#15).
+
+### Seguridad
+
+- `main` protegida: PR obligatorio con aprobación, CI en verde, historial lineal y sin
+  *force push*; alertas de vulnerabilidades de Dependabot activadas.
 
 ### Cambiado
 
