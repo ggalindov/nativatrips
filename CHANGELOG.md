@@ -49,6 +49,9 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   PostgreSQL (#37, #39).
 - BUG-02: cerrar sesión revoca el token; uno robado deja de servir de inmediato (#47).
 - Escaneo de secretos en cada push y reporte privado de vulnerabilidades activados.
+- Hallazgos de CodeQL: el registro ya no guarda el cuerpo de los correos con enlaces ni el
+  correo completo, la ruta del cliente no puede romper líneas del registro y la CI corre con
+  permisos de solo lectura (#56).
 - `main` protegida: PR obligatorio con aprobación, CI en verde, historial lineal y sin
   *force push*; alertas de vulnerabilidades de Dependabot activadas.
 - `source-map-js` 1.2.2: cierra la alerta alta de denegación de servicio (#24).
