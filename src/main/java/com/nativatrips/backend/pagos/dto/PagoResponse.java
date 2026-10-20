@@ -8,8 +8,8 @@ import java.util.UUID;
 public record PagoResponse(
         UUID id,
         UUID reservaId,
-        String referenciaPayu,
-        String transactionIdPayu,
+        String referencia,
+        String transaccionId,
         BigDecimal monto,
         String moneda,
         EstadoPago estado) {
@@ -18,8 +18,8 @@ public record PagoResponse(
         return new PagoResponse(
                 pago.getId(),
                 pago.getReservaId(),
-                pago.getReferenciaPayu(),
-                pago.getTransactionIdPayu(),
+                pago.getReferencia(),
+                pago.getTransaccionId(),
                 pago.getMonto(),
                 pago.getMoneda(),
                 pago.getEstado());

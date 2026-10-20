@@ -13,11 +13,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface PagoRepository extends JpaRepository<Pago, UUID> {
 
-    Optional<Pago> findByReferenciaPayu(String referenciaPayu);
+    Optional<Pago> findByReferencia(String referencia);
 
     /** SELECT ... FOR UPDATE: dos copias simultaneas del mismo evento se aplican una tras otra. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM Pago p WHERE p.referenciaPayu = :referencia")
+    @Query("SELECT p FROM Pago p WHERE p.referencia = :referencia")
     Optional<Pago> findByReferenciaConBloqueo(@Param("referencia") String referencia);
 
     List<Pago> findByReservaIdOrderByCreatedAtDesc(UUID reservaId);

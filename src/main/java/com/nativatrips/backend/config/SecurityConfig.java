@@ -51,9 +51,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/reservas/sin-cuenta").permitAll() // HU-02, ADR-004
                         // HU-18: el enlace magico autentica dentro de MiReservaService, no con JWT.
                         .requestMatchers("/api/v1/mi-reserva", "/api/v1/mi-reserva/**").permitAll()
-                        // Webhook de PayU: no puede enviar JWT: la autenticidad se valida con la
-                        // firma MD5 de PayU dentro de PagoService, no con Spring Security.
-                        .requestMatchers(HttpMethod.POST, "/api/v1/pagos/confirmacion").permitAll()
                         // Webhook de Wompi (ADR-005): se autentica con el checksum del evento.
                         .requestMatchers(HttpMethod.POST, "/api/v1/pagos/wompi/eventos").permitAll()
                         .anyRequest().authenticated())
