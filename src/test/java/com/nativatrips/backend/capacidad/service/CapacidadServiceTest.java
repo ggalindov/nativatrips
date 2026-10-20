@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import com.nativatrips.backend.capacidad.dto.CapacidadDiaRequest;
 import com.nativatrips.backend.capacidad.dto.CapacidadDiaResponse;
+import com.nativatrips.backend.capacidad.dto.DiaCalendarioResponse;
 import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
 import com.nativatrips.backend.capacidad.model.CapacidadDia;
 import com.nativatrips.backend.capacidad.repository.CapacidadDiaRepository;
@@ -153,6 +154,45 @@ class CapacidadServiceTest {
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(() -> capacidadService.consultarDias(HOY, HOY.plusDays(62)))
                 .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void elCalendarioMarcaDiasPublicadosLlenosFueraDeVentanaYSinCapacidad() {
+        // Viernes 30 de octubre: publicado con cupos. Sabado 31: publicado y lleno.
+        // Domingo 1 de noviembre: sin capacidad. Lunes 2: publicado pero fuera de la ventana.
+        LocalDate viernes = LocalDate.of(2026, 10, 30);
+        given(senderoRepository.existsById(1L)).willReturn(true);
+        given(capacidadDiaRepository.findBySenderoIdAndFechaBetweenOrderByFechaAsc(1L, viernes, viernes.plusDays(3)))
+                .willReturn(List.of(
+                        new CapacidadDia(1L, viernes, 20, (short) 80, UUID.randomUUID()),
+                        new CapacidadDia(1L, viernes.plusDays(1), 10, (short) 80, UUID.randomUUID()),
+                        new CapacidadDia(1L, viernes.plusDays(3), 30, (short) 80, UUID.randomUUID())));
+        given(ocupacionDelDia.personasReservadas(1L, viernes)).willReturn(17);
+        given(ocupacionDelDia.personasReservadas(1L, viernes.plusDays(1))).willReturn(10);
+
+        List<DiaCalendarioResponse> dias = capacidadService.calendario(1L, viernes, 4);
+
+        assertThat(dias).extracting(DiaCalendarioResponse::fecha)
+                .containsExactly(viernes, viernes.plusDays(1), viernes.plusDays(2), viernes.plusDays(3));
+        assertThat(dias.get(0)).satisfies(d -> {
+            assertThat(d.reservable()).isTrue();
+            assertThat(d.cupoDisponible()).isEqualTo(3);
+            assertThat(d.umbralAlertaSuperado()).isTrue();
+        });
+        assertThat(dias.get(1).reservable()).as("dia lleno").isFalse();
+        assertThat(dias.get(2).publicada()).as("dia sin capacidad").isFalse();
+        assertThat(dias.get(3)).satisfies(d -> {
+            assertThat(d.publicada()).isTrue();
+            assertThat(d.reservable()).as("fuera de la ventana").isFalse();
+        });
+    }
+
+    @Test
+    void elCalendarioRechazaRangosFueraDeLimitesYSenderosInexistentes() {
+        assertThatThrownBy(() -> capacidadService.calendario(1L, HOY, 0)).isInstanceOf(BusinessRuleException.class);
+        assertThatThrownBy(() -> capacidadService.calendario(1L, HOY, 22)).isInstanceOf(BusinessRuleException.class);
+        given(senderoRepository.existsById(9L)).willReturn(false);
+        assertThatThrownBy(() -> capacidadService.calendario(9L, HOY, 7)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
