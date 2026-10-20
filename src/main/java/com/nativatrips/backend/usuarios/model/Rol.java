@@ -1,12 +1,12 @@
 package com.nativatrips.backend.usuarios.model;
 
 /**
- * Los 4 roles del sistema (analisis de stakeholders, Anexo 2). La Autoridad Ambiental
- * no tiene login propio: actua a traves de PERSONAL_ADMINISTRATIVO.
+ * Roles con cuenta (ADR-007). El administrador reune administracion y gerencia; la Autoridad
+ * Ambiental no tiene cuenta y recibe sus reportes a traves del administrador. TURISTA se retira
+ * cuando la reserva sin cuenta reemplace al registro de turistas (ADR-004).
  */
 public enum Rol {
     TURISTA,
-    PERSONAL_ADMINISTRATIVO,
-    GUIA_TURISTICO,
-    GERENCIA
+    ADMINISTRADOR,
+    GUIA_TURISTICO
 }

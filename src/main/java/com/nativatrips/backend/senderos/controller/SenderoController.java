@@ -51,20 +51,20 @@ public class SenderoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PERSONAL_ADMINISTRATIVO', 'GERENCIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<SenderoResponse> crear(@Valid @RequestBody SenderoRequest request) {
         SenderoResponse creado = senderoService.crear(request);
         return ResponseEntity.created(URI.create("/api/v1/senderos/" + creado.id())).body(creado);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PERSONAL_ADMINISTRATIVO', 'GERENCIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public SenderoResponse actualizar(@PathVariable Long id, @Valid @RequestBody SenderoRequest request) {
         return senderoService.actualizar(id, request);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('PERSONAL_ADMINISTRATIVO', 'GERENCIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> desactivar(@PathVariable Long id) {
         senderoService.desactivar(id);
         return ResponseEntity.noContent().build();

@@ -70,13 +70,13 @@ public class ReservaController {
     }
 
     @GetMapping("/en-revision")
-    @PreAuthorize("hasAnyRole('PERSONAL_ADMINISTRATIVO', 'GERENCIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public List<ReservaResponse> listarEnRevision() {
         return reservaService.listarEnRevision();
     }
 
     @PostMapping("/{id}/revision")
-    @PreAuthorize("hasAnyRole('PERSONAL_ADMINISTRATIVO', 'GERENCIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ReservaResponse revisar(
             @PathVariable UUID id,
             @Valid @RequestBody RevisionRequest request,
@@ -85,7 +85,7 @@ public class ReservaController {
     }
 
     @PostMapping("/{id}/asignar-guia")
-    @PreAuthorize("hasAnyRole('PERSONAL_ADMINISTRATIVO', 'GERENCIA')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ReservaResponse asignarGuia(@PathVariable UUID id, @Valid @RequestBody AsignarGuiaRequest request) {
         return reservaService.asignarGuia(id, request.guiaId());
     }
