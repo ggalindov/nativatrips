@@ -84,7 +84,7 @@ public class VerificadorEventosWompi {
     }
 
     /** VOIDED (anulada) y ERROR no mueven la reserva: se registran y se espera otro evento o la conciliacion. */
-    static EstadoPago mapearEstado(String estadoWompi) {
+    public static EstadoPago mapearEstado(String estadoWompi) {
         return switch (estadoWompi) {
             case "APPROVED" -> EstadoPago.APROBADO;
             case "DECLINED" -> EstadoPago.RECHAZADO;
