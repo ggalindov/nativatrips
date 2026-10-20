@@ -52,6 +52,24 @@ class AsistenteToolsTest {
     }
 
     @Test
+    void unVisitanteSinSesionNoRecibeLaHerramientaDeReservas() {
+        assertThat(asistenteTools.definiciones(false))
+                .extracting(definicion -> definicion.get("name"))
+                .containsExactly("buscar_senderos", "consultar_disponibilidad");
+        assertThat(asistenteTools.definiciones(true))
+                .extracting(definicion -> definicion.get("name"))
+                .contains("consultar_mis_reservas");
+    }
+
+    @Test
+    void siUnVisitantePideSusReservasDeTodasFormasSeRechazaSinConsultar() {
+        String resultado = asistenteTools.ejecutar("consultar_mis_reservas", Map.of(), null);
+
+        assertThat(resultado).contains("enlace");
+        org.mockito.Mockito.verifyNoInteractions(reservaService);
+    }
+
+    @Test
     void buscarSenderosDevuelveElCatalogoComoJson() {
         given(senderoService.listarActivos()).willReturn(List.of());
 
