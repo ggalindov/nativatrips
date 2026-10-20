@@ -70,6 +70,7 @@ public class ReservaService {
     private final CapacidadService capacidadService;
     private final NotificacionService notificacionService;
     private final GeneradorCodigoReserva generadorCodigo;
+    private final EnlaceReservaService enlaceService;
 
     public ReservaService(
             ReservaRepository reservaRepository,
@@ -79,7 +80,8 @@ public class ReservaService {
             UsuarioRepository usuarioRepository,
             CapacidadService capacidadService,
             NotificacionService notificacionService,
-            GeneradorCodigoReserva generadorCodigo) {
+            GeneradorCodigoReserva generadorCodigo,
+            EnlaceReservaService enlaceService) {
         this.reservaRepository = reservaRepository;
         this.reservaIntegranteRepository = reservaIntegranteRepository;
         this.historialRepository = historialRepository;
@@ -88,6 +90,7 @@ public class ReservaService {
         this.capacidadService = capacidadService;
         this.notificacionService = notificacionService;
         this.generadorCodigo = generadorCodigo;
+        this.enlaceService = enlaceService;
     }
 
     @Transactional
@@ -126,7 +129,7 @@ public class ReservaService {
 
     /**
      * HU-02 (ADR-004): reserva sin cuenta. Aparta el cupo con el mismo bloqueo que la reserva con
-     * cuenta y envia el codigo al correo del titular; los acompanantes se agregan despues.
+     * cuenta y envia al correo del titular el codigo y el enlace magico para gestionarla (HU-18).
      */
     @Transactional
     public ReservaApartadaResponse crearReservaSinCuenta(ReservaSinCuentaRequest request) {
@@ -161,7 +164,7 @@ public class ReservaService {
                 reserva.getId(), null, EstadoReserva.PENDIENTE_PAGO, "Reserva sin cuenta creada, pendiente de pago",
                 OrigenCambioEstado.TURISTA, null));
 
-        notificarCupoApartado(reserva, sendero);
+        notificarCupoApartado(reserva, sendero, enlaceService.emitir(reserva));
         return ReservaApartadaResponse.from(reserva);
     }
 
@@ -212,7 +215,7 @@ public class ReservaService {
         throw new IllegalStateException("No se pudo generar un codigo de reserva unico");
     }
 
-    private void notificarCupoApartado(Reserva reserva, Sendero sendero) {
+    private void notificarCupoApartado(Reserva reserva, Sendero sendero, EnlaceReservaService.EnlaceEmitido enlace) {
         String venceA = HORA.format(reserva.getBloqueoExpiraEn());
         notificacionService.enviarCorreo(
                 reserva.getTitular().getCorreo(),
@@ -220,7 +223,10 @@ public class ReservaService {
                 "Hola " + reserva.getTitular().getNombre() + ". Apartamos " + reserva.getCantidadPersonas()
                         + " cupo(s) en " + sendero.getNombre() + " para el " + reserva.getFechaTour()
                         + ". Tu codigo de reserva es " + reserva.getCodigoReserva()
-                        + ". El cupo se guarda hasta las " + venceA + " (hora de Colombia) mientras completas el pago.");
+                        + ". El cupo se guarda hasta las " + venceA + " (hora de Colombia) mientras completas el pago."
+                        + "\n\nDesde este enlace pagas, registras a tus acompanantes y consultas tu reserva:\n"
+                        + enlace.url()
+                        + "\n\nEs personal: no lo compartas. Si lo pierdes, pide uno nuevo con tu correo y el codigo.");
     }
 
     /**
