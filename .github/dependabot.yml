@@ -1,6 +1,6 @@
 # Revisión semanal de dependencias. Las actualizaciones menores y de parche llegan en un solo PR
-# por ecosistema; las mayores llegan por separado para revisarlas con calma. Java 21 y
-# PostgreSQL 16 son versiones fijas del proyecto: no se proponen saltos mayores de las imágenes.
+# por ecosistema. Las mayores no se proponen: se revisan a mano en el receso, una por una, porque
+# suelen traer cambios que rompen. Java 21 y PostgreSQL 16 son versiones fijas del proyecto.
 version: 2
 updates:
   - package-ecosystem: maven
@@ -15,6 +15,9 @@ updates:
     groups:
       backend-menores:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: npm
     directory: /frontend
@@ -28,6 +31,9 @@ updates:
     groups:
       frontend-menores:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
@@ -40,6 +46,8 @@ updates:
       acciones:
         patterns: ["*"]
 
+  # Las imágenes de Maven y de Temurin llevan la versión de Java en la etiqueta
+  # (3.9-eclipse-temurin-21): Dependabot propondría saltar de Java, así que se actualizan a mano.
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -48,6 +56,8 @@ updates:
     commit-message:
       prefix: build(deps)
     ignore:
+      - dependency-name: maven
+      - dependency-name: eclipse-temurin
       - dependency-name: "*"
         update-types: [version-update:semver-major]
 
