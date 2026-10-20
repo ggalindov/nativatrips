@@ -41,6 +41,7 @@ public class SecurityConfig {
                         // Contrato OpenAPI y Swagger UI: se apagan en produccion con SPRINGDOC_ENABLED=false.
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/senderos/**").permitAll() // RF-01/02: catalogo publico
+                        .requestMatchers(HttpMethod.POST, "/api/v1/asistente/mensajes").permitAll() // BUG-04: visitantes
                         // Webhook de PayU: no puede enviar JWT: la autenticidad se valida con la
                         // firma MD5 de PayU dentro de PagoService, no con Spring Security.
                         .requestMatchers(HttpMethod.POST, "/api/v1/pagos/confirmacion").permitAll()
