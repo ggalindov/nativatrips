@@ -17,7 +17,8 @@ import tools.jackson.databind.ObjectMapper;
  * Herramientas que el asistente puede invocar, siempre respaldadas por datos reales del backend
  * (nunca inventadas por el modelo). El turistaId SIEMPRE lo inyecta este componente desde el
  * principal autenticado — nunca se toma de los argumentos que arma el modelo, para que un intento
- * de prompt injection no pueda pedirle al asistente "consulta las reservas del usuario X".
+ * de prompt injection no pueda pedirle al asistente "consulta las reservas del usuario X". Un
+ * visitante sin sesion no recibe la herramienta de reservas y, si aun asi la pide, se rechaza.
  */
 @Component
 public class AsistenteTools {
@@ -34,7 +35,16 @@ public class AsistenteTools {
         this.objectMapper = objectMapper;
     }
 
-    public List<Map<String, Object>> definiciones() {
+    static final String CONSULTAR_MIS_RESERVAS = "consultar_mis_reservas";
+
+    /** @param conReservas true solo cuando hay un turista identificado en la conversacion. */
+    public List<Map<String, Object>> definiciones(boolean conReservas) {
+        return todas().stream()
+                .filter(definicion -> conReservas || !CONSULTAR_MIS_RESERVAS.equals(definicion.get("name")))
+                .toList();
+    }
+
+    private static List<Map<String, Object>> todas() {
         return List.of(
                 Map.of(
                         "name", "buscar_senderos",
@@ -51,7 +61,7 @@ public class AsistenteTools {
                                         "fecha", Map.of("type", "string", "description", "Fecha en formato YYYY-MM-DD")),
                                 "required", List.of("senderoId", "fecha"))),
                 Map.of(
-                        "name", "consultar_mis_reservas",
+                        "name", CONSULTAR_MIS_RESERVAS,
                         "description", "Devuelve las reservas del turista que esta conversando, con su estado actual.",
                         "input_schema", Map.of("type", "object", "properties", Map.of(), "required", List.of())));
     }
@@ -62,7 +72,9 @@ public class AsistenteTools {
                 case "buscar_senderos" -> senderoService.listarActivos();
                 case "consultar_disponibilidad" -> reservaService.obtenerDisponibilidad(
                         obtenerSenderoId(input), obtenerFecha(input));
-                case "consultar_mis_reservas" -> reservaService.listarMisReservas(turistaId);
+                case CONSULTAR_MIS_RESERVAS -> turistaId == null
+                        ? Map.of("error", "Para consultar una reserva hay que abrir el enlace que llego al correo")
+                        : reservaService.listarMisReservas(turistaId);
                 default -> Map.of("error", "Herramienta desconocida: " + nombreTool);
             };
             return aJson(resultado);

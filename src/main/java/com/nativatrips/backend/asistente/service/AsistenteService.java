@@ -42,13 +42,14 @@ public class AsistenteService {
         this.tools = tools;
     }
 
+    /** @param turistaId null cuando conversa un visitante sin sesion (BUG-04). */
     public ChatResponse conversar(ChatRequest request, UUID turistaId) {
         List<Map<String, Object>> messages = new ArrayList<>();
         for (MensajeChat mensaje : request.mensajes()) {
             messages.add(Map.of("role", mensaje.rol(), "content", mensaje.contenido()));
         }
 
-        List<Map<String, Object>> definicionesTools = tools.definiciones();
+        List<Map<String, Object>> definicionesTools = tools.definiciones(turistaId != null);
 
         for (int intento = 0; intento < MAX_ITERACIONES_TOOLS; intento++) {
             AnthropicResponse respuesta = anthropicClient.enviarMensaje(SYSTEM_PROMPT, messages, definicionesTools);
