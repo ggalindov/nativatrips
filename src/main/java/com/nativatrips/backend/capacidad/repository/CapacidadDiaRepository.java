@@ -16,6 +16,8 @@ public interface CapacidadDiaRepository extends JpaRepository<CapacidadDia, Long
 
     List<CapacidadDia> findByFechaBetweenOrderByFechaAscSenderoIdAsc(LocalDate desde, LocalDate hasta);
 
+    List<CapacidadDia> findBySenderoIdAndFechaBetweenOrderByFechaAsc(Long senderoId, LocalDate desde, LocalDate hasta);
+
     /** SELECT ... FOR UPDATE del dia: otra reserva para el mismo sendero y fecha espera (ADR-008). */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CapacidadDia c WHERE c.senderoId = :senderoId AND c.fecha = :fecha")

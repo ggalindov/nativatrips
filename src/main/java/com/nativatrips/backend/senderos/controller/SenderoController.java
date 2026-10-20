@@ -1,6 +1,8 @@
 package com.nativatrips.backend.senderos.controller;
 
+import com.nativatrips.backend.capacidad.dto.DiaCalendarioResponse;
 import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
+import com.nativatrips.backend.capacidad.service.CapacidadService;
 import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.senderos.dto.SenderoRequest;
 import com.nativatrips.backend.senderos.dto.SenderoResponse;
@@ -28,10 +30,12 @@ public class SenderoController {
 
     private final SenderoService senderoService;
     private final ReservaService reservaService;
+    private final CapacidadService capacidadService;
 
-    public SenderoController(SenderoService senderoService, ReservaService reservaService) {
+    public SenderoController(SenderoService senderoService, ReservaService reservaService, CapacidadService capacidadService) {
         this.senderoService = senderoService;
         this.reservaService = reservaService;
+        this.capacidadService = capacidadService;
     }
 
     @GetMapping
@@ -42,6 +46,15 @@ public class SenderoController {
     @GetMapping("/{id}")
     public SenderoResponse obtener(@PathVariable Long id) {
         return senderoService.obtener(id);
+    }
+
+    /** Calendario de los proximos dias (hasta 21) con cupos y si se puede reservar. Publico. */
+    @GetMapping("/{id}/calendario")
+    public List<DiaCalendarioResponse> calendario(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(defaultValue = "14") int dias) {
+        return capacidadService.calendario(id, desde, dias);
     }
 
     @GetMapping("/{id}/disponibilidad")
