@@ -32,6 +32,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-nativatrips}
       APP_JWT_SECRET: ${APP_JWT_SECRET:?la variable APP_JWT_SECRET es obligatoria, definela en tu .env}
       APP_JWT_EXPIRATION_MINUTES: ${APP_JWT_EXPIRATION_MINUTES:-60}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
+      AUTH_INTENTOS_MAXIMOS: ${AUTH_INTENTOS_MAXIMOS:-5}
+      AUTH_MINUTOS_BLOQUEO: ${AUTH_MINUTOS_BLOQUEO:-15}
       SPRING_PROFILES_ACTIVE: dev
       # Sprint 2 - PayU WebCheckout. Vacias => usa las credenciales de prueba publicas de PayU.
       PAYU_API_KEY: ${PAYU_API_KEY:-}

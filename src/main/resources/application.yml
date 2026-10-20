@@ -23,6 +23,8 @@ server:
   forward-headers-strategy: framework
 
 app:
+  # Base de los enlaces que llegan por correo (recuperar la clave y, desde el Sprint 2, la reserva).
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
   asistente:
     mensajes-por-hora: ${ASISTENTE_MENSAJES_POR_HORA:20}
   auth:
