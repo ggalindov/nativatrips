@@ -63,6 +63,8 @@ public class PasswordResetService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
 
         usuario.setPasswordHash(passwordEncoder.encode(nuevaPassword));
+        // Quien recupera la clave por correo ya demostro ser el titular: se levanta el bloqueo (A-04).
+        usuario.reiniciarIntentos();
         resetToken.marcarUsado();
         // Sin llamadas a save(): ambas entidades estan gestionadas dentro de la transaccion
         // y JPA hace flush de los cambios (dirty checking) al confirmar.

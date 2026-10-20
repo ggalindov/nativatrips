@@ -25,6 +25,10 @@ server:
 app:
   asistente:
     mensajes-por-hora: ${ASISTENTE_MENSAJES_POR_HORA:20}
+  auth:
+    # Amenaza A-04: fuerza bruta sobre el inicio de sesion del equipo.
+    intentos-maximos: ${AUTH_INTENTOS_MAXIMOS:5}
+    minutos-bloqueo: ${AUTH_MINUTOS_BLOQUEO:15}
   jwt:
     secret: ${APP_JWT_SECRET:}
     expiration-minutes: ${APP_JWT_EXPIRATION_MINUTES:60}
