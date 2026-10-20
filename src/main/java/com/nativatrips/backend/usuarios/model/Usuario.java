@@ -9,6 +9,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -39,6 +41,12 @@ public class Usuario extends Auditable {
 
     @Column(nullable = false)
     private boolean activo = true;
+
+    @Column(name = "intentos_fallidos", nullable = false)
+    private int intentosFallidos;
+
+    @Column(name = "bloqueado_hasta")
+    private Instant bloqueadoHasta;
 
     protected Usuario() {
         // requerido por JPA
@@ -106,5 +114,31 @@ public class Usuario extends Auditable {
 
     public void setActivo(boolean activo) {
         this.activo = activo;
+    }
+
+    public int getIntentosFallidos() {
+        return intentosFallidos;
+    }
+
+    public Instant getBloqueadoHasta() {
+        return bloqueadoHasta;
+    }
+
+    public boolean estaBloqueado(Instant ahora) {
+        return bloqueadoHasta != null && ahora.isBefore(bloqueadoHasta);
+    }
+
+    /** Al llegar al maximo de intentos seguidos el acceso queda bloqueado y el contador vuelve a cero. */
+    public void registrarIntentoFallido(Instant ahora, int maximoIntentos, Duration duracionBloqueo) {
+        intentosFallidos++;
+        if (intentosFallidos >= maximoIntentos) {
+            bloqueadoHasta = ahora.plus(duracionBloqueo);
+            intentosFallidos = 0;
+        }
+    }
+
+    public void reiniciarIntentos() {
+        intentosFallidos = 0;
+        bloqueadoHasta = null;
     }
 }
