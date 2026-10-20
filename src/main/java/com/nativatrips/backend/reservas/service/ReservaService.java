@@ -85,6 +85,9 @@ public class ReservaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Sendero no encontrado"));
 
         int cantidadPersonas = request.integrantes().size();
+        // El bloqueo va antes de contar la ocupacion; sin el, dos reservas simultaneas ven la misma
+        // ocupacion y ambas pasan (BUG-01).
+        capacidadService.bloquearLimiteVigente(sendero.getId(), request.fechaTour());
         int ocupacionActual = ocupacionActual(sendero.getId(), request.fechaTour());
         capacidadService.verificarCupoSuficiente(sendero.getId(), request.fechaTour(), ocupacionActual, cantidadPersonas);
 

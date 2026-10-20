@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -78,6 +79,19 @@ public class CapacidadService {
     @Transactional(readOnly = true)
     public LimiteCapacidad obtenerLimiteVigente(Long senderoId, LocalDate fecha) {
         return limiteCapacidadRepository.findVigentePara(senderoId, fecha)
+                .orElseThrow(() -> new BusinessRuleException(
+                        HttpStatus.CONFLICT,
+                        "No hay un limite de capacidad configurado para este sendero en la fecha solicitada"));
+    }
+
+    /**
+     * Bloquea el limite vigente del sendero para la fecha hasta que termine la transaccion de quien
+     * llama (ADR-008). Debe llamarse antes de leer la ocupacion: asi dos reservas simultaneas para
+     * el mismo dia se atienden una tras otra y la segunda ve la ocupacion ya actualizada (BUG-01).
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public LimiteCapacidad bloquearLimiteVigente(Long senderoId, LocalDate fecha) {
+        return limiteCapacidadRepository.findVigenteParaConBloqueo(senderoId, fecha)
                 .orElseThrow(() -> new BusinessRuleException(
                         HttpStatus.CONFLICT,
                         "No hay un limite de capacidad configurado para este sendero en la fecha solicitada"));
