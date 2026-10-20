@@ -19,7 +19,6 @@ import com.nativatrips.backend.reservas.model.OrigenCambioEstado;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.model.ReservaEstadoHistorial;
 import com.nativatrips.backend.reservas.model.ReservaIntegrante;
-import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
@@ -134,12 +133,13 @@ public class ReservaService {
     @Transactional
     public ReservaApartadaResponse crearReservaSinCuenta(ReservaSinCuentaRequest request) {
         TitularRequest datos = request.titular();
-        validarDocumentoYCelular(datos);
+        ReglasPersona.validarDocumento(datos.tipoDocumento(), datos.documento(), datos.nacionalidad());
+        ReglasPersona.validarCelular(datos.indicativo(), datos.celular());
         if (request.acompanantes().size() > request.personas() - 1) {
             throw new BusinessRuleException(
                     HttpStatus.BAD_REQUEST, "Hay mas acompanantes que personas en la reserva, sin contar al titular");
         }
-        request.acompanantes().forEach(a -> validarDocumento(a.tipoDocumento(), a.documento(), a.nacionalidad()));
+        request.acompanantes().forEach(a -> ReglasPersona.validarDocumento(a.tipoDocumento(), a.documento(), a.nacionalidad()));
         Sendero sendero = apartarCupo(request.senderoId(), request.fechaTour(), request.personas());
 
         TitularReserva titular = new TitularReserva(
@@ -181,27 +181,6 @@ public class ReservaService {
         int ocupacionActual = ocupacionActual(sendero.getId(), fecha);
         capacidadService.verificarCupoSuficiente(sendero.getId(), fecha, ocupacionActual, personas);
         return sendero;
-    }
-
-    /** Las mismas reglas del formulario: el documento depende de la nacionalidad y el celular del indicativo. */
-    private static void validarDocumentoYCelular(TitularRequest titular) {
-        validarDocumento(titular.tipoDocumento(), titular.documento(), titular.nacionalidad());
-        if ("57".equals(titular.indicativo()) && !titular.celular().matches("3\\d{9}")) {
-            throw new BusinessRuleException(
-                    HttpStatus.BAD_REQUEST, "El celular colombiano debe tener 10 digitos y empezar por 3");
-        }
-    }
-
-    private static void validarDocumento(TipoDocumento tipo, String documento, String nacionalidad) {
-        boolean colombiano = "CO".equals(nacionalidad);
-        if (tipo.esNacional() != colombiano) {
-            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, colombiano
-                    ? "Para colombianos el documento debe ser cedula o tarjeta de identidad"
-                    : "Para extranjeros el documento debe ser pasaporte, cedula de extranjeria, PPT o DNI");
-        }
-        if (!tipo.esAlfanumerico() && !documento.trim().matches("\\d{5,12}")) {
-            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "El numero de documento debe tener solo digitos");
-        }
     }
 
     /** Un choque es casi imposible (887 millones de codigos), pero se reintenta en vez de fallar. */
