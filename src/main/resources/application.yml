@@ -19,8 +19,12 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # Detras de Nginx: la IP del visitante llega en X-Forwarded-For (limites de uso por visitante).
+  forward-headers-strategy: framework
 
 app:
+  asistente:
+    mensajes-por-hora: ${ASISTENTE_MENSAJES_POR_HORA:20}
   jwt:
     secret: ${APP_JWT_SECRET:}
     expiration-minutes: ${APP_JWT_EXPIRATION_MINUTES:60}
