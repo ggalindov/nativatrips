@@ -39,6 +39,8 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 - Backend: Spring Boot 4.1.1, jjwt 0.13.0, JaCoCo 0.8.15 y Maven 3.10.0 (#27).
 - Acciones de GitHub: checkout v7, setup-node v7, setup-java v6, upload-artifact v7 y
   dependency-review v5 (#28).
+- Los diagramas y las presentaciones salen del repositorio; se mantienen en el espacio
+  documental del trabajo de grado (#52).
 
 ## [0.2.0] - 2026-10-13
 
