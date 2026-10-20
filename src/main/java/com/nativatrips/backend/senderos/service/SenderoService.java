@@ -3,6 +3,7 @@ package com.nativatrips.backend.senderos.service;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.senderos.dto.SenderoRequest;
 import com.nativatrips.backend.senderos.dto.SenderoResponse;
+import com.nativatrips.backend.senderos.model.FichaTecnica;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
 import java.util.List;
@@ -40,6 +41,8 @@ public class SenderoService {
                 request.tipoExperiencia(),
                 request.requisitosIngreso(),
                 request.precio());
+        sendero.setFicha(fichaDe(request));
+        sendero.reemplazarDestacados(request.destacados());
         return SenderoResponse.from(senderoRepository.save(sendero));
     }
 
@@ -53,6 +56,8 @@ public class SenderoService {
         sendero.setTipoExperiencia(request.tipoExperiencia());
         sendero.setRequisitosIngreso(request.requisitosIngreso());
         sendero.setPrecio(request.precio());
+        sendero.setFicha(fichaDe(request));
+        sendero.reemplazarDestacados(request.destacados());
         return SenderoResponse.from(sendero);
     }
 
@@ -60,6 +65,16 @@ public class SenderoService {
     public void desactivar(Long id) {
         Sendero sendero = buscarPorId(id);
         sendero.setActivo(false);
+    }
+
+    private static FichaTecnica fichaDe(SenderoRequest request) {
+        return new FichaTecnica(
+                request.distanciaKm(),
+                request.desnivelM(),
+                request.altitudMaxM(),
+                request.sector(),
+                request.horaSalida(),
+                request.puntoEncuentro());
     }
 
     private Sendero buscarPorId(Long id) {
