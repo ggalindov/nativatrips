@@ -18,11 +18,13 @@ import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.service.SenderoService;
 import com.nativatrips.backend.usuarios.security.JwtAuthenticationFilter;
 import com.nativatrips.backend.usuarios.security.JwtTokenProvider;
+import com.nativatrips.backend.usuarios.service.RevocacionTokens;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -71,8 +73,13 @@ class SenderoControllerTest {
         }
 
         @Bean
-        JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
-            return new JwtAuthenticationFilter(jwtTokenProvider);
+        RevocacionTokens revocacionTokens() {
+            return Mockito.mock(RevocacionTokens.class);
+        }
+
+        @Bean
+        JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, RevocacionTokens revocacionTokens) {
+            return new JwtAuthenticationFilter(jwtTokenProvider, revocacionTokens);
         }
     }
 

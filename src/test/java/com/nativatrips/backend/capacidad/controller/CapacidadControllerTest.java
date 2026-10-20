@@ -18,10 +18,12 @@ import com.nativatrips.backend.usuarios.model.Rol;
 import com.nativatrips.backend.usuarios.security.AuthenticatedUser;
 import com.nativatrips.backend.usuarios.security.JwtAuthenticationFilter;
 import com.nativatrips.backend.usuarios.security.JwtTokenProvider;
+import com.nativatrips.backend.usuarios.service.RevocacionTokens;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -59,8 +61,13 @@ class CapacidadControllerTest {
         }
 
         @Bean
-        JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
-            return new JwtAuthenticationFilter(jwtTokenProvider);
+        RevocacionTokens revocacionTokens() {
+            return Mockito.mock(RevocacionTokens.class);
+        }
+
+        @Bean
+        JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, RevocacionTokens revocacionTokens) {
+            return new JwtAuthenticationFilter(jwtTokenProvider, revocacionTokens);
         }
     }
 
