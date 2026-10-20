@@ -506,6 +506,7 @@ export const fr: Diccionario = {
     cuentaNoEquipo: 'Ce compte n’appartient pas à l’équipe.',
     asistenteNoDisponible: 'L’assistant n’est pas disponible pour le moment.',
     datosInvalidos: 'Vérifiez les informations du formulaire.',
+    servidor: 'Un problème est survenu sur notre serveur. Réessayez dans quelques minutes.',
   },
   senderos: {
     'la-paila': {
