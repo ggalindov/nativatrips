@@ -11,6 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.nativatrips.backend.config.JwtProperties;
 import com.nativatrips.backend.config.SecurityConfig;
 import com.nativatrips.backend.pagos.dto.IniciarPagoResponse;
+import com.nativatrips.backend.pagos.model.EstadoPago;
+import com.nativatrips.backend.pagos.pasarela.PayuPasarela;
+import com.nativatrips.backend.pagos.pasarela.ResultadoPago;
 import com.nativatrips.backend.pagos.service.PagoService;
 import com.nativatrips.backend.usuarios.model.Rol;
 import com.nativatrips.backend.usuarios.security.AuthenticatedUser;
@@ -41,6 +44,9 @@ class PagoControllerTest {
 
     @MockitoBean
     private PagoService pagoService;
+
+    @MockitoBean
+    private PayuPasarela payuPasarela;
 
     @TestConfiguration
     static class TestSecurityBeans {
@@ -88,6 +94,9 @@ class PagoControllerTest {
 
     @Test
     void confirmacionWebhookNoRequiereAutenticacion() throws Exception {
+        given(payuPasarela.verificar(any())).willReturn(new ResultadoPago(
+                "REF-1", "TX-1", EstadoPago.APROBADO, new java.math.BigDecimal("50000.0"), "COP", "detalle", "{}"));
+
         mockMvc.perform(post("/api/v1/pagos/confirmacion")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("reference_sale", "REF-1")
@@ -97,6 +106,7 @@ class PagoControllerTest {
                         .param("sign", "firma")
                         .param("transaction_id", "TX-1"))
                 .andExpect(status().isOk());
+        org.mockito.Mockito.verify(pagoService).aplicarResultado(any());
     }
 
     private static UsernamePasswordAuthenticationToken unTuristaAutenticado() {

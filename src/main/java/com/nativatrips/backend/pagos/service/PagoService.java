@@ -3,12 +3,13 @@ package com.nativatrips.backend.pagos.service;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.config.PayuProperties;
-import com.nativatrips.backend.pagos.dto.ConfirmacionPayuPayload;
-import com.nativatrips.backend.pagos.dto.IniciarPagoResponse;
 import com.nativatrips.backend.pagos.dto.PagoResponse;
 import com.nativatrips.backend.pagos.model.EstadoPago;
 import com.nativatrips.backend.pagos.model.Pago;
 import com.nativatrips.backend.pagos.model.PagoEstadoHistorial;
+import com.nativatrips.backend.pagos.pasarela.CheckoutPago;
+import com.nativatrips.backend.pagos.pasarela.PasarelaPago;
+import com.nativatrips.backend.pagos.pasarela.ResultadoPago;
 import com.nativatrips.backend.pagos.repository.PagoEstadoHistorialRepository;
 import com.nativatrips.backend.pagos.repository.PagoRepository;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
@@ -31,7 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * PagoService depende de ReservaService (no al reves): reservas no sabe que existe un modulo
  * de pagos, solo expone transicionarEstado() para que quien procese el resultado del pago
- * mueva la reserva a CONFIRMADA o CANCELADA con la trazabilidad de RNF-13 intacta.
+ * mueva la reserva a CONFIRMADA o CANCELADA con la trazabilidad de RNF-13 intacta. Lo propio de
+ * cada pasarela queda en su adaptador (ADR-005).
  */
 @Service
 public class PagoService {
@@ -43,7 +45,7 @@ public class PagoService {
     private final ReservaRepository reservaRepository;
     private final SenderoRepository senderoRepository;
     private final ReservaService reservaService;
-    private final PayuSignatureService signatureService;
+    private final PasarelaPago pasarela;
     private final PayuProperties payuProperties;
 
     public PagoService(
@@ -52,20 +54,20 @@ public class PagoService {
             ReservaRepository reservaRepository,
             SenderoRepository senderoRepository,
             ReservaService reservaService,
-            PayuSignatureService signatureService,
+            PasarelaPago pasarela,
             PayuProperties payuProperties) {
         this.pagoRepository = pagoRepository;
         this.historialRepository = historialRepository;
         this.reservaRepository = reservaRepository;
         this.senderoRepository = senderoRepository;
         this.reservaService = reservaService;
-        this.signatureService = signatureService;
+        this.pasarela = pasarela;
         this.payuProperties = payuProperties;
     }
 
-    /** RF-06: arma los campos del formulario WebCheckout que el frontend redirige hacia PayU. */
+    /** RF-06: datos para llevar al turista al checkout de la pasarela por el total de la reserva. */
     @Transactional
-    public IniciarPagoResponse iniciarPago(UUID reservaId, UUID turistaId, String buyerEmail) {
+    public CheckoutPago iniciarPago(UUID reservaId, UUID turistaId, String buyerEmail) {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .filter(r -> turistaId.equals(r.getTuristaId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
@@ -83,24 +85,7 @@ public class PagoService {
                 .findFirstByReservaIdAndEstadoOrderByCreatedAtDesc(reservaId, EstadoPago.PENDIENTE)
                 .orElseGet(() -> crearPagoPendiente(reserva));
 
-        String firma = signatureService.generarFirmaSolicitud(
-                pago.getReferenciaPayu(), pago.getMonto(), payuProperties.getCurrency());
-
-        return new IniciarPagoResponse(
-                payuProperties.getCheckoutUrl(),
-                payuProperties.getMerchantId(),
-                payuProperties.getAccountId(),
-                "Reserva NativaTrips " + reserva.getId(),
-                pago.getReferenciaPayu(),
-                signatureService.formatearMonto(pago.getMonto()),
-                "0",
-                "0",
-                payuProperties.getCurrency(),
-                firma,
-                payuProperties.isTestMode() ? "1" : "0",
-                buyerEmail,
-                payuProperties.getResponseUrl(),
-                payuProperties.getConfirmationUrl());
+        return pasarela.prepararCheckout(pago, "Reserva NativaTrips " + reserva.getId(), buyerEmail);
     }
 
     private Pago crearPagoPendiente(Reserva reserva) {
@@ -116,48 +101,39 @@ public class PagoService {
     }
 
     /**
-     * RF-07: procesa el webhook de confirmacion de PayU. Valida la firma y el monto antes de
-     * confiar en el resultado — sin esto, cualquiera podria POSTear un "pago aprobado" falso.
+     * RF-07: aplica un resultado cuya firma ya verifico el adaptador. El monto y la moneda deben
+     * ser los del pago; si no, alguien altero el cobro y no se toca nada.
      */
     @Transactional
-    public void procesarConfirmacion(ConfirmacionPayuPayload payload) {
-        boolean firmaValida = signatureService.validarFirmaConfirmacion(
-                payload.referenceSale(), payload.value(), payload.currency(), payload.statePol(), payload.sign());
-        if (!firmaValida) {
-            log.warn("Firma invalida en confirmacion de PayU para referencia {}", payload.referenceSale());
-            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "Firma de confirmacion invalida");
-        }
+    public void aplicarResultado(ResultadoPago resultado) {
+        Pago pago = pagoRepository.findByReferenciaPayu(resultado.referencia())
+                .orElseThrow(() -> new ResourceNotFoundException("Pago no encontrado para la referencia " + resultado.referencia()));
 
-        Pago pago = pagoRepository.findByReferenciaPayu(payload.referenceSale())
-                .orElseThrow(() -> new ResourceNotFoundException("Pago no encontrado para la referencia " + payload.referenceSale()));
-
-        BigDecimal valorRecibido = new BigDecimal(payload.value());
-        if (valorRecibido.compareTo(pago.getMonto()) != 0) {
+        if (resultado.monto().compareTo(pago.getMonto()) != 0 || !pago.getMoneda().equals(resultado.moneda())) {
             log.error(
-                    "Monto de confirmacion ({}) no coincide con el monto esperado ({}) para el pago {}",
-                    valorRecibido, pago.getMonto(), pago.getId());
+                    "Monto de confirmacion ({} {}) no coincide con el esperado ({} {}) para el pago {}",
+                    resultado.monto(), resultado.moneda(), pago.getMonto(), pago.getMoneda(), pago.getId());
             throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "El monto confirmado no coincide con el monto del pago");
         }
 
-        EstadoPago nuevoEstado = mapearEstado(payload.statePol());
+        EstadoPago nuevoEstado = resultado.estado();
         EstadoPago anterior = pago.getEstado();
         pago.setEstado(nuevoEstado);
-        pago.setTransactionIdPayu(payload.transactionId());
-        pago.setRespuestaConfirmacion(payload.rawPayload());
+        pago.setTransactionIdPayu(resultado.transaccionId());
+        pago.setRespuestaConfirmacion(resultado.respuestaCruda());
 
-        historialRepository.save(new PagoEstadoHistorial(
-                pago.getId(), anterior, nuevoEstado, "Confirmacion PayU recibida (state_pol=" + payload.statePol() + ")"));
+        historialRepository.save(new PagoEstadoHistorial(pago.getId(), anterior, nuevoEstado, resultado.detalle()));
 
         switch (nuevoEstado) {
             case APROBADO -> reservaService.transicionarEstado(
-                    pago.getReservaId(), EstadoReserva.CONFIRMADA, "Pago aprobado por PayU",
+                    pago.getReservaId(), EstadoReserva.CONFIRMADA, "Pago aprobado por la pasarela",
                     OrigenCambioEstado.PAGO, null);
             case RECHAZADO, EXPIRADO -> reservaService.transicionarEstado(
                     pago.getReservaId(), EstadoReserva.CANCELADA,
-                    "Pago " + nuevoEstado.name().toLowerCase() + " por PayU", OrigenCambioEstado.PAGO, null);
+                    "Pago " + nuevoEstado.name().toLowerCase() + " por la pasarela", OrigenCambioEstado.PAGO, null);
             default -> {
                 // PENDIENTE (p.ej. PSE en proceso) o ERROR: no se toca el estado de la reserva,
-                // se espera la siguiente confirmacion de PayU con el estado final.
+                // se espera el siguiente evento con el estado final.
             }
         }
     }
@@ -173,15 +149,5 @@ public class PagoService {
         return pagoRepository.findByReservaIdOrderByCreatedAtDesc(reservaId).stream()
                 .findFirst()
                 .map(PagoResponse::from);
-    }
-
-    private EstadoPago mapearEstado(String statePol) {
-        return switch (statePol) {
-            case "4" -> EstadoPago.APROBADO;
-            case "6" -> EstadoPago.RECHAZADO;
-            case "5" -> EstadoPago.EXPIRADO;
-            case "7" -> EstadoPago.PENDIENTE;
-            default -> EstadoPago.ERROR;
-        };
     }
 }
