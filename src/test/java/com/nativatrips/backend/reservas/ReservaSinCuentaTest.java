@@ -113,7 +113,11 @@ class ReservaSinCuentaTest {
     void siNoAlcanzaElCupoDelDiaSeRechazaSinGuardarNada() throws Exception {
         reservar(4, titular("CO", "CC", "1020304050", "57", "3001234567")).andExpect(status().isCreated());
 
-        reservar(3, titular("CO", "CC", "1020304051", "57", "3001234568")).andExpect(status().isConflict());
+        reservar(3, titular("CO", "CC", "1020304051", "57", "3001234568"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("CUPO_INSUFICIENTE"))
+                .andExpect(jsonPath("$.detalles.cupoDisponible").value(2))
+                .andExpect(jsonPath("$.message").value("Solo quedan 2 cupos para el " + fecha + " y la reserva es de 3 personas"));
 
         assertThat(reservaRepository.sumarPersonasActivas(senderoId, fecha, EstadoReserva.queOcupanCupo())).isEqualTo(4);
     }
