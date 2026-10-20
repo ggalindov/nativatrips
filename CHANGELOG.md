@@ -11,6 +11,22 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Agregado
 
+- Capacidad de carga por sendero y día: el administrador la publica y las reservas se validan
+  contra ella, solo hasta el domingo de la semana siguiente (#40, #41).
+- Ficha técnica ampliada de los senderos (distancia, desnivel, altitud, sector, hora y punto de
+  encuentro) y nivel de exigencia `EXIGENTE` (#43).
+- Calendario público de disponibilidad por sendero, de hasta 21 días (#44).
+- El asistente atiende a quien visita el portal sin sesión (#45) y tiene un límite de mensajes
+  por visitante y hora, configurable con `ASISTENTE_MENSAJES_POR_HORA` (#46).
+- Bloqueo del inicio de sesión del equipo por 15 minutos tras cinco intentos fallidos (#48).
+- Reserva sin cuenta: el turista registra sus datos y los de sus acompañantes, recibe un código
+  `NT-XXXXXX` y el cupo queda apartado 15 minutos mientras paga (#49).
+- Cuando no hay cupo, el rechazo dice por qué y cuántos cupos quedan; los errores traen un
+  `codigo` estable para traducirlos a los cuatro idiomas (#50).
+- Recuperación de contraseña con un enlace de un solo uso que vence en 30 minutos (#51).
+- Cliente HTTP del frontend con manejo de errores e idioma (#42).
+- Modelo de amenazas del Sprint 3 (#35) y decisiones ADR-007 de roles y ADR-008 de capacidad
+  por día (#36).
 - Frontend rediseñado con la identidad de Eco Palacio: portada con el páramo vivo, catálogo y
   ficha de senderos, reserva sin cuenta, «mi reserva» con enlace mágico, asistente Frailín y
   paneles del administrador y del guía (#4).
@@ -28,6 +44,11 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Seguridad
 
+- BUG-01: la capacidad del día se bloquea antes de contar la ocupación, así que dos reservas
+  simultáneas nunca se quedan con el mismo último cupo; prueba con 20 reservas a la vez contra
+  PostgreSQL (#37, #39).
+- BUG-02: cerrar sesión revoca el token; uno robado deja de servir de inmediato (#47).
+- Escaneo de secretos en cada push y reporte privado de vulnerabilidades activados.
 - `main` protegida: PR obligatorio con aprobación, CI en verde, historial lineal y sin
   *force push*; alertas de vulnerabilidades de Dependabot activadas.
 - `source-map-js` 1.2.2: cierra la alerta alta de denegación de servicio (#24).
@@ -35,6 +56,9 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Cambiado
 
+- Roles del equipo: `PERSONAL_ADMINISTRATIVO` y `GERENCIA` se unen en `ADMINISTRADOR`; se
+  mantiene `GUIA_TURISTICO` (#38).
+- La capacidad por temporada se reemplaza por la capacidad del día (#41).
 - Sitio liviano para celulares modestos y conexiones lentas: páginas, fotos y video bajo
   demanda, y animaciones que descansan fuera de pantalla (#6, #7, #8).
 - Dependabot no propone versiones mayores ni cambios de la versión de Java (#25).
