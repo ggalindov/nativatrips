@@ -6,6 +6,7 @@ import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
+import com.nativatrips.backend.reservas.dto.AcompananteRequest;
 import com.nativatrips.backend.reservas.dto.HistorialEntradaResponse;
 import com.nativatrips.backend.reservas.dto.IntegranteResponse;
 import com.nativatrips.backend.reservas.dto.ReservaApartadaResponse;
@@ -18,6 +19,7 @@ import com.nativatrips.backend.reservas.model.OrigenCambioEstado;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.model.ReservaEstadoHistorial;
 import com.nativatrips.backend.reservas.model.ReservaIntegrante;
+import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
@@ -130,6 +132,11 @@ public class ReservaService {
     public ReservaApartadaResponse crearReservaSinCuenta(ReservaSinCuentaRequest request) {
         TitularRequest datos = request.titular();
         validarDocumentoYCelular(datos);
+        if (request.acompanantes().size() > request.personas() - 1) {
+            throw new BusinessRuleException(
+                    HttpStatus.BAD_REQUEST, "Hay mas acompanantes que personas en la reserva, sin contar al titular");
+        }
+        request.acompanantes().forEach(a -> validarDocumento(a.tipoDocumento(), a.documento(), a.nacionalidad()));
         Sendero sendero = apartarCupo(request.senderoId(), request.fechaTour(), request.personas());
 
         TitularReserva titular = new TitularReserva(
@@ -143,8 +150,13 @@ public class ReservaService {
                 codigoNuevo(),
                 titular));
 
-        reservaIntegranteRepository.save(
-                new ReservaIntegrante(reserva.getId(), titular.getNombre(), titular.getDocumento()));
+        reservaIntegranteRepository.save(new ReservaIntegrante(
+                reserva.getId(), titular.getNombre(), titular.getTipoDocumento(), titular.getDocumento(),
+                titular.getNacionalidad()));
+        for (AcompananteRequest a : request.acompanantes()) {
+            reservaIntegranteRepository.save(new ReservaIntegrante(
+                    reserva.getId(), a.nombre().trim(), a.tipoDocumento(), a.documento().trim(), a.nacionalidad()));
+        }
         historialRepository.save(new ReservaEstadoHistorial(
                 reserva.getId(), null, EstadoReserva.PENDIENTE_PAGO, "Reserva sin cuenta creada, pendiente de pago",
                 OrigenCambioEstado.TURISTA, null));
@@ -170,18 +182,22 @@ public class ReservaService {
 
     /** Las mismas reglas del formulario: el documento depende de la nacionalidad y el celular del indicativo. */
     private static void validarDocumentoYCelular(TitularRequest titular) {
-        boolean colombiano = "CO".equals(titular.nacionalidad());
-        if (titular.tipoDocumento().esNacional() != colombiano) {
+        validarDocumento(titular.tipoDocumento(), titular.documento(), titular.nacionalidad());
+        if ("57".equals(titular.indicativo()) && !titular.celular().matches("3\\d{9}")) {
+            throw new BusinessRuleException(
+                    HttpStatus.BAD_REQUEST, "El celular colombiano debe tener 10 digitos y empezar por 3");
+        }
+    }
+
+    private static void validarDocumento(TipoDocumento tipo, String documento, String nacionalidad) {
+        boolean colombiano = "CO".equals(nacionalidad);
+        if (tipo.esNacional() != colombiano) {
             throw new BusinessRuleException(HttpStatus.BAD_REQUEST, colombiano
                     ? "Para colombianos el documento debe ser cedula o tarjeta de identidad"
                     : "Para extranjeros el documento debe ser pasaporte, cedula de extranjeria, PPT o DNI");
         }
-        if (!titular.tipoDocumento().esAlfanumerico() && !titular.documento().matches("\\d{5,12}")) {
+        if (!tipo.esAlfanumerico() && !documento.trim().matches("\\d{5,12}")) {
             throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "El numero de documento debe tener solo digitos");
-        }
-        if ("57".equals(titular.indicativo()) && !titular.celular().matches("3\\d{9}")) {
-            throw new BusinessRuleException(
-                    HttpStatus.BAD_REQUEST, "El celular colombiano debe tener 10 digitos y empezar por 3");
         }
     }
 

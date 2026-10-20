@@ -13,3 +13,10 @@ ALTER TABLE reservas
     ADD CONSTRAINT ck_reservas_turista_o_titular CHECK (turista_id IS NOT NULL OR titular_correo IS NOT NULL),
     ADD CONSTRAINT ck_reservas_titular_tipo_documento
         CHECK (titular_tipo_documento IN ('CC', 'TI', 'CE', 'PPT', 'PASAPORTE', 'DNI'));
+
+-- Cada integrante con su tipo de documento y nacionalidad (los extranjeros se reportan al parque).
+ALTER TABLE reserva_integrantes
+    ADD COLUMN tipo_documento VARCHAR(20),
+    ADD COLUMN nacionalidad   VARCHAR(2),
+    ADD CONSTRAINT ck_reserva_integrantes_tipo_documento
+        CHECK (tipo_documento IN ('CC', 'TI', 'CE', 'PPT', 'PASAPORTE', 'DNI'));
