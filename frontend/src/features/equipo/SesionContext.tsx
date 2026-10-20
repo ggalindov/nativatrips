@@ -14,7 +14,7 @@ interface SesionContexto {
 const Contexto = createContext<SesionContexto | null>(null);
 
 /** La sesión vive en sessionStorage: se cierra al cerrar la pestaña. */
-function leer(): SesionEquipo | null {
+export function leerSesionGuardada(): SesionEquipo | null {
   try {
     const crudo = sessionStorage.getItem(CLAVE);
     if (!crudo) return null;
@@ -26,7 +26,7 @@ function leer(): SesionEquipo | null {
 }
 
 export function SesionProvider({ children, inicial }: { children: ReactNode; inicial?: SesionEquipo | null }) {
-  const [sesion, setSesion] = useState<SesionEquipo | null>(() => (inicial !== undefined ? inicial : leer()));
+  const [sesion, setSesion] = useState<SesionEquipo | null>(() => (inicial !== undefined ? inicial : leerSesionGuardada()));
 
   const abrir = useCallback((s: SesionEquipo) => {
     setSesion(s);
