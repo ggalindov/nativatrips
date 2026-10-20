@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -63,8 +64,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-        // Sin saltos de linea: la ruta la escribe el cliente y no debe poder falsificar entradas del registro.
-        log.error("Error no controlado en {}", request.getRequestURI().replaceAll("[\r\n]", "_"), ex);
+        // Se registra el patron de la ruta (/api/v1/senderos/{id}), no la URI que escribe el cliente,
+        // para que nadie pueda falsificar lineas del registro.
+        log.error("Error no controlado en {}", request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrio un error inesperado", request);
     }
 
