@@ -4,22 +4,19 @@ import com.nativatrips.backend.capacidad.dto.CapacidadDiaRequest;
 import com.nativatrips.backend.capacidad.dto.CapacidadDiaResponse;
 import com.nativatrips.backend.capacidad.dto.CargaCapacidadRequest;
 import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
-import com.nativatrips.backend.capacidad.dto.LimiteCapacidadRequest;
-import com.nativatrips.backend.capacidad.dto.LimiteCapacidadResponse;
 import com.nativatrips.backend.capacidad.model.CapacidadDia;
-import com.nativatrips.backend.capacidad.model.LimiteCapacidad;
 import com.nativatrips.backend.capacidad.repository.CapacidadDiaRepository;
-import com.nativatrips.backend.capacidad.repository.LimiteCapacidadRepository;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -37,19 +34,16 @@ public class CapacidadService {
 
     static final short UMBRAL_ALERTA_POR_DEFECTO = 80;
 
-    private final LimiteCapacidadRepository limiteCapacidadRepository;
     private final CapacidadDiaRepository capacidadDiaRepository;
     private final SenderoRepository senderoRepository;
     private final OcupacionDelDia ocupacionDelDia;
     private final Clock reloj;
 
     public CapacidadService(
-            LimiteCapacidadRepository limiteCapacidadRepository,
             CapacidadDiaRepository capacidadDiaRepository,
             SenderoRepository senderoRepository,
             OcupacionDelDia ocupacionDelDia,
             Clock reloj) {
-        this.limiteCapacidadRepository = limiteCapacidadRepository;
         this.capacidadDiaRepository = capacidadDiaRepository;
         this.senderoRepository = senderoRepository;
         this.ocupacionDelDia = ocupacionDelDia;
@@ -123,68 +117,33 @@ public class CapacidadService {
         return CapacidadDiaResponse.from(guardado, ocupacion);
     }
 
-    @Transactional(readOnly = true)
-    public List<LimiteCapacidadResponse> listarPorSendero(Long senderoId) {
-        return limiteCapacidadRepository.findBySenderoIdOrderByTemporadaInicio(senderoId).stream()
-                .map(LimiteCapacidadResponse::from)
-                .toList();
+    /**
+     * Ultimo dia en que se puede reservar con cobro: el domingo de la semana siguiente (ADR-008).
+     * Las semanas de operacion van de lunes a domingo.
+     */
+    public LocalDate ultimoDiaReservable() {
+        return LocalDate.now(reloj).with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).plusWeeks(1);
     }
 
-    @Transactional
-    public LimiteCapacidadResponse crear(Long senderoId, LimiteCapacidadRequest request, UUID usuarioId) {
-        if (!senderoRepository.existsById(senderoId)) {
-            throw new ResourceNotFoundException("Sendero no encontrado");
+    /** @throws BusinessRuleException si la fecha queda despues de la semana siguiente. */
+    public void verificarVentanaDeReserva(LocalDate fecha) {
+        LocalDate ultimoDia = ultimoDiaReservable();
+        if (fecha.isAfter(ultimoDia)) {
+            throw new BusinessRuleException(
+                    HttpStatus.CONFLICT,
+                    "Por ahora se puede reservar hasta el " + ultimoDia + "; la capacidad de fechas posteriores aun no se publica");
         }
-        validarTemporada(request.temporadaInicio(), request.temporadaFin());
-        validarSinSolape(senderoId, request.temporadaInicio(), request.temporadaFin(), null);
-
-        boolean esExterno = request.configuradoPorExterno() != null && !request.configuradoPorExterno().isBlank();
-        LimiteCapacidad limite = new LimiteCapacidad(
-                senderoId,
-                request.temporadaInicio(),
-                request.temporadaFin(),
-                request.cupoMaximoDia(),
-                request.umbralAlertaPct() != null ? request.umbralAlertaPct() : 80,
-                esExterno ? null : usuarioId,
-                esExterno ? request.configuradoPorExterno() : null);
-
-        return LimiteCapacidadResponse.from(limiteCapacidadRepository.save(limite));
-    }
-
-    @Transactional
-    public LimiteCapacidadResponse actualizar(Long id, LimiteCapacidadRequest request) {
-        LimiteCapacidad limite = limiteCapacidadRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Limite de capacidad no encontrado"));
-
-        validarTemporada(request.temporadaInicio(), request.temporadaFin());
-        validarSinSolape(limite.getSenderoId(), request.temporadaInicio(), request.temporadaFin(), id);
-
-        limite.setTemporada(request.temporadaInicio(), request.temporadaFin());
-        limite.setCupoMaximoDia(request.cupoMaximoDia());
-        limite.setUmbralAlertaPct(request.umbralAlertaPct() != null ? request.umbralAlertaPct() : 80);
-
-        return LimiteCapacidadResponse.from(limite);
-    }
-
-    @Transactional(readOnly = true)
-    public LimiteCapacidad obtenerLimiteVigente(Long senderoId, LocalDate fecha) {
-        return limiteCapacidadRepository.findVigentePara(senderoId, fecha)
-                .orElseThrow(() -> new BusinessRuleException(
-                        HttpStatus.CONFLICT,
-                        "No hay un limite de capacidad configurado para este sendero en la fecha solicitada"));
     }
 
     /**
-     * Bloquea el limite vigente del sendero para la fecha hasta que termine la transaccion de quien
-     * llama (ADR-008). Debe llamarse antes de leer la ocupacion: asi dos reservas simultaneas para
-     * el mismo dia se atienden una tras otra y la segunda ve la ocupacion ya actualizada (BUG-01).
+     * Bloquea la capacidad del dia hasta que termine la transaccion de quien llama (ADR-008). Debe
+     * llamarse antes de leer la ocupacion: asi dos reservas simultaneas para el mismo sendero y dia
+     * se atienden una tras otra y la segunda ve la ocupacion ya actualizada (BUG-01).
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public LimiteCapacidad bloquearLimiteVigente(Long senderoId, LocalDate fecha) {
-        return limiteCapacidadRepository.findVigenteParaConBloqueo(senderoId, fecha)
-                .orElseThrow(() -> new BusinessRuleException(
-                        HttpStatus.CONFLICT,
-                        "No hay un limite de capacidad configurado para este sendero en la fecha solicitada"));
+    public CapacidadDia bloquearCapacidadDelDia(Long senderoId, LocalDate fecha) {
+        return capacidadDiaRepository.findBySenderoIdAndFechaConBloqueo(senderoId, fecha)
+                .orElseThrow(() -> sinCapacidadCargada(fecha));
     }
 
     /**
@@ -192,13 +151,14 @@ public class CapacidadService {
      */
     @Transactional(readOnly = true)
     public DisponibilidadResponse verificarDisponibilidad(Long senderoId, LocalDate fecha, int ocupacionActual) {
-        LimiteCapacidad limite = obtenerLimiteVigente(senderoId, fecha);
-        int cupoDisponible = limite.getCupoMaximoDia() - ocupacionActual;
-        boolean umbralSuperado =
-                ocupacionActual * 100.0 / limite.getCupoMaximoDia() >= limite.getUmbralAlertaPct();
-
+        CapacidadDia dia = capacidadDelDia(senderoId, fecha);
         return new DisponibilidadResponse(
-                senderoId, fecha, limite.getCupoMaximoDia(), ocupacionActual, Math.max(cupoDisponible, 0), umbralSuperado);
+                senderoId,
+                fecha,
+                dia.getCupoMaximo(),
+                ocupacionActual,
+                Math.max(dia.getCupoMaximo() - ocupacionActual, 0),
+                dia.umbralSuperadoCon(ocupacionActual));
     }
 
     /**
@@ -206,29 +166,21 @@ public class CapacidadService {
      */
     @Transactional(readOnly = true)
     public void verificarCupoSuficiente(Long senderoId, LocalDate fecha, int ocupacionActual, int cantidadSolicitada) {
-        LimiteCapacidad limite = obtenerLimiteVigente(senderoId, fecha);
-        if (ocupacionActual + cantidadSolicitada > limite.getCupoMaximoDia()) {
+        CapacidadDia dia = capacidadDelDia(senderoId, fecha);
+        if (ocupacionActual + cantidadSolicitada > dia.getCupoMaximo()) {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT,
                     "El cupo maximo del sendero para esta fecha ha sido excedido");
         }
     }
 
-    private void validarTemporada(LocalDate inicio, LocalDate fin) {
-        if (fin.isBefore(inicio)) {
-            throw new BusinessRuleException(
-                    HttpStatus.BAD_REQUEST, "La fecha de fin de temporada no puede ser anterior a la de inicio");
-        }
+    private CapacidadDia capacidadDelDia(Long senderoId, LocalDate fecha) {
+        return capacidadDiaRepository.findBySenderoIdAndFecha(senderoId, fecha)
+                .orElseThrow(() -> sinCapacidadCargada(fecha));
     }
 
-    private void validarSinSolape(Long senderoId, LocalDate inicio, LocalDate fin, Long idExcluido) {
-        boolean solapa = limiteCapacidadRepository.findBySenderoIdOrderByTemporadaInicio(senderoId).stream()
-                .filter(existente -> !Objects.equals(existente.getId(), idExcluido))
-                .anyMatch(existente -> existente.seSolapaCon(inicio, fin));
-
-        if (solapa) {
-            throw new BusinessRuleException(
-                    HttpStatus.CONFLICT, "Ya existe un limite de capacidad configurado que se solapa con esa temporada");
-        }
+    private static BusinessRuleException sinCapacidadCargada(LocalDate fecha) {
+        return new BusinessRuleException(
+                HttpStatus.CONFLICT, "El sendero aun no tiene capacidad de carga publicada para el " + fecha);
     }
 }
