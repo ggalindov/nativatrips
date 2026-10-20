@@ -91,6 +91,22 @@ class ReservaServiceTest {
     }
 
     @Test
+    void rechazaLaReservaFueraDeLaVentanaSinTocarLaCapacidad() {
+        LocalDate lejana = LocalDate.now().plusWeeks(5);
+        given(senderoRepository.findById(1L)).willReturn(Optional.of(unSendero()));
+        org.mockito.BDDMockito.willThrow(new BusinessRuleException(org.springframework.http.HttpStatus.CONFLICT, "fuera de la ventana"))
+                .given(capacidadService)
+                .verificarVentanaDeReserva(lejana);
+
+        var request = new ReservaRequest(1L, lejana, TipoGrupo.ESTANDAR, List.of(new IntegranteRequest("Juan", "123")));
+
+        assertThatThrownBy(() -> reservaService.crearReserva(request, UUID.randomUUID()))
+                .isInstanceOf(BusinessRuleException.class);
+        verify(capacidadService, never()).bloquearCapacidadDelDia(any(), any());
+        verify(reservaRepository, never()).save(any());
+    }
+
+    @Test
     void propagaElRechazoDeCapacidadCuandoNoHayCupoSuficiente() {
         Sendero sendero = unSendero();
         given(senderoRepository.findById(1L)).willReturn(Optional.of(sendero));
@@ -111,7 +127,7 @@ class ReservaServiceTest {
     }
 
     @Test
-    void bloqueaLaCapacidadDelDiaAntesDeContarLaOcupacion() {
+    void verificaLaVentanaYBloqueaLaCapacidadDelDiaAntesDeContarLaOcupacion() {
         LocalDate fecha = LocalDate.now().plusDays(1);
         given(senderoRepository.findById(1L)).willReturn(Optional.of(unSendero()));
         given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(0);
@@ -123,7 +139,8 @@ class ReservaServiceTest {
                 UUID.randomUUID());
 
         InOrder orden = Mockito.inOrder(capacidadService, reservaRepository);
-        orden.verify(capacidadService).bloquearLimiteVigente(1L, fecha);
+        orden.verify(capacidadService).verificarVentanaDeReserva(fecha);
+        orden.verify(capacidadService).bloquearCapacidadDelDia(1L, fecha);
         orden.verify(reservaRepository).sumarPersonasActivas(anyLong(), any(), any());
         orden.verify(capacidadService).verificarCupoSuficiente(1L, fecha, 0, 1);
     }

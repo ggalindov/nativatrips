@@ -3,8 +3,8 @@ package com.nativatrips.backend.reservas.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.nativatrips.backend.TestcontainersConfiguration;
-import com.nativatrips.backend.capacidad.model.LimiteCapacidad;
-import com.nativatrips.backend.capacidad.repository.LimiteCapacidadRepository;
+import com.nativatrips.backend.capacidad.model.CapacidadDia;
+import com.nativatrips.backend.capacidad.repository.CapacidadDiaRepository;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.reservas.dto.IntegranteRequest;
 import com.nativatrips.backend.reservas.dto.ReservaRequest;
@@ -53,7 +53,7 @@ class ReservaConcurrenciaTest {
     private SenderoRepository senderoRepository;
 
     @Autowired
-    private LimiteCapacidadRepository limiteCapacidadRepository;
+    private CapacidadDiaRepository capacidadDiaRepository;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -63,8 +63,9 @@ class ReservaConcurrenciaTest {
         LocalDate fecha = LocalDate.now().plusDays(3);
         Sendero sendero = senderoRepository.save(new Sendero(
                 "Sendero concurrencia", null, NivelDificultad.MODERADO, 120, "ECOTURISMO", null, new BigDecimal("45000")));
-        limiteCapacidadRepository.save(new LimiteCapacidad(
-                sendero.getId(), fecha.minusDays(10), fecha.plusDays(10), CUPO_DEL_DIA, (short) 80, null, "prueba"));
+        UUID adminId = usuarioRepository.save(new Usuario(
+                "admin-concurrencia-" + UUID.randomUUID() + "@ecopalacio.co", "hash", "Administrador", Rol.ADMINISTRADOR)).getId();
+        capacidadDiaRepository.save(new CapacidadDia(sendero.getId(), fecha, CUPO_DEL_DIA, (short) 80, adminId));
         UUID turistaId = usuarioRepository.save(new Usuario(
                 "concurrencia-" + UUID.randomUUID() + "@example.com", "hash", "Turista", Rol.TURISTA)).getId();
 
