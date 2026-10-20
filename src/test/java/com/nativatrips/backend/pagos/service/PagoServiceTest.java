@@ -68,13 +68,16 @@ class PagoServiceTest {
     @Mock
     private EnlaceReservaService enlaceService;
 
+    @Mock
+    private AvisosDePago avisos;
+
     private PagoService pagoService;
 
     @BeforeEach
     void setUp() {
         pagoService = new PagoService(
                 pagoRepository, historialRepository, eventoRepository, reservaRepository, senderoRepository,
-                reservaService, pasarela, new WompiProperties(), enlaceService);
+                reservaService, pasarela, new WompiProperties(), enlaceService, avisos);
     }
 
     @Test
