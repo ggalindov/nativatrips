@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@PreAuthorize("hasAnyRole('PERSONAL_ADMINISTRATIVO', 'GERENCIA')")
+@PreAuthorize("hasRole('ADMINISTRADOR')")
 public class CapacidadController {
 
     private final CapacidadService capacidadService;

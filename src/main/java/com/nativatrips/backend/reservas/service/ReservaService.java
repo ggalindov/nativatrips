@@ -45,7 +45,7 @@ public class ReservaService {
     private static final List<EstadoReserva> ESTADOS_QUE_OCUPAN_CUPO =
             List.of(EstadoReserva.PENDIENTE_PAGO, EstadoReserva.EN_REVISION, EstadoReserva.CONFIRMADA);
 
-    /** RF-08/RF-09: estos tipos de grupo no pasan directo a pago, requieren aprobacion de staff. */
+    /** RF-08/RF-09: estos tipos de grupo no pasan directo a pago, requieren aprobacion del administrador. */
     private static final List<TipoGrupo> TIPOS_QUE_REQUIEREN_REVISION =
             List.of(TipoGrupo.GRUPO_CORPORATIVO, TipoGrupo.NECESIDAD_ESPECIAL);
 
@@ -118,7 +118,7 @@ public class ReservaService {
     }
 
     /**
-     * RF-08/RF-09: personal administrativo aprueba o rechaza una reserva de grupo corporativo o
+     * RF-08/RF-09: el administrador aprueba o rechaza una reserva de grupo corporativo o
      * con necesidad especial. Al aprobar arranca el conteo de bloqueo temporal de pago (RF-05).
      */
     @Transactional
@@ -136,16 +136,16 @@ public class ReservaService {
             actualizada = transicionarEstado(
                     reservaId,
                     EstadoReserva.PENDIENTE_PAGO,
-                    motivo != null && !motivo.isBlank() ? motivo : "Revision aprobada por personal administrativo",
-                    OrigenCambioEstado.PERSONAL_ADMINISTRATIVO,
+                    motivo != null && !motivo.isBlank() ? motivo : "Revision aprobada por el administrador",
+                    OrigenCambioEstado.ADMINISTRADOR,
                     adminId);
             actualizada.setBloqueoExpiraEn(Instant.now().plus(BLOQUEO_MINUTOS, ChronoUnit.MINUTES));
         } else {
             actualizada = transicionarEstado(
                     reservaId,
                     EstadoReserva.CANCELADA,
-                    motivo != null && !motivo.isBlank() ? motivo : "Revision rechazada por personal administrativo",
-                    OrigenCambioEstado.PERSONAL_ADMINISTRATIVO,
+                    motivo != null && !motivo.isBlank() ? motivo : "Revision rechazada por el administrador",
+                    OrigenCambioEstado.ADMINISTRADOR,
                     adminId);
         }
 
@@ -163,7 +163,7 @@ public class ReservaService {
         String asunto = "Nueva reserva pendiente de revision manual";
         String cuerpo = "La reserva " + reserva.getId() + " (tipo " + reserva.getTipoGrupo()
                 + ") requiere aprobacion antes de continuar al pago.";
-        for (Usuario admin : usuarioRepository.findByRolAndActivoTrue(Rol.PERSONAL_ADMINISTRATIVO)) {
+        for (Usuario admin : usuarioRepository.findByRolAndActivoTrue(Rol.ADMINISTRADOR)) {
             notificacionService.enviarCorreo(admin.getEmail(), asunto, cuerpo);
         }
     }
@@ -248,7 +248,7 @@ public class ReservaService {
         return reservaRepository.sumarPersonasActivas(senderoId, fecha, ESTADOS_QUE_OCUPAN_CUPO);
     }
 
-    /** RF-11: personal administrativo asigna un guia a una reserva ya confirmada. */
+    /** RF-11: el administrador asigna un guia a una reserva ya confirmada. */
     @Transactional
     public ReservaResponse asignarGuia(UUID reservaId, UUID guiaId) {
         Reserva reserva = reservaRepository.findById(reservaId)
