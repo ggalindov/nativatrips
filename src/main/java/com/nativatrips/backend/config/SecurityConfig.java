@@ -54,6 +54,8 @@ public class SecurityConfig {
                         // Webhook de PayU: no puede enviar JWT: la autenticidad se valida con la
                         // firma MD5 de PayU dentro de PagoService, no con Spring Security.
                         .requestMatchers(HttpMethod.POST, "/api/v1/pagos/confirmacion").permitAll()
+                        // Webhook de Wompi (ADR-005): se autentica con el checksum del evento.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/pagos/wompi/eventos").permitAll()
                         .anyRequest().authenticated())
                 // R-12: sin token, o con uno vencido o revocado, es 401 (hay que iniciar sesion);
                 // 403 queda solo para una sesion valida sin permiso para la accion.
