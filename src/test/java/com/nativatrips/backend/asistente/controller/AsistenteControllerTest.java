@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.nativatrips.backend.asistente.dto.ChatResponse;
 import com.nativatrips.backend.asistente.service.AsistenteService;
+import com.nativatrips.backend.asistente.service.LimiteMensajesAsistente;
 import com.nativatrips.backend.config.JwtProperties;
 import com.nativatrips.backend.config.SecurityConfig;
 import com.nativatrips.backend.usuarios.model.Rol;
@@ -18,6 +19,7 @@ import com.nativatrips.backend.usuarios.security.JwtAuthenticationFilter;
 import com.nativatrips.backend.usuarios.security.JwtTokenProvider;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -40,6 +42,14 @@ class AsistenteControllerTest {
 
     @MockitoBean
     private AsistenteService asistenteService;
+
+    @MockitoBean
+    private LimiteMensajesAsistente limiteMensajes;
+
+    @BeforeEach
+    void conCupoDeMensajes() {
+        given(limiteMensajes.permitir(any())).willReturn(true);
+    }
 
     @TestConfiguration
     static class TestSecurityBeans {
@@ -65,6 +75,18 @@ class AsistenteControllerTest {
     private static final String MENSAJE_JSON = """
             {"mensajes": [{"rol": "user", "contenido": "Hola"}]}
             """;
+
+    @Test
+    void alSuperarElLimiteDeMensajesRespondeDemasiadasSolicitudesSinLlamarAlModelo() throws Exception {
+        given(limiteMensajes.permitir(any())).willReturn(false);
+
+        mockMvc.perform(post("/api/v1/asistente/mensajes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(MENSAJE_JSON))
+                .andExpect(status().isTooManyRequests());
+
+        org.mockito.Mockito.verifyNoInteractions(asistenteService);
+    }
 
     @Test
     void unVisitanteSinSesionEsAtendidoSinIdentidadDeTurista() throws Exception {
