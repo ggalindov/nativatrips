@@ -24,6 +24,7 @@ import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -42,6 +43,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class PagoService {
 
     private static final Logger log = LoggerFactory.getLogger(PagoService.class);
+
+    /** HU-03 criterio 3 (BUG-03): el primer intento y dos reintentos; al tercer rechazo se cancela. */
+    static final int MAXIMO_INTENTOS = 3;
+
+    private static final List<EstadoPago> INTENTOS_FALLIDOS = List.of(EstadoPago.RECHAZADO, EstadoPago.EXPIRADO);
 
     private final PagoRepository pagoRepository;
     private final PagoEstadoHistorialRepository historialRepository;
@@ -116,7 +122,7 @@ public class PagoService {
         String prefijo = reserva.getCodigoReserva() != null
                 ? reserva.getCodigoReserva()
                 : "NT-" + reserva.getId().toString().replace("-", "").substring(0, 12).toUpperCase();
-        String referencia = prefijo + "-" + Long.toString(System.currentTimeMillis(), 36).toUpperCase();
+        String referencia = prefijo + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Pago pago = pagoRepository.save(new Pago(reserva.getId(), referencia, monto, wompiProperties.getMoneda()));
         historialRepository.save(new PagoEstadoHistorial(pago.getId(), null, EstadoPago.PENDIENTE, "Pago iniciado"));
         return pago;
@@ -165,13 +171,29 @@ public class PagoService {
             case APROBADO -> reservaService.transicionarEstado(
                     pago.getReservaId(), EstadoReserva.CONFIRMADA, "Pago aprobado por la pasarela",
                     OrigenCambioEstado.PAGO, null);
-            case RECHAZADO, EXPIRADO -> reservaService.transicionarEstado(
-                    pago.getReservaId(), EstadoReserva.CANCELADA,
-                    "Pago " + nuevoEstado.name().toLowerCase() + " por la pasarela", OrigenCambioEstado.PAGO, null);
+            case RECHAZADO, EXPIRADO -> registrarIntentoFallido(pago, nuevoEstado);
             default -> {
                 // PENDIENTE (p.ej. PSE en proceso) o ERROR: no se toca el estado de la reserva,
                 // se espera el siguiente evento con el estado final.
             }
+        }
+    }
+
+    /**
+     * BUG-03: un rechazo deja la reserva en PENDIENTE_PAGO para reintentar mientras dure el apartado;
+     * solo el tercer intento fallido la cancela y libera el cupo.
+     */
+    private void registrarIntentoFallido(Pago pago, EstadoPago estado) {
+        long fallidos = pagoRepository.countByReservaIdAndEstadoIn(pago.getReservaId(), INTENTOS_FALLIDOS);
+        if (fallidos >= MAXIMO_INTENTOS) {
+            reservaService.transicionarEstado(
+                    pago.getReservaId(), EstadoReserva.CANCELADA,
+                    "Pago " + estado.name().toLowerCase() + " por la pasarela en el intento " + fallidos + " de "
+                            + MAXIMO_INTENTOS + "; se libera el cupo",
+                    OrigenCambioEstado.PAGO, null);
+        } else {
+            log.info("Intento de pago {} de {} fallido para la reserva {}; puede reintentar",
+                    fallidos, MAXIMO_INTENTOS, pago.getReservaId());
         }
     }
 
