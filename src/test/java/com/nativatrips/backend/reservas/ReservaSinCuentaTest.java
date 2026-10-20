@@ -1,6 +1,7 @@
 package com.nativatrips.backend.reservas;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.AdditionalMatchers.and;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -106,7 +107,8 @@ class ReservaSinCuentaTest {
                 antes.plus(Duration.ofMinutes(15)), Instant.now().plus(Duration.ofMinutes(15)));
         assertThat(integranteRepository.findByReservaId(guardada.getId())).hasSize(1);
         assertThat(reservaRepository.sumarPersonasActivas(senderoId, fecha, EstadoReserva.queOcupanCupo())).isEqualTo(4);
-        verify(notificacionService).enviarCorreo(eq("laura@example.com"), contains(codigo), contains(codigo));
+        verify(notificacionService).enviarCorreo(
+                eq("laura@example.com"), contains(codigo), and(contains(codigo), contains("http://localhost:3000/mi-reserva/")));
     }
 
     @Test
