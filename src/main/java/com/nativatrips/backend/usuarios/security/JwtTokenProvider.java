@@ -47,6 +47,7 @@ public class JwtTokenProvider {
         Instant expira = ahora.plus(jwtProperties.getExpirationMinutes(), ChronoUnit.MINUTES);
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(usuarioId.toString())
                 .claim("email", email)
                 .claim("rol", rol.name())
@@ -69,6 +70,11 @@ public class JwtTokenProvider {
 
     public UUID obtenerUsuarioId(Claims claims) {
         return UUID.fromString(claims.getSubject());
+    }
+
+    /** Identificador unico del token, el que se guarda al revocarlo (BUG-02). */
+    public UUID obtenerJti(Claims claims) {
+        return UUID.fromString(claims.getId());
     }
 
     public Rol obtenerRol(Claims claims) {
