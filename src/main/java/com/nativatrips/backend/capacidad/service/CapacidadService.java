@@ -36,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CapacidadService {
 
-    static final short UMBRAL_ALERTA_POR_DEFECTO = 80;
+    public static final short UMBRAL_ALERTA_POR_DEFECTO = 80;
 
     /** Codigos de rechazo por aforo que el frontend traduce (HU-10). */
     public static final String CUPO_AGOTADO = "CUPO_AGOTADO";
