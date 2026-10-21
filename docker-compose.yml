@@ -23,7 +23,7 @@ services:
 
   # Buzon de pruebas: atrapa todos los correos que envia el backend. En produccion se usa Gmail.
   mailpit:
-    image: axllent/mailpit:v1.31.3
+    image: axllent/mailpit:v1.31.6
     container_name: nativatrips-mailpit
     ports:
       - "8025:8025"
