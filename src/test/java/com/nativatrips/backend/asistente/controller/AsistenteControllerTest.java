@@ -1,7 +1,6 @@
 package com.nativatrips.backend.asistente.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -96,38 +95,38 @@ class AsistenteControllerTest {
     }
 
     @Test
-    void unVisitanteSinSesionEsAtendidoSinIdentidadDeTurista() throws Exception {
-        given(asistenteService.conversar(any(), isNull())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
+    void unVisitanteSinSesionEsAtendido() throws Exception {
+        given(asistenteService.conversar(any())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
 
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON))
                 .andExpect(status().isOk());
 
-        verify(asistenteService).conversar(any(), isNull());
+        verify(asistenteService).conversar(any());
     }
 
     @Test
     @WithMockUser(roles = "ADMINISTRADOR")
-    void unaCuentaDelEquipoConversaComoVisitanteSinAccesoAReservas() throws Exception {
-        given(asistenteService.conversar(any(), isNull())).willReturn(ChatResponse.deAsistente("Hola"));
+    void unaCuentaDelEquipoConversaComoVisitante() throws Exception {
+        given(asistenteService.conversar(any())).willReturn(ChatResponse.deAsistente("Hola"));
 
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON))
                 .andExpect(status().isOk());
 
-        verify(asistenteService).conversar(any(), isNull());
+        verify(asistenteService).conversar(any());
     }
 
     @Test
-    void conversarComoTuristaEsAceptado() throws Exception {
-        given(asistenteService.conversar(any(), any())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
+    void conversarConSesionEsAceptado() throws Exception {
+        given(asistenteService.conversar(any())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
 
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON)
-                        .with(authentication(unTuristaAutenticado())))
+                        .with(authentication(unaCuentaDelEquipo())))
                 .andExpect(status().isOk());
     }
 
@@ -140,13 +139,13 @@ class AsistenteControllerTest {
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mensajeConRolSistema)
-                        .with(authentication(unTuristaAutenticado())))
+                        .with(authentication(unaCuentaDelEquipo())))
                 .andExpect(status().isBadRequest());
     }
 
-    private static UsernamePasswordAuthenticationToken unTuristaAutenticado() {
-        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "turista@example.com", Rol.TURISTA);
+    private static UsernamePasswordAuthenticationToken unaCuentaDelEquipo() {
+        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "guia@ecopalacio.co", Rol.GUIA_TURISTICO);
         return new UsernamePasswordAuthenticationToken(
-                principal, null, List.of(new SimpleGrantedAuthority("ROLE_TURISTA")));
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_GUIA_TURISTICO")));
     }
 }

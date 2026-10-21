@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.nativatrips.backend.reservas.ReservasDePrueba;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.model.TipoGrupo;
@@ -85,8 +86,7 @@ class ExpiracionReservasJobTest {
     }
 
     private static Reserva unaReserva() {
-        Reserva reserva = new Reserva(
-                1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, Instant.now().minusSeconds(60));
+        Reserva reserva = ReservasDePrueba.reserva(1L, LocalDate.now().plusDays(1), 2, Instant.now().minusSeconds(60));
         ReflectionTestUtils.setField(reserva, "id", UUID.randomUUID());
         return reserva;
     }

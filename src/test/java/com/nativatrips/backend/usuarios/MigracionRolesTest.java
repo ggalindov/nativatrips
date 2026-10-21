@@ -15,8 +15,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * V6 (ADR-007): aplica las migraciones hasta V5 en un esquema aparte, carga cuentas con los roles
- * anteriores y comprueba que V6 las convierte sin perder ninguna.
+ * V6 (ADR-007) y V16 (ADR-004): aplica las migraciones hasta V5 en un esquema aparte, carga cuentas
+ * con los roles anteriores y comprueba que V6 las convierte sin perder ninguna del equipo y que V16
+ * retira las cuentas TURISTA.
  */
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -28,7 +29,7 @@ class MigracionRolesTest {
     private DataSource dataSource;
 
     @Test
-    void unificaAdministracionYGerenciaEnAdministradorSinPerderCuentas() {
+    void unificaAdministracionYGerenciaYRetiraLasCuentasDeTurista() {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .schemas(ESQUEMA)
@@ -49,11 +50,13 @@ class MigracionRolesTest {
         assertThat(rolDe(jdbc, "admin@ecopalacio.co")).isEqualTo("ADMINISTRADOR");
         assertThat(rolDe(jdbc, "gerencia@ecopalacio.co")).isEqualTo("ADMINISTRADOR");
         assertThat(rolDe(jdbc, "guia@ecopalacio.co")).isEqualTo("GUIA_TURISTICO");
-        assertThat(rolDe(jdbc, "turista@example.com")).isEqualTo("TURISTA");
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM " + ESQUEMA + ".usuarios", Integer.class)).isEqualTo(4);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM " + ESQUEMA + ".usuarios", Integer.class)).isEqualTo(3);
 
         assertThatThrownBy(() -> insertarUsuario(jdbc, "nuevo@ecopalacio.co", "GERENCIA"))
                 .as("el rol retirado ya no se acepta")
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertarUsuario(jdbc, "nuevo@example.com", "TURISTA"))
+                .as("el turista ya no tiene cuenta")
                 .isInstanceOf(DataIntegrityViolationException.class);
 
         flyway.clean();

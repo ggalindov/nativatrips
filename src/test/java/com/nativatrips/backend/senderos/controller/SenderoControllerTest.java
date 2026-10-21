@@ -116,7 +116,7 @@ class SenderoControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "TURISTA")
+    @WithMockUser(roles = "GUIA_TURISTICO")
     void crearComoTuristaEsRechazado() throws Exception {
         mockMvc.perform(post("/api/v1/senderos")
                         .contentType(MediaType.APPLICATION_JSON)

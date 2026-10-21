@@ -13,6 +13,7 @@ import com.nativatrips.backend.reservas.model.AccesoEnlaceReserva;
 import com.nativatrips.backend.reservas.model.EnlaceReserva;
 import com.nativatrips.backend.reservas.model.PropositoEnlace;
 import com.nativatrips.backend.reservas.model.Reserva;
+import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.reservas.repository.AccesoEnlaceReservaRepository;
@@ -58,7 +59,7 @@ class EnlaceReservaServiceTest {
         servicio = new EnlaceReservaService(
                 enlaceRepository, accesoRepository, reservaRepository, Clock.fixed(AHORA, ZoneOffset.UTC),
                 "https://nativatrips.co/");
-        reserva = Reserva.sinCuenta(1L, FECHA_TOUR, 2, AHORA.plusSeconds(900), "NT-7Q4KX2", new TitularReserva(
+        reserva = Reserva.sinCuenta(1L, FECHA_TOUR, 2, TipoGrupo.ESTANDAR, null, AHORA.plusSeconds(900), "NT-7Q4KX2", new TitularReserva(
                 "Laura Gomez", TipoDocumento.CC, "1020304050", "CO", "laura@example.com", "57", "3001234567"));
         ReflectionTestUtils.setField(reserva, "id", UUID.randomUUID());
     }

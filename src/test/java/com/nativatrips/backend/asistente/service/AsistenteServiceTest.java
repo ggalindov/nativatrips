@@ -18,7 +18,6 @@ import com.nativatrips.backend.asistente.dto.MensajeChat;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,18 +38,7 @@ class AsistenteServiceTest {
     @BeforeEach
     void setUp() {
         asistenteService = new AsistenteService(anthropicClient, tools);
-        org.mockito.Mockito.lenient().when(tools.definiciones(org.mockito.ArgumentMatchers.anyBoolean())).thenReturn(List.of());
-    }
-
-    @Test
-    void aUnVisitanteSinSesionLePideLasHerramientasSinReservas() {
-        given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList())).willReturn(
-                new AnthropicResponse("msg_v", "assistant", List.of(ContentBlock.texto("Hola")), "end_turn",
-                        new AnthropicResponse.Usage(5, 2)));
-
-        asistenteService.conversar(new ChatRequest(List.of(new MensajeChat("user", "Hola"))), null);
-
-        org.mockito.Mockito.verify(tools).definiciones(false);
+        org.mockito.Mockito.lenient().when(tools.definiciones()).thenReturn(List.of());
     }
 
     @Test
@@ -63,7 +51,7 @@ class AsistenteServiceTest {
                         new AnthropicResponse.Usage(10, 5)));
 
         var request = new ChatRequest(List.of(new MensajeChat("user", "Hola")));
-        var response = asistenteService.conversar(request, UUID.randomUUID());
+        var response = asistenteService.conversar(request);
 
         assertThat(response.contenido()).isEqualTo("Hola! En que te puedo ayudar?");
         assertThat(response.rol()).isEqualTo("assistant");
@@ -71,8 +59,6 @@ class AsistenteServiceTest {
 
     @Test
     void ejecutaLaHerramientaYReenviaElResultadoAntesDeResponder() {
-        UUID turistaId = UUID.randomUUID();
-
         AnthropicResponse primeraRespuesta = new AnthropicResponse(
                 "msg_1", "assistant",
                 List.of(new ContentBlock("tool_use", null, "toolu_1", "buscar_senderos", Map.of(), null, null)),
@@ -88,14 +74,14 @@ class AsistenteServiceTest {
         given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList()))
                 .willReturn(primeraRespuesta)
                 .willReturn(segundaRespuesta);
-        given(tools.ejecutar(eq("buscar_senderos"), anyMap(), eq(turistaId)))
+        given(tools.ejecutar(eq("buscar_senderos"), anyMap()))
                 .willReturn("[{\"nombre\":\"Piedras Gordas\"}]");
 
         var request = new ChatRequest(List.of(new MensajeChat("user", "Que senderos hay?")));
-        var response = asistenteService.conversar(request, turistaId);
+        var response = asistenteService.conversar(request);
 
         assertThat(response.contenido()).isEqualTo("Tenemos el sendero Piedras Gordas disponible.");
-        verify(tools).ejecutar(eq("buscar_senderos"), anyMap(), eq(turistaId));
+        verify(tools).ejecutar(eq("buscar_senderos"), anyMap());
         verify(anthropicClient, times(2)).enviarMensaje(anyString(), anyList(), anyList());
     }
 
@@ -108,11 +94,11 @@ class AsistenteServiceTest {
                 new AnthropicResponse.Usage(20, 10));
 
         given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList())).willReturn(siempreToolUse);
-        given(tools.ejecutar(any(), any(), any())).willReturn("[]");
+        given(tools.ejecutar(any(), any())).willReturn("[]");
 
         var request = new ChatRequest(List.of(new MensajeChat("user", "Hola")));
 
-        assertThatThrownBy(() -> asistenteService.conversar(request, UUID.randomUUID()))
+        assertThatThrownBy(() -> asistenteService.conversar(request))
                 .isInstanceOf(BusinessRuleException.class);
     }
 }

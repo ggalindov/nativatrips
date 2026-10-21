@@ -100,7 +100,6 @@ class ReservaSinCuentaTest {
         Reserva guardada = reservaRepository.findAll().stream()
                 .filter(r -> codigo.equals(r.getCodigoReserva()))
                 .findFirst().orElseThrow();
-        assertThat(guardada.getTuristaId()).isNull();
         assertThat(guardada.getTitular().getCorreo()).isEqualTo("laura@example.com");
         assertThat(guardada.getTitular().getTipoDocumento()).isEqualTo(TipoDocumento.CC);
         assertThat(guardada.getBloqueoExpiraEn()).isBetween(
@@ -185,6 +184,27 @@ class ReservaSinCuentaTest {
                 .andExpect(status().isBadRequest());
 
         assertThat(reservaRepository.sumarPersonasActivas(senderoId, fecha, EstadoReserva.queOcupanCupo())).isZero();
+    }
+
+    @Test
+    void unGrupoConNecesidadesEspecialesQuedaEnRevisionOcupandoElCupoYConSusRequerimientos() throws Exception {
+        String respuesta = mockMvc.perform(post("/api/v1/reservas/sin-cuenta")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"senderoId\": " + senderoId + ", \"fechaTour\": \"" + fecha + "\", \"personas\": 3"
+                                + ", \"titular\": " + titular("CO", "CC", "1020304050", "57", "3001234567")
+                                + ", \"tipoGrupo\": \"NECESIDAD_ESPECIAL\", \"requerimientosEspeciales\": \"Una persona en silla de ruedas\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estado").value("EN_REVISION"))
+                .andExpect(jsonPath("$.bloqueoExpiraEn").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+
+        String codigo = JsonPath.read(respuesta, "$.codigoReserva");
+        Reserva guardada = reservaRepository.findAll().stream()
+                .filter(r -> codigo.equals(r.getCodigoReserva()))
+                .findFirst().orElseThrow();
+        assertThat(guardada.getRequerimientosEspeciales()).isEqualTo("Una persona en silla de ruedas");
+        assertThat(reservaRepository.sumarPersonasActivas(senderoId, fecha, EstadoReserva.queOcupanCupo())).isEqualTo(3);
+        verify(notificacionService).enviarCorreo(eq("laura@example.com"), contains("Recibimos tu solicitud"), contains("revisa"));
     }
 
     private static String titular(String nacionalidad, String tipoDocumento, String documento, String indicativo, String celular) {

@@ -34,7 +34,9 @@ class OpenApiContratoTest {
                 .andExpect(jsonPath("$.info.title").value("NativaTrips API"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerJwt.scheme").value("bearer"))
                 .andExpect(jsonPath("$.paths['/api/v1/senderos']").exists())
-                .andExpect(jsonPath("$.paths['/api/v1/reservas']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/reservas/sin-cuenta']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/reservas']").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/v1/auth/registro']").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/login']").exists())
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
 
