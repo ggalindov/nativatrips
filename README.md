@@ -145,11 +145,13 @@ Para usar la API real se arranca con `VITE_FUENTE_DATOS=http` y `VITE_API_URL=ht
 # Backend: reporte de cobertura en target/site/jacoco/index.html
 ./mvnw verify          # abre target/site/jacoco/index.html
 
-# Frontend: pruebas y compilación de producción
+# Frontend: análisis estático, pruebas y compilación de producción
+npm --prefix frontend run lint
 npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
+- **Calidad estática:** ESLint con TypeScript y las reglas de hooks de React en el frontend (sin advertencias permitidas); CodeQL en ambos.
 - **Frameworks de pruebas:** JUnit 5, Mockito, Spring Boot Test y Testcontainers (PostgreSQL real)
   en el backend; Vitest y Testing Library en el frontend.
 - **Cobertura:** la CI exige como mínimo el 70 % de líneas en el backend con JaCoCo; el reporte
