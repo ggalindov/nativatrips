@@ -33,19 +33,18 @@ public class ReservaIntegrante {
 
     private String nacionalidad;
 
+    /** RF-12: marca del guia en la salida; null mientras no la registre. */
+    private Boolean asistio;
+
     protected ReservaIntegrante() {
         // requerido por JPA
     }
 
-    public ReservaIntegrante(UUID reservaId, String nombreCompleto, String documentoIdentidad) {
+    public ReservaIntegrante(
+            UUID reservaId, String nombreCompleto, TipoDocumento tipoDocumento, String documentoIdentidad, String nacionalidad) {
         this.reservaId = reservaId;
         this.nombreCompleto = nombreCompleto;
         this.documentoIdentidad = documentoIdentidad;
-    }
-
-    public ReservaIntegrante(
-            UUID reservaId, String nombreCompleto, TipoDocumento tipoDocumento, String documentoIdentidad, String nacionalidad) {
-        this(reservaId, nombreCompleto, documentoIdentidad);
         this.tipoDocumento = tipoDocumento;
         this.nacionalidad = nacionalidad;
     }
@@ -72,5 +71,13 @@ public class ReservaIntegrante {
 
     public String getNacionalidad() {
         return nacionalidad;
+    }
+
+    public Boolean getAsistio() {
+        return asistio;
+    }
+
+    public void setAsistio(Boolean asistio) {
+        this.asistio = asistio;
     }
 }

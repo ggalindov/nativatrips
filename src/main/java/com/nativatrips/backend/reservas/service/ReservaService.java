@@ -7,10 +7,8 @@ import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.reservas.dto.AcompananteRequest;
-import com.nativatrips.backend.reservas.dto.HistorialEntradaResponse;
 import com.nativatrips.backend.reservas.dto.IntegranteResponse;
 import com.nativatrips.backend.reservas.dto.ReservaApartadaResponse;
-import com.nativatrips.backend.reservas.dto.ReservaRequest;
 import com.nativatrips.backend.reservas.dto.ReservaResponse;
 import com.nativatrips.backend.reservas.dto.ReservaSinCuentaRequest;
 import com.nativatrips.backend.reservas.dto.TitularRequest;
@@ -53,14 +51,6 @@ public class ReservaService {
     private static final DateTimeFormatter HORA =
             DateTimeFormatter.ofPattern("HH:mm").withZone(RelojConfig.ZONA_OPERACION);
 
-    /** RF-08/RF-09: estos tipos de grupo no pasan directo a pago, requieren aprobacion del administrador. */
-    private static final List<TipoGrupo> TIPOS_QUE_REQUIEREN_REVISION =
-            List.of(TipoGrupo.GRUPO_CORPORATIVO, TipoGrupo.NECESIDAD_ESPECIAL);
-
-    /** RF-37: una reserva ya cancelada, expirada o completada no se puede volver a cancelar. */
-    private static final List<EstadoReserva> ESTADOS_CANCELABLES_POR_TURISTA =
-            List.of(EstadoReserva.PENDIENTE_PAGO, EstadoReserva.EN_REVISION, EstadoReserva.CONFIRMADA);
-
     private final ReservaRepository reservaRepository;
     private final ReservaIntegranteRepository reservaIntegranteRepository;
     private final ReservaEstadoHistorialRepository historialRepository;
@@ -92,43 +82,10 @@ public class ReservaService {
         this.enlaceService = enlaceService;
     }
 
-    @Transactional
-    public ReservaResponse crearReserva(ReservaRequest request, UUID turistaId) {
-        int cantidadPersonas = request.integrantes().size();
-        Sendero sendero = apartarCupo(request.senderoId(), request.fechaTour(), cantidadPersonas);
-
-        boolean requiereRevision = TIPOS_QUE_REQUIEREN_REVISION.contains(request.tipoGrupo());
-        Instant bloqueoExpiraEn = requiereRevision ? null : Instant.now().plus(BLOQUEO_MINUTOS, ChronoUnit.MINUTES);
-
-        Reserva reserva = new Reserva(
-                sendero.getId(), turistaId, request.fechaTour(), cantidadPersonas, request.tipoGrupo(), bloqueoExpiraEn);
-        if (requiereRevision) {
-            reserva.setEstado(EstadoReserva.EN_REVISION);
-        }
-        final Reserva reservaGuardada = reservaRepository.save(reserva);
-
-        List<ReservaIntegrante> integrantes = request.integrantes().stream()
-                .map(i -> reservaIntegranteRepository.save(
-                        new ReservaIntegrante(reservaGuardada.getId(), i.nombreCompleto(), i.documentoIdentidad())))
-                .toList();
-
-        EstadoReserva estadoInicial = requiereRevision ? EstadoReserva.EN_REVISION : EstadoReserva.PENDIENTE_PAGO;
-        String motivoInicial = requiereRevision
-                ? "Reserva creada, pendiente de revision manual por tipo de grupo (" + request.tipoGrupo() + ")"
-                : "Reserva creada, pendiente de pago";
-        historialRepository.save(new ReservaEstadoHistorial(
-                reservaGuardada.getId(), null, estadoInicial, motivoInicial, OrigenCambioEstado.SISTEMA, turistaId));
-
-        if (requiereRevision) {
-            notificarAdministradoresRevisionPendiente(reservaGuardada);
-        }
-
-        return ReservaResponse.from(reservaGuardada, integrantes.stream().map(IntegranteResponse::from).toList());
-    }
-
     /**
-     * HU-02 (ADR-004): reserva sin cuenta. Aparta el cupo con el mismo bloqueo que la reserva con
-     * cuenta y envia al correo del titular el codigo y el enlace magico para gestionarla (HU-18).
+     * HU-02 (ADR-004): reserva sin cuenta. Aparta el cupo y envia al correo del titular el codigo y
+     * el enlace magico para gestionarla (HU-18). La reserva estandar queda 15 minutos para pagar; un
+     * grupo corporativo o con necesidades especiales espera la aprobacion del administrador (RF-09).
      */
     @Transactional
     public ReservaApartadaResponse crearReservaSinCuenta(ReservaSinCuentaRequest request) {
@@ -140,6 +97,10 @@ public class ReservaService {
                     HttpStatus.BAD_REQUEST, "Hay mas acompanantes que personas en la reserva, sin contar al titular");
         }
         request.acompanantes().forEach(a -> ReglasPersona.validarDocumento(a.tipoDocumento(), a.documento(), a.nacionalidad()));
+        if (request.tipoGrupo() == TipoGrupo.NECESIDAD_ESPECIAL && request.requerimientosEspeciales() == null) {
+            throw new BusinessRuleException(
+                    HttpStatus.BAD_REQUEST, "Cuentanos que necesita el grupo para que el guia lo tenga en cuenta");
+        }
         Sendero sendero = apartarCupo(request.senderoId(), request.fechaTour(), request.personas());
 
         TitularReserva titular = new TitularReserva(
@@ -149,6 +110,8 @@ public class ReservaService {
                 sendero.getId(),
                 request.fechaTour(),
                 request.personas(),
+                request.tipoGrupo(),
+                request.requerimientosEspeciales(),
                 Instant.now().plus(BLOQUEO_MINUTOS, ChronoUnit.MINUTES),
                 codigoNuevo(),
                 titular));
@@ -160,11 +123,21 @@ public class ReservaService {
             reservaIntegranteRepository.save(new ReservaIntegrante(
                     reserva.getId(), a.nombre().trim(), a.tipoDocumento(), a.documento().trim(), a.nacionalidad()));
         }
+        boolean enRevision = reserva.getEstado() == EstadoReserva.EN_REVISION;
         historialRepository.save(new ReservaEstadoHistorial(
-                reserva.getId(), null, EstadoReserva.PENDIENTE_PAGO, "Reserva sin cuenta creada, pendiente de pago",
+                reserva.getId(), null, reserva.getEstado(),
+                enRevision
+                        ? "Reserva sin cuenta creada, pendiente de revision por tipo de grupo (" + reserva.getTipoGrupo() + ")"
+                        : "Reserva sin cuenta creada, pendiente de pago",
                 OrigenCambioEstado.TURISTA, null));
 
-        notificarCupoApartado(reserva, sendero, enlaceService.emitir(reserva));
+        EnlaceReservaService.EnlaceEmitido enlace = enlaceService.emitir(reserva);
+        if (enRevision) {
+            notificarEnRevision(reserva, sendero, enlace);
+            notificarAdministradoresRevisionPendiente(reserva, sendero);
+        } else {
+            notificarCupoApartado(reserva, sendero, enlace);
+        }
         return ReservaApartadaResponse.from(reserva);
     }
 
@@ -208,9 +181,28 @@ public class ReservaService {
                         + "\n\nEs personal: no lo compartas. Si lo pierdes, pide uno nuevo con tu correo y el codigo.");
     }
 
+    private void notificarEnRevision(Reserva reserva, Sendero sendero, EnlaceReservaService.EnlaceEmitido enlace) {
+        notificacionService.enviarCorreo(
+                reserva.getTitular().getCorreo(),
+                "Recibimos tu solicitud - NativaTrips " + reserva.getCodigoReserva(),
+                "Hola " + reserva.getTitular().getNombre() + ". Guardamos " + reserva.getCantidadPersonas()
+                        + " cupo(s) en " + sendero.getNombre() + " para el " + reserva.getFechaTour()
+                        + ". Como es un " + descripcion(reserva.getTipoGrupo()) + ", el equipo de Eco Palacio la revisa"
+                        + " antes del pago. Te escribimos apenas la aprueben; desde ese momento tienes "
+                        + BLOQUEO_MINUTOS + " minutos para pagar."
+                        + "\n\nDesde este enlace consultas el estado de tu reserva:\n"
+                        + enlace.url()
+                        + "\n\nEs personal: no lo compartas.");
+    }
+
+    private static String descripcion(TipoGrupo tipo) {
+        return tipo == TipoGrupo.GRUPO_CORPORATIVO ? "grupo corporativo" : "grupo con necesidades especiales";
+    }
+
     /**
-     * RF-08/RF-09: el administrador aprueba o rechaza una reserva de grupo corporativo o
-     * con necesidad especial. Al aprobar arranca el conteo de bloqueo temporal de pago (RF-05).
+     * RF-08/RF-09: el administrador aprueba o rechaza una reserva de grupo corporativo o con
+     * necesidad especial. Al aprobar arranca el conteo de pago (RF-05) y el titular recibe un enlace
+     * nuevo para pagar; al rechazar, el aviso con el motivo.
      */
     @Transactional
     public ReservaResponse revisarReserva(UUID reservaId, boolean aprobar, String motivo, UUID adminId) {
@@ -231,6 +223,7 @@ public class ReservaService {
                     OrigenCambioEstado.ADMINISTRADOR,
                     adminId);
             actualizada.setBloqueoExpiraEn(Instant.now().plus(BLOQUEO_MINUTOS, ChronoUnit.MINUTES));
+            avisarRevisionAprobada(actualizada);
         } else {
             actualizada = transicionarEstado(
                     reservaId,
@@ -238,6 +231,7 @@ public class ReservaService {
                     motivo != null && !motivo.isBlank() ? motivo : "Revision rechazada por el administrador",
                     OrigenCambioEstado.ADMINISTRADOR,
                     adminId);
+            avisarRevisionRechazada(actualizada, motivo);
         }
 
         return conIntegrantes(actualizada);
@@ -250,10 +244,41 @@ public class ReservaService {
                 .toList();
     }
 
-    private void notificarAdministradoresRevisionPendiente(Reserva reserva) {
-        String asunto = "Nueva reserva pendiente de revision manual";
-        String cuerpo = "La reserva " + reserva.getId() + " (tipo " + reserva.getTipoGrupo()
-                + ") requiere aprobacion antes de continuar al pago.";
+    private void avisarRevisionAprobada(Reserva reserva) {
+        if (reserva.getTitular() == null) {
+            return;
+        }
+        String sendero = senderoRepository.findById(reserva.getSenderoId()).map(Sendero::getNombre).orElse("el sendero");
+        notificacionService.enviarCorreo(
+                reserva.getTitular().getCorreo(),
+                "Tu reserva fue aprobada - NativaTrips " + reserva.getCodigoReserva(),
+                "Hola " + reserva.getTitular().getNombre() + ". El equipo aprobó tu reserva en " + sendero
+                        + " para el " + reserva.getFechaTour() + ". Tienes hasta las "
+                        + HORA.format(reserva.getBloqueoExpiraEn()) + " (hora de Colombia) para pagar desde este enlace:"
+                        + "\n\n" + enlaceService.emitir(reserva).url()
+                        + "\n\nLos enlaces que recibiste antes ya no sirven.");
+    }
+
+    private void avisarRevisionRechazada(Reserva reserva, String motivo) {
+        if (reserva.getTitular() == null) {
+            return;
+        }
+        notificacionService.enviarCorreo(
+                reserva.getTitular().getCorreo(),
+                "Tu reserva no fue aprobada - NativaTrips " + reserva.getCodigoReserva(),
+                "Hola " + reserva.getTitular().getNombre() + ". El equipo de Eco Palacio no pudo aprobar tu reserva para el "
+                        + reserva.getFechaTour() + (motivo != null && !motivo.isBlank() ? ": " + motivo.strip() : ".")
+                        + "\n\nNo se hizo ningún cobro y los cupos quedaron libres. Escríbenos si quieres buscar otra fecha.");
+    }
+
+    private void notificarAdministradoresRevisionPendiente(Reserva reserva, Sendero sendero) {
+        String asunto = "Nueva reserva en revisión - " + reserva.getCodigoReserva();
+        String cuerpo = "La reserva " + reserva.getCodigoReserva() + " de " + reserva.getTitular().getNombre() + " ("
+                + descripcion(reserva.getTipoGrupo()) + ", " + reserva.getCantidadPersonas() + " personas) en "
+                + sendero.getNombre() + " para el " + reserva.getFechaTour() + " espera tu aprobación antes del pago."
+                + (reserva.getRequerimientosEspeciales() != null
+                        ? "\n\nRequerimientos: " + reserva.getRequerimientosEspeciales()
+                        : "");
         for (Usuario admin : usuarioRepository.findByRolAndActivoTrue(Rol.ADMINISTRADOR)) {
             notificacionService.enviarCorreo(admin.getEmail(), asunto, cuerpo);
         }
@@ -276,54 +301,6 @@ public class ReservaService {
                 new ReservaEstadoHistorial(reservaId, anterior, nuevoEstado, motivo, origen, cambiadoPorUsuarioId));
 
         return reserva;
-    }
-
-    @Transactional(readOnly = true)
-    public List<ReservaResponse> listarMisReservas(UUID turistaId) {
-        return reservaRepository.findByTuristaIdOrderByFechaTourDesc(turistaId).stream()
-                .map(this::conIntegrantes)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public ReservaResponse obtenerParaTurista(UUID reservaId, UUID turistaId) {
-        Reserva reserva = buscarDelTurista(reservaId, turistaId);
-        return conIntegrantes(reserva);
-    }
-
-    /** RF-36: historial completo de transiciones de una reserva propia, mas antiguo primero. */
-    @Transactional(readOnly = true)
-    public List<HistorialEntradaResponse> obtenerHistorialParaTurista(UUID reservaId, UUID turistaId) {
-        buscarDelTurista(reservaId, turistaId);
-        return historialRepository.findByReservaIdOrderByCreatedAtAsc(reservaId).stream()
-                .map(HistorialEntradaResponse::from)
-                .toList();
-    }
-
-    /** RF-37: el turista cancela su propia reserva mientras no este ya cerrada. */
-    @Transactional
-    public ReservaResponse cancelarPorTurista(UUID reservaId, UUID turistaId, String motivo) {
-        Reserva reserva = buscarDelTurista(reservaId, turistaId);
-
-        if (!ESTADOS_CANCELABLES_POR_TURISTA.contains(reserva.getEstado())) {
-            throw new BusinessRuleException(
-                    HttpStatus.CONFLICT, "La reserva no se puede cancelar en su estado actual (" + reserva.getEstado() + ")");
-        }
-
-        Reserva actualizada = transicionarEstado(
-                reservaId,
-                EstadoReserva.CANCELADA,
-                motivo != null && !motivo.isBlank() ? motivo : "Cancelada por el turista",
-                OrigenCambioEstado.TURISTA,
-                turistaId);
-
-        return conIntegrantes(actualizada);
-    }
-
-    private Reserva buscarDelTurista(UUID reservaId, UUID turistaId) {
-        return reservaRepository.findById(reservaId)
-                .filter(r -> turistaId.equals(r.getTuristaId()))
-                .orElseThrow(() -> new ResourceNotFoundException("Reserva no encontrada"));
     }
 
     @Transactional(readOnly = true)
@@ -374,8 +351,24 @@ public class ReservaService {
     public List<IntegranteResponse> obtenerTuristasParaGuia(UUID reservaId, UUID guiaId) {
         Reserva reserva = buscarDelGuia(reservaId, guiaId);
         return reservaIntegranteRepository.findByReservaId(reserva.getId()).stream()
-                .map(IntegranteResponse::from)
+                .map(i -> IntegranteResponse.conVisitas(i, reservaIntegranteRepository.contarVisitasPrevias(
+                        i.getTipoDocumento(), i.getDocumentoIdentidad(), reserva.getId(), EstadoReserva.COMPLETADA)))
                 .toList();
+    }
+
+    /** RF-12: el guia asignado marca, persona por persona, quien llego a la salida. */
+    @Transactional
+    public IntegranteResponse marcarAsistenciaIntegrante(UUID reservaId, UUID integranteId, boolean asistio, UUID guiaId) {
+        Reserva reserva = buscarDelGuia(reservaId, guiaId);
+        if (reserva.getEstado() != EstadoReserva.CONFIRMADA) {
+            throw new BusinessRuleException(
+                    HttpStatus.CONFLICT, "Solo se marca asistencia en una reserva confirmada");
+        }
+        ReservaIntegrante integrante = reservaIntegranteRepository.findById(integranteId)
+                .filter(i -> reserva.getId().equals(i.getReservaId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Persona no encontrada en la reserva"));
+        integrante.setAsistio(asistio);
+        return IntegranteResponse.from(integrante);
     }
 
     /** RF-38: el guia asignado cierra el tour registrando la asistencia el mismo dia o despues. */

@@ -3,14 +3,11 @@ package com.nativatrips.backend.usuarios.controller;
 import com.nativatrips.backend.usuarios.dto.LoginRequest;
 import com.nativatrips.backend.usuarios.dto.LoginResponse;
 import com.nativatrips.backend.usuarios.dto.OlvidePasswordRequest;
-import com.nativatrips.backend.usuarios.dto.RegistroTuristaRequest;
 import com.nativatrips.backend.usuarios.dto.RestablecerPasswordRequest;
-import com.nativatrips.backend.usuarios.dto.UsuarioResponse;
 import com.nativatrips.backend.usuarios.service.AuthService;
 import com.nativatrips.backend.usuarios.service.PasswordResetService;
 import com.nativatrips.backend.usuarios.service.RevocacionTokens;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,14 +30,7 @@ public class AuthController {
         this.revocacionTokens = revocacionTokens;
     }
 
-    /** RF-33: registro publico, siempre crea un usuario con rol TURISTA. */
-    @PostMapping("/registro")
-    public ResponseEntity<UsuarioResponse> registro(@Valid @RequestBody RegistroTuristaRequest request) {
-        UsuarioResponse response = authService.registrarTurista(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    /** RF-32/33: login para cualquier rol, emite JWT. */
+    /** RF-32/33: login del equipo (ADMINISTRADOR o GUIA_TURISTICO), emite JWT. */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));

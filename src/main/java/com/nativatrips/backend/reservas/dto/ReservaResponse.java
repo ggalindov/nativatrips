@@ -8,17 +8,20 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+/** Vista del equipo sobre una reserva: panel del administrador y lista del guia. */
 public record ReservaResponse(
         UUID id,
         String codigoReserva,
         Long senderoId,
-        UUID turistaId,
         UUID guiaId,
         LocalDate fechaTour,
         int cantidadPersonas,
         TipoGrupo tipoGrupo,
         EstadoReserva estado,
         Instant bloqueoExpiraEn,
+        TitularResponse titular,
+        String requerimientosEspeciales,
+        Instant creadaEn,
         List<IntegranteResponse> integrantes) {
 
     public static ReservaResponse from(Reserva reserva, List<IntegranteResponse> integrantes) {
@@ -26,13 +29,15 @@ public record ReservaResponse(
                 reserva.getId(),
                 reserva.getCodigoReserva(),
                 reserva.getSenderoId(),
-                reserva.getTuristaId(),
                 reserva.getGuiaId(),
                 reserva.getFechaTour(),
                 reserva.getCantidadPersonas(),
                 reserva.getTipoGrupo(),
                 reserva.getEstado(),
                 reserva.getBloqueoExpiraEn(),
+                reserva.getTitular() != null ? TitularResponse.from(reserva.getTitular()) : null,
+                reserva.getRequerimientosEspeciales(),
+                reserva.getCreatedAt(),
                 integrantes);
     }
 }
