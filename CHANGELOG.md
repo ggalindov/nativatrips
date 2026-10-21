@@ -11,6 +11,9 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Agregado
 
+- Los correos salen de verdad por SMTP (Gmail con contraseña de aplicación en producción):
+  código de reserva, enlace de recuperación y avisos al equipo; se envían solo cuando la
+  operación queda guardada (#58).
 - Capacidad de carga por sendero y día: el administrador la publica y las reservas se validan
   contra ella, solo hasta el domingo de la semana siguiente (#40, #41).
 - Ficha técnica ampliada de los senderos (distancia, desnivel, altitud, sector, hora y punto de
