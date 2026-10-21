@@ -47,6 +47,8 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Seguridad
 
+- Sin sesión válida (sin token, vencido o revocado) la API responde 401 en JSON; el 403 queda
+  solo para una sesión sin permiso. El frontend reconoce así la sesión vencida (#61).
 - BUG-01: la capacidad del día se bloquea antes de contar la ocupación, así que dos reservas
   simultáneas nunca se quedan con el mismo último cupo; prueba con 20 reservas a la vez contra
   PostgreSQL (#37, #39).
