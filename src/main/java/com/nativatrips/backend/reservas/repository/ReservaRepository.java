@@ -23,6 +23,11 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
 
     List<Reserva> findByGuiaIdOrderByFechaTourAsc(UUID guiaId);
 
+    /** RF-36: historial de un correo, lo mas reciente primero. */
+    List<Reserva> findByTitularCorreoOrderByFechaTourDesc(String correo);
+
+    boolean existsByTitularCorreo(String correo);
+
     List<Reserva> findByGuiaIdAndFechaTourOrderByFechaTourAsc(UUID guiaId, LocalDate fechaTour);
 
     @Query("""
