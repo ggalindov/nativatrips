@@ -65,6 +65,9 @@ class ReservaServiceTest {
     @Mock
     private NotificacionService notificacionService;
 
+    @Mock
+    private EnlaceReservaService enlaceService;
+
     private ReservaService reservaService;
 
     @BeforeEach
@@ -77,7 +80,8 @@ class ReservaServiceTest {
                 usuarioRepository,
                 capacidadService,
                 notificacionService,
-                new GeneradorCodigoReserva());
+                new GeneradorCodigoReserva(),
+                enlaceService);
     }
 
     @Test
