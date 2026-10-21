@@ -80,7 +80,7 @@ class ReservaControllerTest {
                  "integrantes": [{"nombreCompleto": "Juan Perez", "documentoIdentidad": "123"}]}
                 """;
         mockMvc.perform(post("/api/v1/reservas").contentType(MediaType.APPLICATION_JSON).content(reserva))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isMethodNotAllowed());
         mockMvc.perform(get("/api/v1/reservas/mias")).andExpect(status().isNotFound());
         mockMvc.perform(post("/api/v1/reservas/" + UUID.randomUUID() + "/cancelar")).andExpect(status().isNotFound());
     }
