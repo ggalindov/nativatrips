@@ -41,6 +41,8 @@ export function useConsulta<T>(consulta: () => Promise<T>, deps: readonly unknow
     return () => {
       vigente = false;
     };
+    // `deps` las fija quien llama (como en useMemo); la regla las revisa en cada llamada a useConsulta.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, version]);
 
   const recargar = useCallback(() => setVersion((v) => v + 1), []);

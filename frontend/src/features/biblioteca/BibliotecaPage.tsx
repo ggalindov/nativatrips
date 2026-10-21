@@ -21,7 +21,7 @@ export function BibliotecaPage() {
   const [categoria, setCategoria] = useState<CategoriaMedio | null>(null);
   const [abierto, setAbierto] = useState<number | null>(null);
 
-  const todos = estado.tipo === 'listo' ? estado.datos : [];
+  const todos = useMemo(() => (estado.tipo === 'listo' ? estado.datos : []), [estado]);
   const visibles = useMemo(() => filtrarPorCategoria(todos, categoria), [todos, categoria]);
   const cuenta = useMemo(() => contarPorCategoria(todos), [todos]);
   const propios = todos.filter((m) => m.propio).length;

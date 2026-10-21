@@ -169,10 +169,11 @@ export function ParamoVivo() {
     }
   });
 
+  const totalDatos = datos.length;
   useEffect(() => {
-    const t = setInterval(() => setDato((d) => siguienteDato(d, 1, datos.length)), ROTACION_MS);
+    const t = setInterval(() => setDato((d) => siguienteDato(d, 1, totalDatos)), ROTACION_MS);
     return () => clearInterval(t);
-  }, []);
+  }, [totalDatos]);
 
   // Mientras la persona desplaza la página, los bucles de la escena se pausan
   // y el scroll tiene todo el procesador; al detenerse siguen desde donde

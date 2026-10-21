@@ -90,8 +90,8 @@ export function ReservaPage() {
 
   // Tras el primer intento, los errores se recalculan mientras la persona corrige.
   useEffect(() => {
-    if (intentado) setErrores(validarSolicitud(solicitud));
-  }, [intentado, fecha, personas, titular]);
+    if (intentado) setErrores(validarSolicitud({ senderoId: idActual ?? '', fecha: fecha ?? '', personas, titular }));
+  }, [intentado, idActual, fecha, personas, titular]);
 
   // Si se llega desde la ficha con ?fecha=, se preselecciona cuando hay cupos.
   const fechaSugerida = parametros.get('fecha');
