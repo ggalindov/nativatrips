@@ -79,3 +79,20 @@ jobs:
 
       - name: Type check and production build
         run: npm run build
+
+  contenedores:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Compose valido y con todas sus variables
+        run: docker compose config -q
+        env:
+          APP_JWT_SECRET: ci-only-secret-not-for-production-min-32-bytes-long
+
+      - name: Imagenes del backend y del sitio
+        run: docker compose build backend frontend
+        env:
+          APP_JWT_SECRET: ci-only-secret-not-for-production-min-32-bytes-long
