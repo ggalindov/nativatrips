@@ -50,6 +50,9 @@ services:
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
       AUTH_INTENTOS_MAXIMOS: ${AUTH_INTENTOS_MAXIMOS:-5}
       AUTH_MINUTOS_BLOQUEO: ${AUTH_MINUTOS_BLOQUEO:-15}
+      # Cuentas del equipo creadas al primer arranque; cada una recibe el enlace para crear su clave.
+      APP_EQUIPO_ADMINISTRADORES: ${APP_EQUIPO_ADMINISTRADORES:-}
+      APP_EQUIPO_GUIAS: ${APP_EQUIPO_GUIAS:-}
       SPRINGDOC_ENABLED: ${SPRINGDOC_ENABLED:-true}
       # Correo: por defecto va a Mailpit; para Gmail se definen MAIL_* en el .env.
       MAIL_HOST: ${MAIL_HOST:-mailpit}
