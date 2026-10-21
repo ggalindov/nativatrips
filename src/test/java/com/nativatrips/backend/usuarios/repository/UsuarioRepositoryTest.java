@@ -22,18 +22,18 @@ class UsuarioRepositoryTest {
     @Test
     void guardaYRecuperaUnUsuarioPorEmail() {
         Usuario turista = new Usuario(
-                "turista@example.com",
+                "guia@ecopalacio.co",
                 "hash-no-real-solo-de-prueba",
                 "Turista de Prueba",
-                Rol.TURISTA);
+                Rol.GUIA_TURISTICO);
 
         usuarioRepository.save(turista);
 
-        Usuario encontrado = usuarioRepository.findByEmail("turista@example.com").orElseThrow();
+        Usuario encontrado = usuarioRepository.findByEmail("guia@ecopalacio.co").orElseThrow();
 
         assertThat(encontrado.getId()).isNotNull();
         assertThat(encontrado.getNombreCompleto()).isEqualTo("Turista de Prueba");
-        assertThat(encontrado.getRol()).isEqualTo(Rol.TURISTA);
+        assertThat(encontrado.getRol()).isEqualTo(Rol.GUIA_TURISTICO);
         assertThat(encontrado.isActivo()).isTrue();
         assertThat(encontrado.getCreatedAt()).isNotNull();
     }

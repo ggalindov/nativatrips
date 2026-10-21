@@ -91,15 +91,15 @@ class PagoControllerTest {
     }
 
     @Test
-    void elPagoConSesionDeTuristaYElWebhookAnteriorYaNoExisten() throws Exception {
-        mockMvc.perform(post("/api/v1/reservas/" + UUID.randomUUID() + "/pago").with(authentication(unTurista())))
+    void elPagoConSesionYElWebhookAnteriorYaNoExisten() throws Exception {
+        mockMvc.perform(post("/api/v1/reservas/" + UUID.randomUUID() + "/pago").with(authentication(unaCuentaDelEquipo())))
                 .andExpect(status().isNotFound());
-        mockMvc.perform(post("/api/v1/pagos/confirmacion").with(authentication(unTurista())))
+        mockMvc.perform(post("/api/v1/pagos/confirmacion").with(authentication(unaCuentaDelEquipo())))
                 .andExpect(status().isNotFound());
     }
 
-    private static UsernamePasswordAuthenticationToken unTurista() {
-        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "turista@example.com", Rol.TURISTA);
-        return new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_TURISTA")));
+    private static UsernamePasswordAuthenticationToken unaCuentaDelEquipo() {
+        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "guia@ecopalacio.co", Rol.GUIA_TURISTICO);
+        return new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_GUIA_TURISTICO")));
     }
 }

@@ -1,25 +1,25 @@
 package com.nativatrips.backend.reservas.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.nativatrips.backend.config.JwtProperties;
 import com.nativatrips.backend.config.SecurityConfig;
 import com.nativatrips.backend.reservas.dto.IntegranteResponse;
-import com.nativatrips.backend.reservas.dto.ReservaResponse;
-import com.nativatrips.backend.reservas.model.EstadoReserva;
-import com.nativatrips.backend.reservas.model.TipoGrupo;
+import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.usuarios.model.Rol;
 import com.nativatrips.backend.usuarios.security.AuthenticatedUser;
 import com.nativatrips.backend.usuarios.security.JwtAuthenticationFilter;
 import com.nativatrips.backend.usuarios.security.JwtTokenProvider;
 import com.nativatrips.backend.usuarios.service.RevocacionTokens;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -72,75 +72,60 @@ class ReservaControllerTest {
         }
     }
 
-    private static final String RESERVA_JSON = """
-            {
-                "senderoId": 1,
-                "fechaTour": "2026-12-01",
-                "tipoGrupo": "ESTANDAR",
-                "integrantes": [{"nombreCompleto": "Juan Perez", "documentoIdentidad": "123"}]
-            }
-            """;
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR")
+    void laReservaConCuentaYLaCancelacionDelTuristaYaNoExisten() throws Exception {
+        String reserva = """
+                {"senderoId": 1, "fechaTour": "2026-12-01", "tipoGrupo": "ESTANDAR",
+                 "integrantes": [{"nombreCompleto": "Juan Perez", "documentoIdentidad": "123"}]}
+                """;
+        mockMvc.perform(post("/api/v1/reservas").contentType(MediaType.APPLICATION_JSON).content(reserva))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/reservas/mias")).andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/v1/reservas/" + UUID.randomUUID() + "/cancelar")).andExpect(status().isNotFound());
+    }
 
     @Test
-    void crearSinAutenticarEsRechazado() throws Exception {
-        mockMvc.perform(post("/api/v1/reservas")
+    void laBandejaDeRevisionSinSesionEsRechazada() throws Exception {
+        mockMvc.perform(get("/api/v1/reservas/en-revision")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "GUIA_TURISTICO")
+    void elGuiaNoVeLaBandejaDeRevision() throws Exception {
+        mockMvc.perform(get("/api/v1/reservas/en-revision")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void elGuiaMarcaLaAsistenciaDeUnaPersona() throws Exception {
+        UUID guiaId = UUID.randomUUID();
+        UUID reservaId = UUID.randomUUID();
+        UUID integranteId = UUID.randomUUID();
+        given(reservaService.marcarAsistenciaIntegrante(eq(reservaId), eq(integranteId), eq(true), eq(guiaId)))
+                .willReturn(new IntegranteResponse(integranteId, "Laura", TipoDocumento.CC, "1020304050", "CO", true, 2));
+
+        mockMvc.perform(put("/api/v1/reservas/" + reservaId + "/integrantes/" + integranteId + "/asistencia")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(RESERVA_JSON))
-                .andExpect(status().isUnauthorized());
+                        .content("{\"asistio\": true}")
+                        .with(authentication(guia(guiaId))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.asistio").value(true))
+                .andExpect(jsonPath("$.visitasPrevias").value(2));
     }
 
     @Test
     @WithMockUser(roles = "ADMINISTRADOR")
-    void crearComoAdministradorEsRechazado() throws Exception {
-        mockMvc.perform(post("/api/v1/reservas")
+    void elAdministradorNoMarcaAsistencia() throws Exception {
+        mockMvc.perform(put("/api/v1/reservas/" + UUID.randomUUID() + "/integrantes/" + UUID.randomUUID() + "/asistencia")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(RESERVA_JSON))
+                        .content("{\"asistio\": true}"))
                 .andExpect(status().isForbidden());
+        Mockito.verify(reservaService, Mockito.never()).marcarAsistenciaIntegrante(any(), any(), Mockito.anyBoolean(), any());
     }
 
-    @Test
-    @WithMockUser(roles = "TURISTA")
-    void crearComoTuristaConIntegrantesVaciosEsRechazadoPorValidacion() throws Exception {
-        String sinIntegrantes = """
-                {"senderoId": 1, "fechaTour": "2026-12-01", "tipoGrupo": "ESTANDAR", "integrantes": []}
-                """;
-
-        mockMvc.perform(post("/api/v1/reservas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(sinIntegrantes))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void crearComoTuristaEsAceptado() throws Exception {
-        given(reservaService.crearReserva(any(), any())).willReturn(new ReservaResponse(
-                UUID.randomUUID(),
-                null,
-                1L,
-                UUID.randomUUID(),
-                null,
-                LocalDate.of(2026, 12, 1),
-                1,
-                TipoGrupo.ESTANDAR,
-                EstadoReserva.PENDIENTE_PAGO,
-                java.time.Instant.now().plusSeconds(900),
-                List.of(new IntegranteResponse("Juan Perez", "123"))));
-
-        mockMvc.perform(post("/api/v1/reservas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(RESERVA_JSON)
-                        .with(authentication(unTuristaAutenticado())))
-                .andExpect(status().isCreated());
-    }
-
-    private static UsernamePasswordAuthenticationToken unTuristaAutenticado() {
-        AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "turista@example.com", Rol.TURISTA);
+    private static UsernamePasswordAuthenticationToken guia(UUID id) {
+        AuthenticatedUser principal = new AuthenticatedUser(id, "guia@ecopalacio.co", Rol.GUIA_TURISTICO);
         return new UsernamePasswordAuthenticationToken(
-                principal, null, List.of(new SimpleGrantedAuthority("ROLE_TURISTA")));
-    }
-
-    @Test
-    void misReservasSinAutenticarEsRechazado() throws Exception {
-        mockMvc.perform(get("/api/v1/reservas/mias")).andExpect(status().isUnauthorized());
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_GUIA_TURISTICO")));
     }
 }

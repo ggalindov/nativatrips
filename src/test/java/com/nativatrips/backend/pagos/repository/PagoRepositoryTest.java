@@ -2,6 +2,7 @@ package com.nativatrips.backend.pagos.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.nativatrips.backend.reservas.ReservasDePrueba;
 import com.nativatrips.backend.TestcontainersConfiguration;
 import com.nativatrips.backend.config.JpaConfig;
 import com.nativatrips.backend.pagos.model.EstadoPago;
@@ -44,9 +45,7 @@ class PagoRepositoryTest {
     void encuentraElPagoMasRecientePendienteDeUnaReserva() {
         Sendero sendero = senderoRepository.save(new Sendero(
                 "Sendero pago", null, NivelDificultad.FACIL, 60, "ECOTURISMO", null, new BigDecimal("10000")));
-        Usuario turista = usuarioRepository.save(new Usuario("pago@example.com", "hash", "Turista", Rol.TURISTA));
-        Reserva reserva = reservaRepository.save(new Reserva(
-                sendero.getId(), turista.getId(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null));
+        Reserva reserva = reservaRepository.save(ReservasDePrueba.reserva(sendero.getId(), LocalDate.now().plusDays(1), 2, null));
 
         Pago rechazado = pagoRepository.save(
                 new Pago(reserva.getId(), "REF-1", new BigDecimal("20000"), "COP"));
@@ -66,9 +65,7 @@ class PagoRepositoryTest {
     void encuentraPorReferencia() {
         Sendero sendero = senderoRepository.save(new Sendero(
                 "Sendero pago 2", null, NivelDificultad.FACIL, 60, "ECOTURISMO", null, new BigDecimal("10000")));
-        Usuario turista = usuarioRepository.save(new Usuario("pago2@example.com", "hash", "Turista", Rol.TURISTA));
-        Reserva reserva = reservaRepository.save(new Reserva(
-                sendero.getId(), turista.getId(), LocalDate.now().plusDays(1), 1, TipoGrupo.ESTANDAR, null));
+        Reserva reserva = reservaRepository.save(ReservasDePrueba.reserva(sendero.getId(), LocalDate.now().plusDays(1), 1, null));
         pagoRepository.save(new Pago(reserva.getId(), "REF-UNICA", new BigDecimal("10000"), "COP"));
 
         assertThat(pagoRepository.findByReferencia("REF-UNICA")).isPresent();

@@ -20,6 +20,7 @@ import com.nativatrips.backend.pagos.repository.PagoEstadoHistorialRepository;
 import com.nativatrips.backend.pagos.repository.PagoRepository;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.Reserva;
+import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
 import com.nativatrips.backend.reservas.service.EnlaceReservaService;
 import com.nativatrips.backend.reservas.service.ReservaService;
@@ -141,7 +142,7 @@ class PagoServiceTest {
     }
 
     private static Reserva reservaSinCuenta(int personas, Instant venceEn) {
-        Reserva reserva = Reserva.sinCuenta(1L, LocalDate.now().plusDays(1), personas, venceEn, "NT-7Q4KX2",
+        Reserva reserva = Reserva.sinCuenta(1L, LocalDate.now().plusDays(1), personas, TipoGrupo.ESTANDAR, null, venceEn, "NT-7Q4KX2",
                 new com.nativatrips.backend.reservas.model.TitularReserva("Laura Gomez",
                         com.nativatrips.backend.reservas.model.TipoDocumento.CC, "1020304050", "CO", "laura@example.com",
                         "57", "3001234567"));

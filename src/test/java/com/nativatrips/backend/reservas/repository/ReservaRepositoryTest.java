@@ -2,6 +2,7 @@ package com.nativatrips.backend.reservas.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.nativatrips.backend.reservas.ReservasDePrueba;
 import com.nativatrips.backend.TestcontainersConfiguration;
 import com.nativatrips.backend.config.JpaConfig;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
@@ -41,15 +42,13 @@ class ReservaRepositoryTest {
     void sumaSoloLasPersonasDeReservasEnEstadosActivosParaLaFechaYSenderoIndicados() {
         Sendero sendero = senderoRepository.save(new Sendero(
                 "Sendero de prueba", null, NivelDificultad.FACIL, 60, "ECOTURISMO", null, new BigDecimal("10000")));
-        Usuario turista = usuarioRepository.save(
-                new Usuario("turista-reserva@example.com", "hash", "Turista", Rol.TURISTA));
 
         LocalDate fecha = LocalDate.now().plusDays(5);
 
-        guardarReserva(sendero.getId(), turista.getId(), fecha, 3, EstadoReserva.PENDIENTE_PAGO);
-        guardarReserva(sendero.getId(), turista.getId(), fecha, 2, EstadoReserva.CONFIRMADA);
-        guardarReserva(sendero.getId(), turista.getId(), fecha, 10, EstadoReserva.CANCELADA);
-        guardarReserva(sendero.getId(), turista.getId(), fecha.plusDays(1), 7, EstadoReserva.CONFIRMADA);
+        guardarReserva(sendero.getId(), fecha, 3, EstadoReserva.PENDIENTE_PAGO);
+        guardarReserva(sendero.getId(), fecha, 2, EstadoReserva.CONFIRMADA);
+        guardarReserva(sendero.getId(), fecha, 10, EstadoReserva.CANCELADA);
+        guardarReserva(sendero.getId(), fecha.plusDays(1), 7, EstadoReserva.CONFIRMADA);
 
         int suma = reservaRepository.sumarPersonasActivas(
                 sendero.getId(), fecha, List.of(EstadoReserva.PENDIENTE_PAGO, EstadoReserva.EN_REVISION, EstadoReserva.CONFIRMADA));
@@ -61,20 +60,15 @@ class ReservaRepositoryTest {
     void encuentraSoloReservasPendientesDePagoConBloqueoYaVencido() {
         Sendero sendero = senderoRepository.save(new Sendero(
                 "Sendero de prueba 2", null, NivelDificultad.FACIL, 60, "ECOTURISMO", null, new BigDecimal("10000")));
-        Usuario turista = usuarioRepository.save(
-                new Usuario("turista-expira@example.com", "hash", "Turista", Rol.TURISTA));
         LocalDate fecha = LocalDate.now().plusDays(5);
 
-        Reserva vencida = new Reserva(
-                sendero.getId(), turista.getId(), fecha, 2, TipoGrupo.ESTANDAR, Instant.now().minusSeconds(60));
+        Reserva vencida = ReservasDePrueba.reserva(sendero.getId(), fecha, 2, Instant.now().minusSeconds(60));
         reservaRepository.save(vencida);
 
-        Reserva noVencida = new Reserva(
-                sendero.getId(), turista.getId(), fecha, 2, TipoGrupo.ESTANDAR, Instant.now().plusSeconds(900));
+        Reserva noVencida = ReservasDePrueba.reserva(sendero.getId(), fecha, 2, Instant.now().plusSeconds(900));
         reservaRepository.save(noVencida);
 
-        Reserva vencidaPeroConfirmada = new Reserva(
-                sendero.getId(), turista.getId(), fecha, 2, TipoGrupo.ESTANDAR, Instant.now().minusSeconds(60));
+        Reserva vencidaPeroConfirmada = ReservasDePrueba.reserva(sendero.getId(), fecha, 2, Instant.now().minusSeconds(60));
         vencidaPeroConfirmada.setEstado(EstadoReserva.CONFIRMADA);
         reservaRepository.save(vencidaPeroConfirmada);
 
@@ -84,8 +78,8 @@ class ReservaRepositoryTest {
         assertThat(vencidas).extracting(Reserva::getId).containsExactly(vencida.getId());
     }
 
-    private void guardarReserva(Long senderoId, java.util.UUID turistaId, LocalDate fecha, int personas, EstadoReserva estado) {
-        Reserva reserva = new Reserva(senderoId, turistaId, fecha, personas, TipoGrupo.ESTANDAR, null);
+    private void guardarReserva(Long senderoId, LocalDate fecha, int personas, EstadoReserva estado) {
+        Reserva reserva = ReservasDePrueba.reserva(senderoId, fecha, personas, null);
         reserva.setEstado(estado);
         reservaRepository.save(reserva);
     }

@@ -37,35 +37,17 @@ class AsistenteToolsTest {
     }
 
     @Test
-    void consultarMisReservasUsaSiempreElTuristaIdAutenticadoNoUnoQueVengaEnElInput() {
-        UUID turistaAutenticado = UUID.randomUUID();
-        UUID otroTuristaSugeridoPorElModelo = UUID.randomUUID();
-        given(reservaService.listarMisReservas(turistaAutenticado)).willReturn(List.of());
-
-        // El modelo podria intentar inyectar un turistaId ajeno en el input; la tool lo ignora.
-        Map<String, Object> inputManipulado = Map.of("turistaId", otroTuristaSugeridoPorElModelo.toString());
-
-        asistenteTools.ejecutar("consultar_mis_reservas", inputManipulado, turistaAutenticado);
-
-        verify(reservaService).listarMisReservas(turistaAutenticado);
-        verify(reservaService, org.mockito.Mockito.never()).listarMisReservas(otroTuristaSugeridoPorElModelo);
-    }
-
-    @Test
-    void unVisitanteSinSesionNoRecibeLaHerramientaDeReservas() {
-        assertThat(asistenteTools.definiciones(false))
+    void ningunaHerramientaDevuelveReservas() {
+        assertThat(asistenteTools.definiciones())
                 .extracting(definicion -> definicion.get("name"))
                 .containsExactly("buscar_senderos", "consultar_disponibilidad");
-        assertThat(asistenteTools.definiciones(true))
-                .extracting(definicion -> definicion.get("name"))
-                .contains("consultar_mis_reservas");
     }
 
     @Test
-    void siUnVisitantePideSusReservasDeTodasFormasSeRechazaSinConsultar() {
-        String resultado = asistenteTools.ejecutar("consultar_mis_reservas", Map.of(), null);
+    void siElModeloPideReservasSeRechazaSinConsultarNada() {
+        String resultado = asistenteTools.ejecutar("consultar_mis_reservas", Map.of("turistaId", UUID.randomUUID().toString()));
 
-        assertThat(resultado).contains("enlace");
+        assertThat(resultado).contains("Herramienta desconocida");
         org.mockito.Mockito.verifyNoInteractions(reservaService);
     }
 
@@ -73,7 +55,7 @@ class AsistenteToolsTest {
     void buscarSenderosDevuelveElCatalogoComoJson() {
         given(senderoService.listarActivos()).willReturn(List.of());
 
-        String resultado = asistenteTools.ejecutar("buscar_senderos", Map.of(), UUID.randomUUID());
+        String resultado = asistenteTools.ejecutar("buscar_senderos", Map.of());
 
         assertThat(resultado).isEqualTo("[]");
     }
@@ -85,7 +67,7 @@ class AsistenteToolsTest {
         given(reservaService.obtenerDisponibilidad(1L, LocalDate.of(2026, 12, 1))).willReturn(disponibilidad);
 
         String resultado = asistenteTools.ejecutar(
-                "consultar_disponibilidad", Map.of("senderoId", 1, "fecha", "2026-12-01"), UUID.randomUUID());
+                "consultar_disponibilidad", Map.of("senderoId", 1, "fecha", "2026-12-01"));
 
         assertThat(resultado).contains("\"cupoDisponible\":15");
     }
@@ -96,14 +78,14 @@ class AsistenteToolsTest {
                 .willThrow(new ResourceNotFoundException("Sendero no encontrado"));
 
         String resultado = asistenteTools.ejecutar(
-                "consultar_disponibilidad", Map.of("senderoId", 999, "fecha", "2026-12-01"), UUID.randomUUID());
+                "consultar_disponibilidad", Map.of("senderoId", 999, "fecha", "2026-12-01"));
 
         assertThat(resultado).contains("Sendero no encontrado");
     }
 
     @Test
     void herramientaDesconocidaDevuelveUnErrorControlado() {
-        String resultado = asistenteTools.ejecutar("herramienta_inventada", Map.of(), UUID.randomUUID());
+        String resultado = asistenteTools.ejecutar("herramienta_inventada", Map.of());
 
         assertThat(resultado).contains("Herramienta desconocida");
     }

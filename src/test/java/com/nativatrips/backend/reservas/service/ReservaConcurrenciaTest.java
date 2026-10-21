@@ -6,10 +6,10 @@ import com.nativatrips.backend.TestcontainersConfiguration;
 import com.nativatrips.backend.capacidad.model.CapacidadDia;
 import com.nativatrips.backend.capacidad.repository.CapacidadDiaRepository;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
-import com.nativatrips.backend.reservas.dto.IntegranteRequest;
-import com.nativatrips.backend.reservas.dto.ReservaRequest;
+import com.nativatrips.backend.reservas.dto.ReservaSinCuentaRequest;
+import com.nativatrips.backend.reservas.dto.TitularRequest;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
-import com.nativatrips.backend.reservas.model.TipoGrupo;
+import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
 import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.model.Sendero;
@@ -66,10 +66,7 @@ class ReservaConcurrenciaTest {
         UUID adminId = usuarioRepository.save(new Usuario(
                 "admin-concurrencia-" + UUID.randomUUID() + "@ecopalacio.co", "hash", "Administrador", Rol.ADMINISTRADOR)).getId();
         capacidadDiaRepository.save(new CapacidadDia(sendero.getId(), fecha, CUPO_DEL_DIA, (short) 80, adminId));
-        UUID turistaId = usuarioRepository.save(new Usuario(
-                "concurrencia-" + UUID.randomUUID() + "@example.com", "hash", "Turista", Rol.TURISTA)).getId();
-
-        List<Boolean> resultados = reservarAlMismoTiempo(sendero.getId(), fecha, turistaId);
+        List<Boolean> resultados = reservarAlMismoTiempo(sendero.getId(), fecha);
 
         long aceptadas = resultados.stream().filter(Boolean::booleanValue).count();
         int ocupacion = reservaRepository.sumarPersonasActivas(
@@ -80,18 +77,21 @@ class ReservaConcurrenciaTest {
     }
 
     /** Lanza todas las reservas a la vez; cada una es de una persona. true = aceptada, false = rechazada por cupo. */
-    private List<Boolean> reservarAlMismoTiempo(Long senderoId, LocalDate fecha, UUID turistaId) throws Exception {
+    private List<Boolean> reservarAlMismoTiempo(Long senderoId, LocalDate fecha) throws Exception {
         ExecutorService hilos = Executors.newFixedThreadPool(RESERVAS_SIMULTANEAS);
         CountDownLatch salida = new CountDownLatch(1);
         List<Future<Boolean>> pendientes = new ArrayList<>();
         try {
             for (int i = 0; i < RESERVAS_SIMULTANEAS; i++) {
-                ReservaRequest request = new ReservaRequest(
-                        senderoId, fecha, TipoGrupo.ESTANDAR, List.of(new IntegranteRequest("Visitante " + i, "CC" + i)));
+                ReservaSinCuentaRequest request = new ReservaSinCuentaRequest(
+                        senderoId, fecha, 1,
+                        new TitularRequest("Visitante " + i, TipoDocumento.CC, "10203040" + (10 + i), "CO",
+                                "visitante" + i + "@example.com", "57", "3001234567"),
+                        List.of(), null, null);
                 pendientes.add(hilos.submit(() -> {
                     salida.await();
                     try {
-                        reservaService.crearReserva(request, turistaId);
+                        reservaService.crearReservaSinCuenta(request);
                         return true;
                     } catch (BusinessRuleException cupoAgotado) {
                         return false;

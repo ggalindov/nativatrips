@@ -1,10 +1,14 @@
 package com.nativatrips.backend.reservas.service;
 
+import static com.nativatrips.backend.reservas.ReservasDePrueba.reserva;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -13,11 +17,13 @@ import com.nativatrips.backend.capacidad.service.CapacidadService;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
-import com.nativatrips.backend.reservas.dto.IntegranteRequest;
-import com.nativatrips.backend.reservas.dto.ReservaRequest;
+import com.nativatrips.backend.reservas.dto.ReservaSinCuentaRequest;
+import com.nativatrips.backend.reservas.dto.TitularRequest;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.OrigenCambioEstado;
 import com.nativatrips.backend.reservas.model.Reserva;
+import com.nativatrips.backend.reservas.model.ReservaIntegrante;
+import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
 import com.nativatrips.backend.reservas.repository.ReservaIntegranteRepository;
@@ -25,8 +31,11 @@ import com.nativatrips.backend.reservas.repository.ReservaRepository;
 import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
+import com.nativatrips.backend.usuarios.model.Rol;
+import com.nativatrips.backend.usuarios.model.Usuario;
 import com.nativatrips.backend.usuarios.repository.UsuarioRepository;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +48,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -87,10 +97,8 @@ class ReservaServiceTest {
     @Test
     void rechazaReservaSiElSenderoNoExisteOEstaInactivo() {
         given(senderoRepository.findById(1L)).willReturn(Optional.empty());
-        var request = new ReservaRequest(
-                1L, LocalDate.now().plusDays(1), TipoGrupo.ESTANDAR, List.of(new IntegranteRequest("Juan", "123")));
 
-        assertThatThrownBy(() -> reservaService.crearReserva(request, UUID.randomUUID()))
+        assertThatThrownBy(() -> reservaService.crearReservaSinCuenta(solicitud(LocalDate.now().plusDays(1), 1)))
                 .isInstanceOf(ResourceNotFoundException.class);
         verify(reservaRepository, never()).save(any());
     }
@@ -99,49 +107,22 @@ class ReservaServiceTest {
     void rechazaLaReservaFueraDeLaVentanaSinTocarLaCapacidad() {
         LocalDate lejana = LocalDate.now().plusWeeks(5);
         given(senderoRepository.findById(1L)).willReturn(Optional.of(unSendero()));
-        org.mockito.BDDMockito.willThrow(new BusinessRuleException(org.springframework.http.HttpStatus.CONFLICT, "fuera de la ventana"))
+        willThrow(new BusinessRuleException(HttpStatus.CONFLICT, "fuera de la ventana"))
                 .given(capacidadService)
                 .verificarVentanaDeReserva(lejana);
 
-        var request = new ReservaRequest(1L, lejana, TipoGrupo.ESTANDAR, List.of(new IntegranteRequest("Juan", "123")));
-
-        assertThatThrownBy(() -> reservaService.crearReserva(request, UUID.randomUUID()))
+        assertThatThrownBy(() -> reservaService.crearReservaSinCuenta(solicitud(lejana, 1)))
                 .isInstanceOf(BusinessRuleException.class);
         verify(capacidadService, never()).bloquearCapacidadDelDia(any(), any());
         verify(reservaRepository, never()).save(any());
     }
 
     @Test
-    void propagaElRechazoDeCapacidadCuandoNoHayCupoSuficiente() {
-        Sendero sendero = unSendero();
-        given(senderoRepository.findById(1L)).willReturn(Optional.of(sendero));
-        given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(18);
-        org.mockito.BDDMockito.willThrow(new BusinessRuleException(org.springframework.http.HttpStatus.CONFLICT, "sin cupo"))
-                .given(capacidadService)
-                .verificarCupoSuficiente(1L, LocalDate.now().plusDays(1), 18, 2);
-
-        var request = new ReservaRequest(
-                1L,
-                LocalDate.now().plusDays(1),
-                TipoGrupo.ESTANDAR,
-                List.of(new IntegranteRequest("Juan", "123"), new IntegranteRequest("Ana", "456")));
-
-        assertThatThrownBy(() -> reservaService.crearReserva(request, UUID.randomUUID()))
-                .isInstanceOf(BusinessRuleException.class);
-        verify(reservaRepository, never()).save(any());
-    }
-
-    @Test
     void verificaLaVentanaYBloqueaLaCapacidadDelDiaAntesDeContarLaOcupacion() {
         LocalDate fecha = LocalDate.now().plusDays(1);
-        given(senderoRepository.findById(1L)).willReturn(Optional.of(unSendero()));
-        given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(0);
-        given(reservaRepository.save(any())).willAnswer(this::conIdGenerado);
-        given(reservaIntegranteRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+        prepararCreacion();
 
-        reservaService.crearReserva(
-                new ReservaRequest(1L, fecha, TipoGrupo.ESTANDAR, List.of(new IntegranteRequest("Juan", "123"))),
-                UUID.randomUUID());
+        reservaService.crearReservaSinCuenta(solicitud(fecha, 1));
 
         InOrder orden = Mockito.inOrder(capacidadService, reservaRepository);
         orden.verify(capacidadService).verificarVentanaDeReserva(fecha);
@@ -151,28 +132,58 @@ class ReservaServiceTest {
     }
 
     @Test
-    void creaLaReservaEnEstadoPendientePagoConBloqueoTemporalYRegistraHistorial() {
-        Sendero sendero = unSendero();
-        given(senderoRepository.findById(1L)).willReturn(Optional.of(sendero));
-        given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(0);
-        given(reservaRepository.save(any())).willAnswer(this::conIdGenerado);
-        given(reservaIntegranteRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
+    void laReservaEstandarQuedaPendienteDePagoConBloqueoYAvisoAlTitular() {
+        prepararCreacion();
 
-        var request = new ReservaRequest(
-                1L, LocalDate.now().plusDays(1), TipoGrupo.ESTANDAR, List.of(new IntegranteRequest("Juan", "123")));
+        var apartada = reservaService.crearReservaSinCuenta(solicitud(LocalDate.now().plusDays(1), 2));
 
-        var response = reservaService.crearReserva(request, UUID.randomUUID());
+        assertThat(apartada.estado()).isEqualTo(EstadoReserva.PENDIENTE_PAGO);
+        assertThat(apartada.bloqueoExpiraEn()).isNotNull();
+        verify(notificacionService).enviarCorreo(eq("laura@example.com"), contains("Tu cupo esta apartado"), any());
+        verify(usuarioRepository, never()).findByRolAndActivoTrue(any());
+    }
 
-        assertThat(response.estado()).isEqualTo(EstadoReserva.PENDIENTE_PAGO);
-        assertThat(response.bloqueoExpiraEn()).isNotNull();
-        assertThat(response.integrantes()).hasSize(1);
-        verify(historialRepository).save(any());
+    @Test
+    void unGrupoCorporativoSinCuentaPasaARevisionSinConteoYAvisaAlTitularYAlEquipo() {
+        prepararCreacion();
+        given(usuarioRepository.findByRolAndActivoTrue(Rol.ADMINISTRADOR))
+                .willReturn(List.of(new Usuario("admin@ecopalacio.co", "hash", "Admin", Rol.ADMINISTRADOR)));
+
+        var apartada = reservaService.crearReservaSinCuenta(
+                solicitud(LocalDate.now().plusDays(1), 12, TipoGrupo.GRUPO_CORPORATIVO, null));
+
+        assertThat(apartada.estado()).isEqualTo(EstadoReserva.EN_REVISION);
+        assertThat(apartada.bloqueoExpiraEn()).isNull();
+        verify(notificacionService).enviarCorreo(eq("laura@example.com"), contains("Recibimos tu solicitud"), any());
+        verify(notificacionService).enviarCorreo(eq("admin@ecopalacio.co"), contains("en revisión"), any());
+    }
+
+    @Test
+    void unGrupoConNecesidadesEspecialesDebeDecirQueNecesita() {
+        assertThatThrownBy(() -> reservaService.crearReservaSinCuenta(
+                        solicitud(LocalDate.now().plusDays(1), 3, TipoGrupo.NECESIDAD_ESPECIAL, "  ")))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("que necesita el grupo");
+        verify(reservaRepository, never()).save(any());
+    }
+
+    @Test
+    void losRequerimientosEspecialesQuedanEnLaReserva() {
+        prepararCreacion();
+        given(usuarioRepository.findByRolAndActivoTrue(Rol.ADMINISTRADOR)).willReturn(List.of());
+
+        reservaService.crearReservaSinCuenta(
+                solicitud(LocalDate.now().plusDays(1), 3, TipoGrupo.NECESIDAD_ESPECIAL, " Silla de ruedas "));
+
+        var captor = org.mockito.ArgumentCaptor.forClass(Reserva.class);
+        verify(reservaRepository).save(captor.capture());
+        assertThat(captor.getValue().getRequerimientosEspeciales()).isEqualTo("Silla de ruedas");
+        assertThat(captor.getValue().getEstado()).isEqualTo(EstadoReserva.EN_REVISION);
     }
 
     @Test
     void transicionarEstadoLiberaElBloqueoAlConfirmar() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR,
-                java.time.Instant.now().plusSeconds(900));
+        Reserva reserva = reserva(1L, LocalDate.now().plusDays(1), 2, Instant.now().plusSeconds(900));
         given(reservaRepository.findById(any())).willReturn(Optional.of(reserva));
 
         Reserva actualizada = reservaService.transicionarEstado(
@@ -184,247 +195,207 @@ class ReservaServiceTest {
     }
 
     @Test
-    void obtenerParaTuristaRechazaReservaDeOtroUsuario() {
-        UUID duenioReal = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, duenioReal, LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-
-        assertThatThrownBy(() -> reservaService.obtenerParaTurista(reservaId, UUID.randomUUID()))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    void cancelarPorTuristaFuncionaDesdePendientePagoYLiberaElBloqueo() {
-        UUID turistaId = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, turistaId, LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR,
-                java.time.Instant.now().plusSeconds(900));
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-
-        var response = reservaService.cancelarPorTurista(reservaId, turistaId, "Cambio de planes");
-
-        assertThat(response.estado()).isEqualTo(EstadoReserva.CANCELADA);
-        assertThat(response.bloqueoExpiraEn()).isNull();
-    }
-
-    @Test
-    void cancelarPorTuristaRechazaReservaDeOtroUsuario() {
-        UUID duenioReal = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, duenioReal, LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-
-        assertThatThrownBy(() -> reservaService.cancelarPorTurista(reservaId, UUID.randomUUID(), null))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    void cancelarPorTuristaRechazaSiYaEstaCanceladaOExpirada() {
-        UUID turistaId = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, turistaId, LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        reserva.setEstado(EstadoReserva.EXPIRADA);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-
-        assertThatThrownBy(() -> reservaService.cancelarPorTurista(reservaId, turistaId, null))
-                .isInstanceOf(BusinessRuleException.class);
-    }
-
-    @Test
-    void obtenerHistorialParaTuristaRechazaReservaDeOtroUsuario() {
-        UUID duenioReal = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, duenioReal, LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-
-        assertThatThrownBy(() -> reservaService.obtenerHistorialParaTurista(reservaId, UUID.randomUUID()))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
     void calculaDisponibilidadDelegandoEnCapacidadService() {
         given(senderoRepository.existsById(1L)).willReturn(true);
         given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(4);
         var esperada = new DisponibilidadResponse(1L, LocalDate.now(), 20, 4, 16, false);
         given(capacidadService.verificarDisponibilidad(1L, LocalDate.now(), 4)).willReturn(esperada);
 
-        var disponibilidad = reservaService.obtenerDisponibilidad(1L, LocalDate.now());
-
-        assertThat(disponibilidad).isEqualTo(esperada);
+        assertThat(reservaService.obtenerDisponibilidad(1L, LocalDate.now())).isEqualTo(esperada);
     }
 
     @Test
-    void creaReservaDeGrupoCorporativoEnRevisionSinBloqueoYNotificaAdministradores() {
-        Sendero sendero = unSendero();
-        given(senderoRepository.findById(1L)).willReturn(Optional.of(sendero));
-        given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(0);
-        given(reservaRepository.save(any())).willAnswer(this::conIdGenerado);
-        given(reservaIntegranteRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
-        var admin = new com.nativatrips.backend.usuarios.model.Usuario(
-                "admin@example.com", "hash", "Admin", com.nativatrips.backend.usuarios.model.Rol.ADMINISTRADOR);
-        given(usuarioRepository.findByRolAndActivoTrue(com.nativatrips.backend.usuarios.model.Rol.ADMINISTRADOR))
-                .willReturn(List.of(admin));
+    void aprobarLaRevisionAbreElConteoYEnviaUnEnlaceNuevoParaPagar() {
+        Reserva reserva = conId(reserva(1L, LocalDate.now().plusDays(1), 5, TipoGrupo.GRUPO_CORPORATIVO, null));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
+        given(senderoRepository.findById(1L)).willReturn(Optional.of(unSendero()));
+        given(enlaceService.emitir(reserva))
+                .willReturn(new EnlaceReservaService.EnlaceEmitido("http://localhost:3000/mi-reserva/nuevo", Instant.now()));
 
-        var request = new ReservaRequest(
-                1L, LocalDate.now().plusDays(1), TipoGrupo.GRUPO_CORPORATIVO, List.of(new IntegranteRequest("Juan", "123")));
-
-        var response = reservaService.crearReserva(request, UUID.randomUUID());
-
-        assertThat(response.estado()).isEqualTo(EstadoReserva.EN_REVISION);
-        assertThat(response.bloqueoExpiraEn()).isNull();
-        verify(notificacionService).enviarCorreo(org.mockito.ArgumentMatchers.eq("admin@example.com"), any(), any());
-    }
-
-    @Test
-    void revisarReservaAprobadaPasaAPendientePagoConNuevoBloqueo() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 5, TipoGrupo.GRUPO_CORPORATIVO, null);
-        reserva.setEstado(EstadoReserva.EN_REVISION);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-
-        var response = reservaService.revisarReserva(reservaId, true, null, UUID.randomUUID());
+        var response = reservaService.revisarReserva(reserva.getId(), true, null, UUID.randomUUID());
 
         assertThat(response.estado()).isEqualTo(EstadoReserva.PENDIENTE_PAGO);
         assertThat(response.bloqueoExpiraEn()).isNotNull();
+        verify(notificacionService).enviarCorreo(
+                eq("laura@example.com"), contains("fue aprobada"), contains("http://localhost:3000/mi-reserva/nuevo"));
     }
 
     @Test
-    void revisarReservaRechazadaPasaACancelada() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 5, TipoGrupo.NECESIDAD_ESPECIAL, null);
-        reserva.setEstado(EstadoReserva.EN_REVISION);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+    void rechazarLaRevisionCancelaYLeDiceElMotivoAlTitular() {
+        Reserva reserva = conId(reserva(1L, LocalDate.now().plusDays(1), 5, TipoGrupo.NECESIDAD_ESPECIAL, null));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
 
-        var response = reservaService.revisarReserva(reservaId, false, "No cumple requisitos", UUID.randomUUID());
+        var response = reservaService.revisarReserva(reserva.getId(), false, "No hay guia de apoyo ese dia", UUID.randomUUID());
 
         assertThat(response.estado()).isEqualTo(EstadoReserva.CANCELADA);
+        verify(notificacionService).enviarCorreo(
+                eq("laura@example.com"), contains("no fue aprobada"), contains("No hay guia de apoyo ese dia"));
     }
 
     @Test
     void revisarReservaQueNoEstaEnRevisionEsRechazada() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 5, TipoGrupo.ESTANDAR,
-                java.time.Instant.now().plusSeconds(900));
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+        Reserva reserva = conId(reserva(1L, LocalDate.now().plusDays(1), 5, Instant.now().plusSeconds(900)));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
 
-        assertThatThrownBy(() -> reservaService.revisarReserva(reservaId, true, null, UUID.randomUUID()))
+        assertThatThrownBy(() -> reservaService.revisarReserva(reserva.getId(), true, null, UUID.randomUUID()))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
     void asignarGuiaFallaSiLaReservaNoEstaConfirmada() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR,
-                java.time.Instant.now().plusSeconds(900));
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+        Reserva reserva = conId(reserva(1L, LocalDate.now().plusDays(1), 2, Instant.now().plusSeconds(900)));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
 
-        assertThatThrownBy(() -> reservaService.asignarGuia(reservaId, UUID.randomUUID()))
+        assertThatThrownBy(() -> reservaService.asignarGuia(reserva.getId(), UUID.randomUUID()))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
     void asignarGuiaFallaSiElUsuarioNoEsGuiaActivo() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        reserva.setEstado(EstadoReserva.CONFIRMADA);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+        Reserva reserva = confirmada(LocalDate.now().plusDays(1));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
         given(usuarioRepository.findById(any())).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> reservaService.asignarGuia(reservaId, UUID.randomUUID()))
+        assertThatThrownBy(() -> reservaService.asignarGuia(reserva.getId(), UUID.randomUUID()))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     void asignarGuiaExitosaCuandoLaReservaEstaConfirmadaYElUsuarioEsGuiaActivo() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        reserva.setEstado(EstadoReserva.CONFIRMADA);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
-
+        Reserva reserva = confirmada(LocalDate.now().plusDays(1));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
         UUID guiaId = UUID.randomUUID();
-        var guia = new com.nativatrips.backend.usuarios.model.Usuario(
-                "guia@example.com", "hash", "Guia", com.nativatrips.backend.usuarios.model.Rol.GUIA_TURISTICO);
+        var guia = new Usuario("guia@example.com", "hash", "Guia", Rol.GUIA_TURISTICO);
         ReflectionTestUtils.setField(guia, "id", guiaId);
         given(usuarioRepository.findById(guiaId)).willReturn(Optional.of(guia));
 
-        var response = reservaService.asignarGuia(reservaId, guiaId);
-
-        assertThat(response.guiaId()).isEqualTo(guiaId);
+        assertThat(reservaService.asignarGuia(reserva.getId(), guiaId).guiaId()).isEqualTo(guiaId);
     }
 
     @Test
     void agendaGuiaSinFechaSoloIncluyeToursDesdeHoy() {
         UUID guiaId = UUID.randomUUID();
-        Reserva pasada = new Reserva(1L, UUID.randomUUID(), LocalDate.now().minusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        Reserva futura = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
-        ReflectionTestUtils.setField(pasada, "id", UUID.randomUUID());
-        ReflectionTestUtils.setField(futura, "id", UUID.randomUUID());
+        Reserva pasada = conId(reserva(1L, LocalDate.now().minusDays(1), 2, null));
+        Reserva futura = conId(reserva(1L, LocalDate.now().plusDays(1), 2, null));
         given(reservaRepository.findByGuiaIdOrderByFechaTourAsc(guiaId)).willReturn(List.of(pasada, futura));
 
         var agenda = reservaService.obtenerAgendaGuia(guiaId, null);
 
-        assertThat(agenda).hasSize(1);
-        assertThat(agenda.get(0).fechaTour()).isEqualTo(futura.getFechaTour());
+        assertThat(agenda).extracting(r -> r.fechaTour()).containsExactly(futura.getFechaTour());
     }
 
     @Test
     void obtenerTuristasParaGuiaRechazaSiLaReservaNoLePerteneceAEseGuia() {
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
+        Reserva reserva = conId(reserva(1L, LocalDate.now().plusDays(1), 2, null));
         reserva.setGuiaId(UUID.randomUUID());
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
 
-        assertThatThrownBy(() -> reservaService.obtenerTuristasParaGuia(reservaId, UUID.randomUUID()))
+        assertThatThrownBy(() -> reservaService.obtenerTuristasParaGuia(reserva.getId(), UUID.randomUUID()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void laListaDelGuiaTraeLasVisitasPreviasDeCadaPersona() {
+        UUID guiaId = UUID.randomUUID();
+        Reserva reserva = confirmada(LocalDate.now());
+        reserva.setGuiaId(guiaId);
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
+        ReservaIntegrante laura = new ReservaIntegrante(reserva.getId(), "Laura Gomez", TipoDocumento.CC, "1020304050", "CO");
+        given(reservaIntegranteRepository.findByReservaId(reserva.getId())).willReturn(List.of(laura));
+        given(reservaIntegranteRepository.contarVisitasPrevias(
+                TipoDocumento.CC, "1020304050", reserva.getId(), EstadoReserva.COMPLETADA)).willReturn(3L);
+
+        var lista = reservaService.obtenerTuristasParaGuia(reserva.getId(), guiaId);
+
+        assertThat(lista).singleElement().satisfies(p -> assertThat(p.visitasPrevias()).isEqualTo(3));
+    }
+
+    @Test
+    void elGuiaMarcaLaAsistenciaDeUnaPersonaDeSuSalida() {
+        UUID guiaId = UUID.randomUUID();
+        Reserva reserva = confirmada(LocalDate.now());
+        reserva.setGuiaId(guiaId);
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
+        ReservaIntegrante laura = new ReservaIntegrante(reserva.getId(), "Laura Gomez", TipoDocumento.CC, "1020304050", "CO");
+        UUID integranteId = UUID.randomUUID();
+        given(reservaIntegranteRepository.findById(integranteId)).willReturn(Optional.of(laura));
+
+        var marcada = reservaService.marcarAsistenciaIntegrante(reserva.getId(), integranteId, false, guiaId);
+
+        assertThat(marcada.asistio()).isFalse();
+        assertThat(laura.getAsistio()).isFalse();
+    }
+
+    @Test
+    void noSeMarcaAsistenciaDeAlguienDeOtraReserva() {
+        UUID guiaId = UUID.randomUUID();
+        Reserva reserva = confirmada(LocalDate.now());
+        reserva.setGuiaId(guiaId);
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
+        UUID integranteId = UUID.randomUUID();
+        given(reservaIntegranteRepository.findById(integranteId)).willReturn(Optional.of(
+                new ReservaIntegrante(UUID.randomUUID(), "Otra", TipoDocumento.CC, "999999", "CO")));
+
+        assertThatThrownBy(() -> reservaService.marcarAsistenciaIntegrante(reserva.getId(), integranteId, true, guiaId))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     void registrarAsistenciaFallaSiElTourEsEnElFuturo() {
         UUID guiaId = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now().plusDays(1), 2, TipoGrupo.ESTANDAR, null);
+        Reserva reserva = confirmada(LocalDate.now().plusDays(1));
         reserva.setGuiaId(guiaId);
-        reserva.setEstado(EstadoReserva.CONFIRMADA);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
 
-        assertThatThrownBy(() -> reservaService.registrarAsistencia(reservaId, guiaId))
+        assertThatThrownBy(() -> reservaService.registrarAsistencia(reserva.getId(), guiaId))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
     void registrarAsistenciaCompletaLaReservaYRegistraLaFechaDeAsistencia() {
         UUID guiaId = UUID.randomUUID();
-        Reserva reserva = new Reserva(1L, UUID.randomUUID(), LocalDate.now(), 2, TipoGrupo.ESTANDAR, null);
+        Reserva reserva = confirmada(LocalDate.now());
         reserva.setGuiaId(guiaId);
-        reserva.setEstado(EstadoReserva.CONFIRMADA);
-        UUID reservaId = UUID.randomUUID();
-        ReflectionTestUtils.setField(reserva, "id", reservaId);
-        given(reservaRepository.findById(reservaId)).willReturn(Optional.of(reserva));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
 
-        var response = reservaService.registrarAsistencia(reservaId, guiaId);
+        var response = reservaService.registrarAsistencia(reserva.getId(), guiaId);
 
         assertThat(response.estado()).isEqualTo(EstadoReserva.COMPLETADA);
         assertThat(reserva.getAsistenciaRegistradaEn()).isNotNull();
     }
 
-    private Reserva conIdGenerado(InvocationOnMock invocation) {
-        Reserva reserva = invocation.getArgument(0);
+    private void prepararCreacion() {
+        given(senderoRepository.findById(1L)).willReturn(Optional.of(unSendero()));
+        given(reservaRepository.sumarPersonasActivas(anyLong(), any(), any())).willReturn(0);
+        given(reservaRepository.save(any())).willAnswer(this::conIdGenerado);
+        given(enlaceService.emitir(any()))
+                .willReturn(new EnlaceReservaService.EnlaceEmitido("http://localhost:3000/mi-reserva/t", Instant.now()));
+    }
+
+    private static ReservaSinCuentaRequest solicitud(LocalDate fecha, int personas) {
+        return solicitud(fecha, personas, null, null);
+    }
+
+    private static ReservaSinCuentaRequest solicitud(LocalDate fecha, int personas, TipoGrupo tipo, String requerimientos) {
+        return new ReservaSinCuentaRequest(
+                1L, fecha, personas,
+                new TitularRequest("Laura Gomez", TipoDocumento.CC, "1020304050", "CO", "laura@example.com", "57", "3001234567"),
+                List.of(), tipo, requerimientos);
+    }
+
+    private static Reserva confirmada(LocalDate fecha) {
+        Reserva reserva = conId(reserva(1L, fecha, 2, null));
+        reserva.setEstado(EstadoReserva.CONFIRMADA);
+        return reserva;
+    }
+
+    private static Reserva conId(Reserva reserva) {
         ReflectionTestUtils.setField(reserva, "id", UUID.randomUUID());
         return reserva;
+    }
+
+    private Reserva conIdGenerado(InvocationOnMock invocation) {
+        return conId(invocation.getArgument(0));
     }
 
     private static Sendero unSendero() {

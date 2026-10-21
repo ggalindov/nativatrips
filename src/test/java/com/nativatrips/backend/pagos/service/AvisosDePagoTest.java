@@ -9,12 +9,12 @@ import static org.mockito.Mockito.verify;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.pagos.model.Pago;
 import com.nativatrips.backend.reservas.model.Reserva;
+import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
-import com.nativatrips.backend.usuarios.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -38,17 +38,14 @@ class AvisosDePagoTest {
     @Mock
     private SenderoRepository senderoRepository;
 
-    @Mock
-    private UsuarioRepository usuarioRepository;
-
     private AvisosDePago avisos;
     private Reserva reserva;
     private Pago pago;
 
     @BeforeEach
     void setUp() {
-        avisos = new AvisosDePago(notificacionService, senderoRepository, usuarioRepository);
-        reserva = Reserva.sinCuenta(1L, LocalDate.of(2026, 10, 24), 3, Instant.parse("2026-10-20T15:15:00Z"), "NT-7Q4KX2",
+        avisos = new AvisosDePago(notificacionService, senderoRepository);
+        reserva = Reserva.sinCuenta(1L, LocalDate.of(2026, 10, 24), 3, TipoGrupo.ESTANDAR, null, Instant.parse("2026-10-20T15:15:00Z"), "NT-7Q4KX2",
                 new TitularReserva("Laura Gomez", TipoDocumento.CC, "1020304050", "CO", "laura@example.com", "57", "3001234567"));
         ReflectionTestUtils.setField(reserva, "id", UUID.randomUUID());
         pago = new Pago(reserva.getId(), "NT-7Q4KX2-ABCD1234", new BigDecimal("135000"), "COP");
