@@ -17,6 +17,7 @@ import com.nativatrips.backend.capacidad.service.CapacidadService;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
+import com.nativatrips.backend.panel.service.AvisosDeOperacion;
 import com.nativatrips.backend.reservas.dto.ReservaSinCuentaRequest;
 import com.nativatrips.backend.reservas.dto.TitularRequest;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
@@ -78,6 +79,9 @@ class ReservaServiceTest {
     @Mock
     private EnlaceReservaService enlaceService;
 
+    @Mock
+    private AvisosDeOperacion avisosDeOperacion;
+
     private ReservaService reservaService;
 
     @BeforeEach
@@ -91,7 +95,8 @@ class ReservaServiceTest {
                 capacidadService,
                 notificacionService,
                 new GeneradorCodigoReserva(),
-                enlaceService);
+                enlaceService,
+                avisosDeOperacion);
     }
 
     @Test
@@ -156,6 +161,38 @@ class ReservaServiceTest {
         assertThat(apartada.bloqueoExpiraEn()).isNull();
         verify(notificacionService).enviarCorreo(eq("laura@example.com"), contains("Recibimos tu solicitud"), any());
         verify(notificacionService).enviarCorreo(eq("admin@ecopalacio.co"), contains("en revisión"), any());
+    }
+
+    @Test
+    void cadaReservaNuevaLlegaAlPanelYSeRevisaElUmbralDelDia() {
+        prepararCreacion();
+
+        reservaService.crearReservaSinCuenta(solicitud(LocalDate.now().plusDays(1), 2));
+
+        verify(avisosDeOperacion).reserva(any(), any());
+        verify(avisosDeOperacion).siCruzaElUmbral(any(), any(), eq(0), eq(2));
+    }
+
+    @Test
+    void elPanelNoAceptaRangosInvertidosNiDeMasDeDosMeses() {
+        LocalDate hoy = LocalDate.now();
+        assertThatThrownBy(() -> reservaService.listarParaPanel(hoy, hoy.minusDays(1), null))
+                .isInstanceOf(BusinessRuleException.class);
+        assertThatThrownBy(() -> reservaService.listarParaPanel(hoy, hoy.plusDays(63), null))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void elPanelFiltraPorEstado() {
+        LocalDate hoy = LocalDate.now();
+        Reserva confirmada = confirmada(hoy);
+        Reserva pendiente = conId(reserva(1L, hoy, 2, Instant.now().plusSeconds(900)));
+        given(reservaRepository.findByFechaTourBetweenOrderByFechaTourAscCreatedAtAsc(hoy, hoy))
+                .willReturn(List.of(confirmada, pendiente));
+
+        assertThat(reservaService.listarParaPanel(hoy, hoy, EstadoReserva.CONFIRMADA))
+                .extracting(r -> r.codigoReserva()).containsExactly(confirmada.getCodigoReserva());
+        assertThat(reservaService.listarParaPanel(hoy, hoy, null)).hasSize(2);
     }
 
     @Test
