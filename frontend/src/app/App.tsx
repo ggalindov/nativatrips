@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'rea
 import type { Servicios } from '@/services/puertos';
 import { ServiciosProvider, crearServicios } from '@/services/ServiciosContext';
 import { RutaProtegida } from '@/features/equipo/RutaProtegida';
-import { SesionProvider, leerSesionGuardada } from '@/features/equipo/SesionContext';
+import { EVENTO_SESION_INVALIDA, SesionProvider, leerSesionGuardada } from '@/features/equipo/SesionContext';
 import { LandingPage } from '@/features/landing/LandingPage';
 import { PantallaCarga } from '@/features/sitio/PantallaCarga';
 import { SitioLayout } from '@/features/sitio/SitioLayout';
@@ -112,6 +112,7 @@ export function Rutas() {
 const OPCIONES_SERVICIOS = {
   idioma: () => document.documentElement.lang || 'es',
   token: () => leerSesionGuardada()?.token ?? null,
+  alSesionInvalida: () => window.dispatchEvent(new Event(EVENTO_SESION_INVALIDA)),
 };
 
 export function App({ servicios }: { servicios?: Servicios }) {

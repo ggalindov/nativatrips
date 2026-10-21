@@ -17,7 +17,7 @@ const FUENTE_MEMORIA = import.meta.env.VITE_FUENTE_DATOS !== 'http';
 export function AccesoPage() {
   const mensajeDeError = useMensajeError();
   const { autenticacion } = useServicios();
-  const { sesion, abrir } = useSesion();
+  const { sesion, vencida, abrir } = useSesion();
   const navegar = useNavigate();
   const desde = (useLocation().state as { desde?: string } | null)?.desde;
   const [correo, setCorreo] = useState('');
@@ -73,6 +73,11 @@ export function AccesoPage() {
               Solo para administradores y guías. Las cuentas las crea un administrador.
             </p>
           </div>
+          {vencida && (
+            <p role="status" className="m-0 rounded-2xl bg-superficie px-4 py-3 text-sm text-bosque shadow-[var(--shadow-tarjeta)]">
+              Tu sesión venció o se cerró. Ingresa de nuevo.
+            </p>
+          )}
           <Campo etiqueta="Correo de trabajo" type="email" autoComplete="username" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
           <Campo
             etiqueta="Contraseña"

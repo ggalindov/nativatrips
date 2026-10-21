@@ -507,6 +507,8 @@ export const fr: Diccionario = {
     asistenteNoDisponible: 'L’assistant n’est pas disponible pour le moment.',
     datosInvalidos: 'Vérifiez les informations du formulaire.',
     servidor: 'Un problème est survenu sur notre serveur. Réessayez dans quelques minutes.',
+    sesionVencida: 'Votre session a expiré ou a été fermée. Reconnectez-vous.',
+    enlaceRecuperacionVencido: 'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.',
   },
   senderos: {
     'la-paila': {

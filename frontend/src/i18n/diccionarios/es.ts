@@ -530,6 +530,8 @@ export const es = {
     asistenteNoDisponible: 'El asistente no está disponible en este momento.',
     datosInvalidos: 'Revisa los datos del formulario.',
     servidor: 'Tuvimos un problema en el servidor. Intenta de nuevo en unos minutos.',
+    sesionVencida: 'Tu sesión venció o se cerró. Ingresa de nuevo.',
+    enlaceRecuperacionVencido: 'El enlace venció o ya se usó. Pide uno nuevo.',
   } satisfies Record<CodigoError | 'generico', string>,
   /** Traducciones de los senderos; en español se usa el texto original. */
   senderos: {} as Partial<Record<string, SenderoTraducido>>,

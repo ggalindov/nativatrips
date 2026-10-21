@@ -89,6 +89,12 @@ export interface BibliotecaServicio {
 
 export interface AutenticacionServicio {
   iniciarSesion(correo: string, clave: string): Promise<SesionEquipo>;
+  /** Invalida el token en el servidor; después la interfaz olvida la sesión. */
+  cerrarSesion(): Promise<void>;
+  /** Pide el enlace de recuperación. Responde igual exista o no el correo. */
+  solicitarRecuperacion(correo: string): Promise<void>;
+  /** Crea la contraseña nueva con el token del enlace (vence en 30 minutos y sirve una vez). */
+  restablecerClave(token: string, nueva: string): Promise<void>;
 }
 
 export interface Servicios {
@@ -113,7 +119,9 @@ export type CodigoError =
   | 'cuentaNoEquipo'
   | 'asistenteNoDisponible'
   | 'datosInvalidos'
-  | 'servidor';
+  | 'servidor'
+  | 'sesionVencida'
+  | 'enlaceRecuperacionVencido';
 
 /**
  * Error esperable de negocio. `codigo` permite mostrarlo en el idioma de la

@@ -103,4 +103,40 @@ describe('cliente HTTP', () => {
 
     await expect(clienteCon(fetchFalso).pedir('/x', { method: 'POST' })).resolves.toBeUndefined();
   });
+
+  it('acepta un 202 sin cuerpo, como la solicitud de recuperación', async () => {
+    const fetchFalso = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 202 }));
+
+    await expect(clienteCon(fetchFalso).pedir('/x', { method: 'POST' })).resolves.toBeUndefined();
+  });
+
+  it('avisa la sesión vencida cuando el servidor rechaza el token', async () => {
+    const fetchFalso = vi.fn<typeof fetch>().mockResolvedValue(respuesta(401, { message: 'Token revocado' }));
+    const alSesionInvalida = vi.fn();
+    const cliente = crearClienteHttp({
+      baseUrl: 'https://api.test',
+      idioma: () => 'es',
+      token: () => 'token-revocado',
+      alSesionInvalida,
+      fetch: fetchFalso,
+    });
+
+    expect((await errorDe(cliente.pedir('/api/v1/reservas/en-revision'))).codigo).toBe('sesionVencida');
+    expect(alSesionInvalida).toHaveBeenCalledOnce();
+  });
+
+  it('un 401 sin sesión son credenciales incorrectas, no una sesión vencida', async () => {
+    const fetchFalso = vi.fn<typeof fetch>().mockResolvedValue(respuesta(401, { message: 'Credenciales invalidas' }));
+    const alSesionInvalida = vi.fn();
+    const cliente = crearClienteHttp({
+      baseUrl: 'https://api.test',
+      idioma: () => 'es',
+      token: () => null,
+      alSesionInvalida,
+      fetch: fetchFalso,
+    });
+
+    expect((await errorDe(cliente.pedir('/api/v1/auth/login', { method: 'POST', body: '{}' }))).codigo).toBe('credenciales');
+    expect(alSesionInvalida).not.toHaveBeenCalled();
+  });
 });
