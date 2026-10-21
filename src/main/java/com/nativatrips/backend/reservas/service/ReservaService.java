@@ -1,11 +1,13 @@
 package com.nativatrips.backend.reservas.service;
 
 import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
+import com.nativatrips.backend.capacidad.model.CapacidadDia;
 import com.nativatrips.backend.capacidad.service.CapacidadService;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
+import com.nativatrips.backend.panel.service.AvisosDeOperacion;
 import com.nativatrips.backend.reservas.dto.AcompananteRequest;
 import com.nativatrips.backend.reservas.dto.IntegranteResponse;
 import com.nativatrips.backend.reservas.dto.ReservaApartadaResponse;
@@ -48,6 +50,8 @@ public class ReservaService {
     /** Tiempo que se retiene el cupo mientras el turista completa el pago (RF-05). */
     static final long BLOQUEO_MINUTOS = 15;
 
+    static final int MAX_DIAS_PANEL = 62;
+
     private static final DateTimeFormatter HORA =
             DateTimeFormatter.ofPattern("HH:mm").withZone(RelojConfig.ZONA_OPERACION);
 
@@ -60,6 +64,7 @@ public class ReservaService {
     private final NotificacionService notificacionService;
     private final GeneradorCodigoReserva generadorCodigo;
     private final EnlaceReservaService enlaceService;
+    private final AvisosDeOperacion avisosDeOperacion;
 
     public ReservaService(
             ReservaRepository reservaRepository,
@@ -70,7 +75,8 @@ public class ReservaService {
             CapacidadService capacidadService,
             NotificacionService notificacionService,
             GeneradorCodigoReserva generadorCodigo,
-            EnlaceReservaService enlaceService) {
+            EnlaceReservaService enlaceService,
+            AvisosDeOperacion avisosDeOperacion) {
         this.reservaRepository = reservaRepository;
         this.reservaIntegranteRepository = reservaIntegranteRepository;
         this.historialRepository = historialRepository;
@@ -80,6 +86,7 @@ public class ReservaService {
         this.notificacionService = notificacionService;
         this.generadorCodigo = generadorCodigo;
         this.enlaceService = enlaceService;
+        this.avisosDeOperacion = avisosDeOperacion;
     }
 
     /**
@@ -131,6 +138,7 @@ public class ReservaService {
                         : "Reserva sin cuenta creada, pendiente de pago",
                 OrigenCambioEstado.TURISTA, null));
 
+        avisosDeOperacion.reserva(reserva, sendero);
         EnlaceReservaService.EnlaceEmitido enlace = enlaceService.emitir(reserva);
         if (enRevision) {
             notificarEnRevision(reserva, sendero, enlace);
@@ -150,9 +158,10 @@ public class ReservaService {
         capacidadService.verificarVentanaDeReserva(fecha);
         // El bloqueo va antes de contar la ocupacion; sin el, dos reservas simultaneas ven la misma
         // ocupacion y ambas pasan (BUG-01).
-        capacidadService.bloquearCapacidadDelDia(sendero.getId(), fecha);
+        CapacidadDia dia = capacidadService.bloquearCapacidadDelDia(sendero.getId(), fecha);
         int ocupacionActual = ocupacionActual(sendero.getId(), fecha);
         capacidadService.verificarCupoSuficiente(sendero.getId(), fecha, ocupacionActual, personas);
+        avisosDeOperacion.siCruzaElUmbral(dia, sendero, ocupacionActual, ocupacionActual + personas);
         return sendero;
     }
 
@@ -244,6 +253,19 @@ public class ReservaService {
                 .toList();
     }
 
+    /** RF-08: reservas del panel entre dos fechas de tour (maximo 62 dias), opcionalmente de un estado. */
+    @Transactional(readOnly = true)
+    public List<ReservaResponse> listarParaPanel(LocalDate desde, LocalDate hasta, EstadoReserva estado) {
+        if (hasta.isBefore(desde) || desde.plusDays(MAX_DIAS_PANEL).isBefore(hasta)) {
+            throw new BusinessRuleException(
+                    HttpStatus.BAD_REQUEST, "El rango del panel va de 1 a " + MAX_DIAS_PANEL + " dias");
+        }
+        return reservaRepository.findByFechaTourBetweenOrderByFechaTourAscCreatedAtAsc(desde, hasta).stream()
+                .filter(r -> estado == null || r.getEstado() == estado)
+                .map(this::conIntegrantes)
+                .toList();
+    }
+
     private void avisarRevisionAprobada(Reserva reserva) {
         if (reserva.getTitular() == null) {
             return;
@@ -299,6 +321,7 @@ public class ReservaService {
 
         historialRepository.save(
                 new ReservaEstadoHistorial(reservaId, anterior, nuevoEstado, motivo, origen, cambiadoPorUsuarioId));
+        senderoRepository.findById(reserva.getSenderoId()).ifPresent(s -> avisosDeOperacion.reserva(reserva, s));
 
         return reserva;
     }

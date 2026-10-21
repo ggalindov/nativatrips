@@ -5,6 +5,7 @@ import com.nativatrips.backend.reservas.dto.IntegranteResponse;
 import com.nativatrips.backend.reservas.dto.MarcarAsistenciaRequest;
 import com.nativatrips.backend.reservas.dto.ReservaResponse;
 import com.nativatrips.backend.reservas.dto.RevisionRequest;
+import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.usuarios.security.AuthenticatedUser;
 import jakarta.validation.Valid;
@@ -32,6 +33,15 @@ public class ReservaController {
 
     public ReservaController(ReservaService reservaService) {
         this.reservaService = reservaService;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public List<ReservaResponse> listar(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) EstadoReserva estado) {
+        return reservaService.listarParaPanel(desde, hasta, estado);
     }
 
     @GetMapping("/en-revision")
