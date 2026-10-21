@@ -1,8 +1,9 @@
 package com.nativatrips.backend.notificaciones.service;
 
 /**
- * Abstraccion de envio de notificaciones. La implementacion inicial solo registra en el log
- * (LogNotificacionService); se reemplaza por un proveedor de correo real sin tocar quien la usa.
+ * Abstraccion de envio de notificaciones. {@code NotificacionesConfig} elige la implementacion:
+ * SMTP ({@link SmtpNotificacionService}) cuando hay MAIL_HOST y el registro
+ * ({@link LogNotificacionService}) cuando no.
  */
 public interface NotificacionService {
 

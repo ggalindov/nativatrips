@@ -2,9 +2,8 @@ package com.nativatrips.backend.notificaciones.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
-@Service
+/** Respaldo sin servidor de correo (MAIL_HOST vacio): los avisos quedan en el registro. */
 public class LogNotificacionService implements NotificacionService {
 
     private static final Logger log = LoggerFactory.getLogger(LogNotificacionService.class);
