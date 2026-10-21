@@ -61,6 +61,18 @@ updates:
       - dependency-name: "*"
         update-types: [version-update:semver-major]
 
+  # Imagen del sitio: Node se queda en la LTS 22 y Nginx en su rama estable.
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: monthly
+      timezone: America/Bogota
+    commit-message:
+      prefix: build(deps)
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
   - package-ecosystem: docker-compose
     directory: /
     schedule:
