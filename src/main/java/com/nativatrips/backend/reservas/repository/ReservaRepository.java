@@ -37,4 +37,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
             @Param("estadosActivos") List<EstadoReserva> estadosActivos);
 
     List<Reserva> findByEstadoAndBloqueoExpiraEnBefore(EstadoReserva estado, Instant instante);
+
+    /** RF-10: reservas confirmadas con tour en la ventana del aviso previo que aun no lo recibieron. */
+    List<Reserva> findByEstadoAndFechaTourBetweenAndAvisoPrevioEnviadoEnIsNull(
+            EstadoReserva estado, LocalDate desde, LocalDate hasta);
 }
