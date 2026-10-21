@@ -13,7 +13,7 @@ ENV VITE_FUENTE_DATOS=$VITE_FUENTE_DATOS VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # --- Etapa de runtime ---
-FROM nginxinc/nginx-unprivileged:1.28-alpine
+FROM nginxinc/nginx-unprivileged:1.29-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
