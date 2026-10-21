@@ -8,6 +8,8 @@ import { registrarCarga } from './carga';
  * Si se pide durante la primera carga, la pantalla de carga la espera, salvo
  * que sea un complemento que no hace falta para ver la página.
  */
+// `lazy` de React tipa su componente como ComponentType<any>; aquí se respeta esa misma firma.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function perezosa<P extends ComponentType<any>>(cargar: () => Promise<P>, { complemento = false } = {}) {
   return lazy(() => {
     const descarga = cargar();
