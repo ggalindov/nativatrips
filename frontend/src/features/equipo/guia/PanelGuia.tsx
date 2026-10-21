@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
 import { hoyIso, sumarDias } from '@/domain/fechas';
 import type { Visitante } from '@/services/puertos';
 import { useServicios } from '@/services/ServiciosContext';
@@ -10,6 +9,7 @@ import { SENDEROS } from '@/services/memoria/datos';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { CURVA } from '@/ui/movimiento';
 import { useSesion } from '../SesionContext';
+import { useSalir } from '../useSalir';
 import { AvisoProvider, Insignia, Pais, formatoFecha, useAviso } from '../ui';
 
 /** Perfil de ejemplo de cada visitante: país e historial de visitas (RF-11). */
@@ -282,13 +282,9 @@ function Agenda() {
 
 /** Panel móvil del guía: pasar lista, novedades, cierre del tour y agenda. */
 export function PanelGuia() {
-  const { sesion, cerrar } = useSesion();
-  const navegar = useNavigate();
+  const { sesion } = useSesion();
+  const salir = useSalir();
   const [vista, setVista] = useState<'hoy' | 'agenda'>('hoy');
-  const salir = () => {
-    cerrar();
-    navegar('/equipo/acceso', { replace: true });
-  };
 
   return (
     <AvisoProvider>

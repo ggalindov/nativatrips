@@ -7,6 +7,8 @@ export interface OpcionesCliente {
   idioma: () => string;
   /** Token de la sesión del equipo, si la hay. */
   token?: () => string | null;
+  /** El servidor rechazó el token (vencido o revocado): la interfaz debe olvidar la sesión. */
+  alSesionInvalida?: () => void;
   /** En el páramo la señal es débil: pasado este tiempo la petición se corta. */
   tiempoLimiteMs?: number;
   fetch?: typeof fetch;
@@ -34,6 +36,7 @@ export function crearClienteHttp({
   baseUrl,
   idioma,
   token,
+  alSesionInvalida,
   tiempoLimiteMs = TIEMPO_LIMITE_MS,
   fetch: hacerFetch = globalThis.fetch.bind(globalThis),
 }: OpcionesCliente): ClienteHttp {
@@ -59,10 +62,15 @@ export function crearClienteHttp({
 
       if (!respuesta.ok) {
         const cuerpo = (await respuesta.json().catch(() => null)) as ErrorApi | null;
+        if (respuesta.status === 401 && sesion) {
+          alSesionInvalida?.();
+          throw new ErrorServicio(cuerpo?.message ?? 'La sesión venció.', 'sesionVencida');
+        }
         throw new ErrorServicio(cuerpo?.message ?? `El servidor respondió ${respuesta.status}.`, codigoPara(respuesta.status));
       }
-      if (respuesta.status === 204) return undefined as T;
-      return (await respuesta.json()) as T;
+      // 202 y 204 llegan sin cuerpo.
+      const texto = await respuesta.text();
+      return (texto ? JSON.parse(texto) : undefined) as T;
     },
   };
 }

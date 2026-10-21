@@ -2,6 +2,7 @@ import type { Disponibilidad } from '@/domain/aforo';
 import { cuposLibres } from '@/domain/aforo';
 import type { Persona, Reserva } from '@/domain/reserva';
 import { validarPersona, validarSolicitud } from '@/domain/reserva';
+import { LARGO_MINIMO_CLAVE } from '@/domain/equipo';
 import { sumarDias } from '@/domain/fechas';
 import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
@@ -169,6 +170,13 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
         const cuenta = CUENTAS_DEMO.find((c) => c.correo === correo.trim().toLowerCase());
         if (!cuenta || clave !== CLAVE_DEMO) throw new ErrorServicio('Correo o contraseña incorrectos.', 'credenciales');
         return esperar({ nombre: cuenta.nombre, correo: cuenta.correo, rol: cuenta.rol, token: token() });
+      },
+      cerrarSesion: async () => esperar(undefined),
+      solicitarRecuperacion: async () => esperar(undefined),
+      restablecerClave: async (enlace, nueva) => {
+        if (!enlace) throw new ErrorServicio('El enlace venció o ya se usó.', 'enlaceRecuperacionVencido');
+        if (nueva.length < LARGO_MINIMO_CLAVE) throw new ErrorServicio('La contraseña es muy corta.', 'datosInvalidos');
+        return esperar(undefined);
       },
     },
   };

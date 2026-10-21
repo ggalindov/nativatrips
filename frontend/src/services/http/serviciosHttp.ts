@@ -105,6 +105,29 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
         if (!rol) throw new ErrorServicio('Esta cuenta no pertenece al equipo.', 'cuentaNoEquipo');
         return { nombre: r.usuario.nombreCompleto, correo: r.usuario.email, rol, token: r.accessToken };
       },
+      cerrarSesion: async () => {
+        await pedir<void>('/api/v1/auth/logout', { method: 'POST' });
+      },
+      solicitarRecuperacion: async (correo) => {
+        await pedir<void>('/api/v1/auth/olvide-password', {
+          method: 'POST',
+          body: JSON.stringify({ email: correo.trim() }),
+        });
+      },
+      restablecerClave: async (token, nueva) => {
+        try {
+          await pedir<void>('/api/v1/auth/restablecer-password', {
+            method: 'POST',
+            body: JSON.stringify({ token, nuevaPassword: nueva }),
+          });
+        } catch (e) {
+          // La clave ya se validó en el formulario: un 400 aquí es un enlace vencido, usado o desconocido.
+          if (e instanceof ErrorServicio && e.codigo === 'datosInvalidos') {
+            throw new ErrorServicio(e.message, 'enlaceRecuperacionVencido');
+          }
+          throw e;
+        }
+      },
     },
   };
 }

@@ -6,7 +6,7 @@ import { crearServiciosEnMemoria } from './memoria/serviciosEnMemoria';
 import type { Servicios } from './puertos';
 
 /** Elige el adaptador según VITE_FUENTE_DATOS; por defecto, datos en memoria. */
-export function crearServicios(opciones: Pick<OpcionesCliente, 'idioma' | 'token'>): Servicios {
+export function crearServicios(opciones: Pick<OpcionesCliente, 'idioma' | 'token' | 'alSesionInvalida'>): Servicios {
   if (import.meta.env.VITE_FUENTE_DATOS === 'http') {
     return crearServiciosHttp({ baseUrl: import.meta.env.VITE_API_URL ?? 'http://localhost:8080', ...opciones });
   }

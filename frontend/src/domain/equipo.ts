@@ -18,6 +18,9 @@ export const RUTA_PANEL: Record<RolEquipo, string> = {
   GUIA_TURISTICO: '/equipo/guia',
 };
 
+/** Mínimo de la contraseña del equipo; el backend exige lo mismo. */
+export const LARGO_MINIMO_CLAVE = 8;
+
 export interface SesionEquipo {
   nombre: string;
   correo: string;

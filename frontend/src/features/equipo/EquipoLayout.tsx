@@ -1,13 +1,14 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { ETIQUETA_ROL } from '@/domain/equipo';
 import { CargandoPagina } from '@/ui/Estados';
 import { Logo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
 import { NOTIFICACIONES } from './ejemplo';
 import { useSesion } from './SesionContext';
+import { useSalir } from './useSalir';
 import { AvisoProvider } from './ui';
 
 const icono = (d: string) => (
@@ -157,12 +158,8 @@ function Notificaciones() {
 
 /** Marco de escritorio con menú lateral para el administrador. */
 export function EquipoLayout() {
-  const { sesion, cerrar } = useSesion();
-  const navegar = useNavigate();
-  const salir = () => {
-    cerrar();
-    navegar('/equipo/acceso', { replace: true });
-  };
+  const { sesion } = useSesion();
+  const salir = useSalir();
   const inicial = sesion?.nombre?.[0] ?? '·';
 
   return (
