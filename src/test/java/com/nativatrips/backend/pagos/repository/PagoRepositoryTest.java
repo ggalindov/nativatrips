@@ -63,7 +63,7 @@ class PagoRepositoryTest {
     }
 
     @Test
-    void encuentraPorReferenciaPayu() {
+    void encuentraPorReferencia() {
         Sendero sendero = senderoRepository.save(new Sendero(
                 "Sendero pago 2", null, NivelDificultad.FACIL, 60, "ECOTURISMO", null, new BigDecimal("10000")));
         Usuario turista = usuarioRepository.save(new Usuario("pago2@example.com", "hash", "Turista", Rol.TURISTA));
@@ -71,7 +71,7 @@ class PagoRepositoryTest {
                 sendero.getId(), turista.getId(), LocalDate.now().plusDays(1), 1, TipoGrupo.ESTANDAR, null));
         pagoRepository.save(new Pago(reserva.getId(), "REF-UNICA", new BigDecimal("10000"), "COP"));
 
-        assertThat(pagoRepository.findByReferenciaPayu("REF-UNICA")).isPresent();
-        assertThat(pagoRepository.findByReferenciaPayu("NO-EXISTE")).isEmpty();
+        assertThat(pagoRepository.findByReferencia("REF-UNICA")).isPresent();
+        assertThat(pagoRepository.findByReferencia("NO-EXISTE")).isEmpty();
     }
 }

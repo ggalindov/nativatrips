@@ -23,7 +23,7 @@ describe('reserva sin cuenta', () => {
     await usuario.type(screen.getByLabelText('Número de documento'), '1020304050');
     await usuario.type(screen.getByLabelText('Correo'), 'laura@correo.co');
     await usuario.type(screen.getByLabelText('Celular'), '3001234567');
-    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con PayU' }));
+    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con Wompi' }));
 
     expect(await screen.findByRole('heading', { name: 'Tu cupo está apartado.' })).toBeInTheDocument();
     expect(screen.getByText('laura@correo.co')).toBeInTheDocument();
@@ -49,7 +49,7 @@ describe('reserva sin cuenta', () => {
     await usuario.type(screen.getByLabelText('Número de documento'), '19ab12345');
     await usuario.type(screen.getByLabelText('Correo'), 'claire@exemple.fr');
     await usuario.type(screen.getByLabelText('Celular'), '612345678');
-    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con PayU' }));
+    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con Wompi' }));
 
     expect(await screen.findByRole('heading', { name: 'Tu cupo está apartado.' })).toBeInTheDocument();
     await usuario.click(screen.getByRole('link', { name: /Abrir el enlace/ }));
@@ -63,7 +63,7 @@ describe('reserva sin cuenta', () => {
     await screen.findByRole('heading', { level: 1, name: 'Lagunas de Siecha' });
     await usuario.click(screen.getByRole('radio', { name: /Extranjera/ }));
     await usuario.type(screen.getByLabelText('Número de documento'), 'AB 1');
-    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con PayU' }));
+    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con Wompi' }));
     expect(screen.getByRole('alert')).toHaveTextContent('entre 5 y 20 letras o números');
   });
 
@@ -72,7 +72,7 @@ describe('reserva sin cuenta', () => {
     renderizarEn({ ruta: '/reservar/lagunas-de-siecha' });
     await screen.findByRole('heading', { level: 1, name: 'Lagunas de Siecha' });
 
-    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con PayU' }));
+    await usuario.click(screen.getByRole('button', { name: 'Apartar cupo y pagar con Wompi' }));
     const alerta = screen.getByRole('alert');
     expect(alerta).toHaveTextContent('Elige una fecha.');
     expect(alerta).toHaveTextContent('Escribe un correo válido');

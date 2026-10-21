@@ -10,6 +10,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.nativatrips.backend.common.exception.BusinessRuleException;
+import com.nativatrips.backend.common.seguridad.TokenSeguro;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.usuarios.model.PasswordResetToken;
 import com.nativatrips.backend.usuarios.model.Rol;
@@ -73,7 +74,7 @@ class PasswordResetServiceTest {
         String token = tokenDelCorreo();
         ArgumentCaptor<PasswordResetToken> guardado = ArgumentCaptor.forClass(PasswordResetToken.class);
         verify(tokenRepository).save(guardado.capture());
-        assertThat(guardado.getValue().getToken()).isEqualTo(PasswordResetService.hash(token)).isNotEqualTo(token);
+        assertThat(guardado.getValue().getToken()).isEqualTo(TokenSeguro.hash(token)).isNotEqualTo(token);
         assertThat(guardado.getValue().getExpiraEn()).isEqualTo(AHORA.plus(Duration.ofMinutes(30)));
     }
 
@@ -112,9 +113,9 @@ class PasswordResetServiceTest {
     @Test
     void conElTokenDelEnlaceSeCambiaLaClaveSeLevantaElBloqueoYElEnlaceNoSirveOtraVez() {
         String token = "token-del-enlace-recibido-por-correo-0123456";
-        PasswordResetToken guardado = new PasswordResetToken(usuario.getId(), PasswordResetService.hash(token), AHORA.plusSeconds(60));
+        PasswordResetToken guardado = new PasswordResetToken(usuario.getId(), TokenSeguro.hash(token), AHORA.plusSeconds(60));
         usuario.registrarIntentoFallido(AHORA, 1, Duration.ofMinutes(15));
-        given(tokenRepository.findByToken(PasswordResetService.hash(token))).willReturn(Optional.of(guardado));
+        given(tokenRepository.findByToken(TokenSeguro.hash(token))).willReturn(Optional.of(guardado));
         given(usuarioRepository.findById(usuario.getId())).willReturn(Optional.of(usuario));
 
         servicio.restablecerPassword(token, "clave-nueva-456");
@@ -127,14 +128,14 @@ class PasswordResetServiceTest {
     @Test
     void unEnlaceVencidoOElHashLeidoDeLaBaseNoSirven() {
         String token = "token-del-enlace-recibido-por-correo-0123456";
-        PasswordResetToken vencido = new PasswordResetToken(usuario.getId(), PasswordResetService.hash(token), AHORA.minusSeconds(1));
-        given(tokenRepository.findByToken(PasswordResetService.hash(token))).willReturn(Optional.of(vencido));
+        PasswordResetToken vencido = new PasswordResetToken(usuario.getId(), TokenSeguro.hash(token), AHORA.minusSeconds(1));
+        given(tokenRepository.findByToken(TokenSeguro.hash(token))).willReturn(Optional.of(vencido));
 
         assertThatThrownBy(() -> servicio.restablecerPassword(token, "clave-nueva-456"))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("pide uno nuevo");
         // Quien lee la tabla solo tiene el hash; usarlo como token da otro hash, que no existe.
-        assertThatThrownBy(() -> servicio.restablecerPassword(PasswordResetService.hash(token), "clave-nueva-456"))
+        assertThatThrownBy(() -> servicio.restablecerPassword(TokenSeguro.hash(token), "clave-nueva-456"))
                 .isInstanceOf(BusinessRuleException.class);
     }
 

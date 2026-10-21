@@ -68,7 +68,7 @@ export function IngresosMensuales() {
     <Marco
       id="g-ingresos"
       titulo="Ingresos por mes"
-      nota="Pagos aprobados por PayU, en pesos colombianos"
+      nota="Pagos aprobados por Wompi, en pesos colombianos"
       tabla={<Tabla cabeceras={['Mes', 'Ingresos']} filas={datos.map((d) => [nombreMes(d.mes), millones(d.valor)])} />}
     >
       <div className="relative h-60" onMouseLeave={() => setActivo(null)}>
