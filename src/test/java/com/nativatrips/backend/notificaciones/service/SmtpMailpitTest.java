@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class SmtpMailpitTest {
 
     @Container
-    static final GenericContainer<?> MAILPIT = new GenericContainer<>("axllent/mailpit:v1.31.3")
+    static final GenericContainer<?> MAILPIT = new GenericContainer<>("axllent/mailpit:v1.31.6")
             .withExposedPorts(1025, 8025)
             .waitingFor(Wait.forHttp("/livez").forPort(8025));
 
