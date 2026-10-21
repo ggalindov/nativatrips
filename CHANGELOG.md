@@ -67,6 +67,9 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Cambiado
 
+- `docker compose up` levanta el sistema completo: sitio en Nginx con la API en el mismo
+  origen, Mailpit para los correos de prueba y las variables al día; la CI construye las
+  imágenes en cada PR (#60).
 - Roles del equipo: `PERSONAL_ADMINISTRATIVO` y `GERENCIA` se unen en `ADMINISTRADOR`; se
   mantiene `GUIA_TURISTICO` (#38).
 - La capacidad por temporada se reemplaza por la capacidad del día (#41).
