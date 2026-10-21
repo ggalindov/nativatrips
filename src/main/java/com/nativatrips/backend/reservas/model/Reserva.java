@@ -54,6 +54,10 @@ public class Reserva extends Auditable {
     @Column(name = "asistencia_registrada_en")
     private Instant asistenciaRegistradaEn;
 
+    /** RF-10: cuando salio el aviso previo al tour; null mientras no se envie. */
+    @Column(name = "aviso_previo_enviado_en")
+    private Instant avisoPrevioEnviadoEn;
+
     /** RF-11: lo que el guia debe saber del grupo (movilidad, salud, alimentacion). */
     @Column(name = "requerimientos_especiales")
     private String requerimientosEspeciales;
@@ -155,6 +159,14 @@ public class Reserva extends Auditable {
 
     public void setBloqueoExpiraEn(Instant bloqueoExpiraEn) {
         this.bloqueoExpiraEn = bloqueoExpiraEn;
+    }
+
+    public Instant getAvisoPrevioEnviadoEn() {
+        return avisoPrevioEnviadoEn;
+    }
+
+    public void marcarAvisoPrevioEnviado(Instant cuando) {
+        this.avisoPrevioEnviadoEn = cuando;
     }
 
     public String getRequerimientosEspeciales() {
