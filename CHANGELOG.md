@@ -11,6 +11,7 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Agregado
 
+- ESLint en el frontend (TypeScript y reglas de hooks de React), sin advertencias, en cada PR (#62).
 - Acceso del equipo con sesión real: «Salir» revoca el token en el servidor, la sesión se
   cierra sola al vencer o si el servidor la rechaza, y la recuperación de contraseña pide el
   enlace y crea la clave nueva contra la API (#59).
