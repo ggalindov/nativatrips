@@ -11,6 +11,9 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 
 ### Agregado
 
+- Acceso del equipo con sesión real: «Salir» revoca el token en el servidor, la sesión se
+  cierra sola al vencer o si el servidor la rechaza, y la recuperación de contraseña pide el
+  enlace y crea la clave nueva contra la API (#59).
 - Los correos salen de verdad por SMTP (Gmail con contraseña de aplicación en producción):
   código de reserva, enlace de recuperación y avisos al equipo; se envían solo cuando la
   operación queda guardada (#58).
