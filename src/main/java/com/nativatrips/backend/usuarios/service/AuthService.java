@@ -4,9 +4,7 @@ import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.config.JwtProperties;
 import com.nativatrips.backend.usuarios.dto.LoginRequest;
 import com.nativatrips.backend.usuarios.dto.LoginResponse;
-import com.nativatrips.backend.usuarios.dto.RegistroTuristaRequest;
 import com.nativatrips.backend.usuarios.dto.UsuarioResponse;
-import com.nativatrips.backend.usuarios.model.Rol;
 import com.nativatrips.backend.usuarios.model.Usuario;
 import com.nativatrips.backend.usuarios.repository.UsuarioRepository;
 import com.nativatrips.backend.usuarios.security.JwtTokenProvider;
@@ -48,24 +46,6 @@ public class AuthService {
         this.reloj = reloj;
         this.intentosMaximos = intentosMaximos;
         this.duracionBloqueo = Duration.ofMinutes(minutosBloqueo);
-    }
-
-    @Transactional
-    public UsuarioResponse registrarTurista(RegistroTuristaRequest request) {
-        if (usuarioRepository.existsByEmail(request.email())) {
-            throw new BusinessRuleException(HttpStatus.CONFLICT, "El email ya esta registrado");
-        }
-
-        Usuario usuario = new Usuario(
-                request.email(),
-                passwordEncoder.encode(request.password()),
-                request.nombreCompleto(),
-                Rol.TURISTA);
-        usuario.setTelefono(request.telefono());
-        usuario.setDocumentoIdentidad(request.documentoIdentidad());
-
-        usuario = usuarioRepository.save(usuario);
-        return UsuarioResponse.from(usuario);
     }
 
     /**

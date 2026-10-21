@@ -13,8 +13,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
 
-    List<Reserva> findByTuristaIdOrderByFechaTourDesc(UUID turistaId);
-
     boolean existsByCodigoReserva(String codigoReserva);
 
     Optional<Reserva> findByCodigoReserva(String codigoReserva);

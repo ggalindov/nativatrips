@@ -1,12 +1,11 @@
 package com.nativatrips.backend.usuarios.model;
 
 /**
- * Roles con cuenta (ADR-007). El administrador reune administracion y gerencia; la Autoridad
- * Ambiental no tiene cuenta y recibe sus reportes a traves del administrador. TURISTA se retira
- * cuando la reserva sin cuenta reemplace al registro de turistas (ADR-004).
+ * Roles con cuenta (ADR-007): solo el equipo. El administrador reune administracion y gerencia; la
+ * Autoridad Ambiental no tiene cuenta y recibe sus reportes a traves del administrador. El turista
+ * reserva sin cuenta y gestiona su reserva con el enlace magico (ADR-004).
  */
 public enum Rol {
-    TURISTA,
     ADMINISTRADOR,
     GUIA_TURISTICO
 }

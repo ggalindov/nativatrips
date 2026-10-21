@@ -4,10 +4,9 @@ import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.pagos.model.Pago;
 import com.nativatrips.backend.reservas.model.Reserva;
+import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
-import com.nativatrips.backend.usuarios.model.Usuario;
-import com.nativatrips.backend.usuarios.repository.UsuarioRepository;
 import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -32,13 +31,10 @@ class AvisosDePago {
 
     private final NotificacionService notificacionService;
     private final SenderoRepository senderoRepository;
-    private final UsuarioRepository usuarioRepository;
 
-    AvisosDePago(
-            NotificacionService notificacionService, SenderoRepository senderoRepository, UsuarioRepository usuarioRepository) {
+    AvisosDePago(NotificacionService notificacionService, SenderoRepository senderoRepository) {
         this.notificacionService = notificacionService;
         this.senderoRepository = senderoRepository;
-        this.usuarioRepository = usuarioRepository;
     }
 
     void comprobante(Reserva reserva, Pago pago, Instant aprobadoEn) {
@@ -79,12 +75,7 @@ class AvisosDePago {
     }
 
     private Optional<String> correoDelTitular(Reserva reserva) {
-        if (reserva.getTitular() != null) {
-            return Optional.of(reserva.getTitular().getCorreo());
-        }
-        return reserva.getTuristaId() == null
-                ? Optional.empty()
-                : usuarioRepository.findById(reserva.getTuristaId()).map(Usuario::getEmail);
+        return Optional.ofNullable(reserva.getTitular()).map(TitularReserva::getCorreo);
     }
 
     private static String identificador(Reserva reserva) {

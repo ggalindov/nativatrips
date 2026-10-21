@@ -28,10 +28,6 @@ public class Reserva extends Auditable {
     @Column(name = "sendero_id", nullable = false)
     private Long senderoId;
 
-    /** Solo en reservas hechas con la cuenta TURISTA anterior; las nuevas llevan titular (ADR-004). */
-    @Column(name = "turista_id")
-    private UUID turistaId;
-
     @Embedded
     private TitularReserva titular;
 
@@ -58,19 +54,21 @@ public class Reserva extends Auditable {
     @Column(name = "asistencia_registrada_en")
     private Instant asistenciaRegistradaEn;
 
+    /** RF-11: lo que el guia debe saber del grupo (movilidad, salud, alimentacion). */
+    @Column(name = "requerimientos_especiales")
+    private String requerimientosEspeciales;
+
     protected Reserva() {
         // requerido por JPA
     }
 
-    public Reserva(
+    private Reserva(
             Long senderoId,
-            UUID turistaId,
             LocalDate fechaTour,
             int cantidadPersonas,
             TipoGrupo tipoGrupo,
             Instant bloqueoExpiraEn) {
         this.senderoId = senderoId;
-        this.turistaId = turistaId;
         this.fechaTour = fechaTour;
         this.cantidadPersonas = cantidadPersonas;
         this.tipoGrupo = tipoGrupo;
@@ -78,15 +76,25 @@ public class Reserva extends Auditable {
         this.bloqueoExpiraEn = bloqueoExpiraEn;
     }
 
-    /** HU-02: reserva sin cuenta, identificada por su codigo y por el correo del titular. */
+    /**
+     * HU-02: reserva sin cuenta, identificada por su codigo y por el correo del titular. Los grupos
+     * corporativos y con necesidades especiales nacen en revision y sin conteo de pago (RF-09).
+     */
     public static Reserva sinCuenta(
             Long senderoId,
             LocalDate fechaTour,
             int cantidadPersonas,
+            TipoGrupo tipoGrupo,
+            String requerimientosEspeciales,
             Instant bloqueoExpiraEn,
             String codigoReserva,
             TitularReserva titular) {
-        Reserva reserva = new Reserva(senderoId, null, fechaTour, cantidadPersonas, TipoGrupo.ESTANDAR, bloqueoExpiraEn);
+        Reserva reserva = new Reserva(
+                senderoId, fechaTour, cantidadPersonas, tipoGrupo, tipoGrupo.requiereRevision() ? null : bloqueoExpiraEn);
+        if (tipoGrupo.requiereRevision()) {
+            reserva.estado = EstadoReserva.EN_REVISION;
+        }
+        reserva.requerimientosEspeciales = requerimientosEspeciales;
         reserva.codigoReserva = codigoReserva;
         reserva.titular = titular;
         return reserva;
@@ -106,10 +114,6 @@ public class Reserva extends Auditable {
 
     public Long getSenderoId() {
         return senderoId;
-    }
-
-    public UUID getTuristaId() {
-        return turistaId;
     }
 
     public TitularReserva getTitular() {
@@ -151,6 +155,10 @@ public class Reserva extends Auditable {
 
     public void setBloqueoExpiraEn(Instant bloqueoExpiraEn) {
         this.bloqueoExpiraEn = bloqueoExpiraEn;
+    }
+
+    public String getRequerimientosEspeciales() {
+        return requerimientosEspeciales;
     }
 
     public Instant getAsistenciaRegistradaEn() {
