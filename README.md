@@ -93,7 +93,17 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Levanta PostgreSQL 16 y el backend. Flyway crea el esquema al arrancar.
+Levanta cuatro servicios y Flyway crea el esquema al arrancar:
+
+| Servicio   | Dirección                         | Qué es                                                   |
+| ---------- | --------------------------------- | -------------------------------------------------------- |
+| `frontend` | <http://localhost:3000>           | El sitio, servido por Nginx; reenvía `/api` al backend    |
+| `backend`  | <http://localhost:8080>           | La API (Swagger en `/swagger-ui.html`)                   |
+| `mailpit`  | <http://localhost:8025>           | Buzón de pruebas: ahí llegan todos los correos del sistema |
+| `postgres` | `localhost:5432`                  | PostgreSQL 16 con un volumen persistente                 |
+
+Para enviar correos reales en lugar de atraparlos en Mailpit se definen `MAIL_HOST`, `MAIL_PORT`,
+`MAIL_USUARIO`, `MAIL_CLAVE`, `MAIL_SMTP_AUTH=true` y `MAIL_STARTTLS=true` en el `.env`.
 
 ### 5.2 Desarrollo
 
