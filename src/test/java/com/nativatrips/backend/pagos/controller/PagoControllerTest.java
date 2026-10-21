@@ -71,7 +71,7 @@ class PagoControllerTest {
     @Test
     void iniciarPagoSinAutenticarEsRechazado() throws Exception {
         mockMvc.perform(post("/api/v1/reservas/" + UUID.randomUUID() + "/pago"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

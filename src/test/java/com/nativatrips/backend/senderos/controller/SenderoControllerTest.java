@@ -109,7 +109,10 @@ class SenderoControllerTest {
         mockMvc.perform(post("/api/v1/senderos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(SENDERO_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.message").value("Inicia sesion para continuar"))
+                .andExpect(jsonPath("$.path").value("/api/v1/senderos"));
     }
 
     @Test

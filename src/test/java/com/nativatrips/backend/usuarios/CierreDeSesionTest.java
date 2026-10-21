@@ -53,7 +53,7 @@ class CierreDeSesionTest {
                         .param("desde", "2026-10-26")
                         .param("hasta", "2026-11-01")
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

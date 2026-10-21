@@ -104,7 +104,7 @@ class CapacidadControllerTest {
         mockMvc.perform(put("/api/v1/senderos/3/capacidad")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(CARGA_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
