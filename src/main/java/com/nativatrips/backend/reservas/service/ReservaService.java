@@ -19,7 +19,6 @@ import com.nativatrips.backend.reservas.model.OrigenCambioEstado;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.model.ReservaEstadoHistorial;
 import com.nativatrips.backend.reservas.model.ReservaIntegrante;
-import com.nativatrips.backend.reservas.model.TipoDocumento;
 import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
@@ -70,6 +69,7 @@ public class ReservaService {
     private final CapacidadService capacidadService;
     private final NotificacionService notificacionService;
     private final GeneradorCodigoReserva generadorCodigo;
+    private final EnlaceReservaService enlaceService;
 
     public ReservaService(
             ReservaRepository reservaRepository,
@@ -79,7 +79,8 @@ public class ReservaService {
             UsuarioRepository usuarioRepository,
             CapacidadService capacidadService,
             NotificacionService notificacionService,
-            GeneradorCodigoReserva generadorCodigo) {
+            GeneradorCodigoReserva generadorCodigo,
+            EnlaceReservaService enlaceService) {
         this.reservaRepository = reservaRepository;
         this.reservaIntegranteRepository = reservaIntegranteRepository;
         this.historialRepository = historialRepository;
@@ -88,6 +89,7 @@ public class ReservaService {
         this.capacidadService = capacidadService;
         this.notificacionService = notificacionService;
         this.generadorCodigo = generadorCodigo;
+        this.enlaceService = enlaceService;
     }
 
     @Transactional
@@ -126,17 +128,18 @@ public class ReservaService {
 
     /**
      * HU-02 (ADR-004): reserva sin cuenta. Aparta el cupo con el mismo bloqueo que la reserva con
-     * cuenta y envia el codigo al correo del titular; los acompanantes se agregan despues.
+     * cuenta y envia al correo del titular el codigo y el enlace magico para gestionarla (HU-18).
      */
     @Transactional
     public ReservaApartadaResponse crearReservaSinCuenta(ReservaSinCuentaRequest request) {
         TitularRequest datos = request.titular();
-        validarDocumentoYCelular(datos);
+        ReglasPersona.validarDocumento(datos.tipoDocumento(), datos.documento(), datos.nacionalidad());
+        ReglasPersona.validarCelular(datos.indicativo(), datos.celular());
         if (request.acompanantes().size() > request.personas() - 1) {
             throw new BusinessRuleException(
                     HttpStatus.BAD_REQUEST, "Hay mas acompanantes que personas en la reserva, sin contar al titular");
         }
-        request.acompanantes().forEach(a -> validarDocumento(a.tipoDocumento(), a.documento(), a.nacionalidad()));
+        request.acompanantes().forEach(a -> ReglasPersona.validarDocumento(a.tipoDocumento(), a.documento(), a.nacionalidad()));
         Sendero sendero = apartarCupo(request.senderoId(), request.fechaTour(), request.personas());
 
         TitularReserva titular = new TitularReserva(
@@ -161,7 +164,7 @@ public class ReservaService {
                 reserva.getId(), null, EstadoReserva.PENDIENTE_PAGO, "Reserva sin cuenta creada, pendiente de pago",
                 OrigenCambioEstado.TURISTA, null));
 
-        notificarCupoApartado(reserva, sendero);
+        notificarCupoApartado(reserva, sendero, enlaceService.emitir(reserva));
         return ReservaApartadaResponse.from(reserva);
     }
 
@@ -180,27 +183,6 @@ public class ReservaService {
         return sendero;
     }
 
-    /** Las mismas reglas del formulario: el documento depende de la nacionalidad y el celular del indicativo. */
-    private static void validarDocumentoYCelular(TitularRequest titular) {
-        validarDocumento(titular.tipoDocumento(), titular.documento(), titular.nacionalidad());
-        if ("57".equals(titular.indicativo()) && !titular.celular().matches("3\\d{9}")) {
-            throw new BusinessRuleException(
-                    HttpStatus.BAD_REQUEST, "El celular colombiano debe tener 10 digitos y empezar por 3");
-        }
-    }
-
-    private static void validarDocumento(TipoDocumento tipo, String documento, String nacionalidad) {
-        boolean colombiano = "CO".equals(nacionalidad);
-        if (tipo.esNacional() != colombiano) {
-            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, colombiano
-                    ? "Para colombianos el documento debe ser cedula o tarjeta de identidad"
-                    : "Para extranjeros el documento debe ser pasaporte, cedula de extranjeria, PPT o DNI");
-        }
-        if (!tipo.esAlfanumerico() && !documento.trim().matches("\\d{5,12}")) {
-            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "El numero de documento debe tener solo digitos");
-        }
-    }
-
     /** Un choque es casi imposible (887 millones de codigos), pero se reintenta en vez de fallar. */
     private String codigoNuevo() {
         for (int intento = 0; intento < 5; intento++) {
@@ -212,7 +194,7 @@ public class ReservaService {
         throw new IllegalStateException("No se pudo generar un codigo de reserva unico");
     }
 
-    private void notificarCupoApartado(Reserva reserva, Sendero sendero) {
+    private void notificarCupoApartado(Reserva reserva, Sendero sendero, EnlaceReservaService.EnlaceEmitido enlace) {
         String venceA = HORA.format(reserva.getBloqueoExpiraEn());
         notificacionService.enviarCorreo(
                 reserva.getTitular().getCorreo(),
@@ -220,7 +202,10 @@ public class ReservaService {
                 "Hola " + reserva.getTitular().getNombre() + ". Apartamos " + reserva.getCantidadPersonas()
                         + " cupo(s) en " + sendero.getNombre() + " para el " + reserva.getFechaTour()
                         + ". Tu codigo de reserva es " + reserva.getCodigoReserva()
-                        + ". El cupo se guarda hasta las " + venceA + " (hora de Colombia) mientras completas el pago.");
+                        + ". El cupo se guarda hasta las " + venceA + " (hora de Colombia) mientras completas el pago."
+                        + "\n\nDesde este enlace pagas, registras a tus acompanantes y consultas tu reserva:\n"
+                        + enlace.url()
+                        + "\n\nEs personal: no lo compartas. Si lo pierdes, pide uno nuevo con tu correo y el codigo.");
     }
 
     /**
