@@ -86,7 +86,7 @@ class ReservaControllerTest {
         mockMvc.perform(post("/api/v1/reservas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(RESERVA_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -141,6 +141,6 @@ class ReservaControllerTest {
 
     @Test
     void misReservasSinAutenticarEsRechazado() throws Exception {
-        mockMvc.perform(get("/api/v1/reservas/mias")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/reservas/mias")).andExpect(status().isUnauthorized());
     }
 }
