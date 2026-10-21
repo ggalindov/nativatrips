@@ -19,6 +19,9 @@ async function violacionesGraves(contenedor: Element) {
     .map((v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`);
 }
 
+/** axe recorre todo el DOM: la portada pasa de 15 s cuando la suite corre en paralelo. */
+const AXE_TIEMPO_MS = 30_000;
+
 const PANTALLAS = [
   { ruta: '/', nombre: 'portada' },
   { ruta: '/senderos', nombre: 'catálogo' },
@@ -33,11 +36,11 @@ describe('accesibilidad', () => {
     const { container } = renderizarEn({ ruta });
     await screen.findAllByRole('heading', { level: 1 });
     expect(await violacionesGraves(container)).toEqual([]);
-  });
+  }, AXE_TIEMPO_MS);
 
   it('el panel del administrador no tiene violaciones graves', async () => {
     const { container } = renderizarEn({ ruta: '/equipo/admin', sesion: SESION_ADMIN });
     await screen.findAllByRole('heading', { level: 1 });
     expect(await violacionesGraves(container)).toEqual([]);
-  });
+  }, AXE_TIEMPO_MS);
 });
