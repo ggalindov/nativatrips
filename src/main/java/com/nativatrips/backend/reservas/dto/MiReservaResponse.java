@@ -1,6 +1,9 @@
 package com.nativatrips.backend.reservas.dto;
 
+import com.nativatrips.backend.reservas.model.CausalReprogramacion;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
+import com.nativatrips.backend.reservas.model.EstadoSolicitudReprogramacion;
+import com.nativatrips.backend.reservas.model.TipoGrupo;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -19,5 +22,13 @@ public record MiReservaResponse(
         EstadoReserva estado,
         Instant bloqueoExpiraEn,
         String guia,
-        String puntoEncuentro) {
+        String puntoEncuentro,
+        TipoGrupo tipoGrupo,
+        String requerimientosEspeciales,
+        Reprogramacion reprogramacion) {
+
+    /** RF-37: la ultima solicitud de cambio de fecha, si la hay. */
+    public record Reprogramacion(
+            CausalReprogramacion causal, LocalDate fechaDeseada, EstadoSolicitudReprogramacion estado, String motivoDecision) {
+    }
 }

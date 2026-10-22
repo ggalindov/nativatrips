@@ -15,6 +15,7 @@ import com.nativatrips.backend.reservas.dto.ReservaResponse;
 import com.nativatrips.backend.reservas.dto.ReservaSinCuentaRequest;
 import com.nativatrips.backend.reservas.dto.TitularRequest;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
+import com.nativatrips.backend.reservas.model.EstadoSolicitudReprogramacion;
 import com.nativatrips.backend.reservas.model.OrigenCambioEstado;
 import com.nativatrips.backend.reservas.model.Reserva;
 import com.nativatrips.backend.reservas.model.ReservaEstadoHistorial;
@@ -24,6 +25,7 @@ import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
 import com.nativatrips.backend.reservas.repository.ReservaIntegranteRepository;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
+import com.nativatrips.backend.reservas.repository.SolicitudReprogramacionRepository;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
 import com.nativatrips.backend.usuarios.model.Rol;
@@ -65,6 +67,7 @@ public class ReservaService {
     private final GeneradorCodigoReserva generadorCodigo;
     private final EnlaceReservaService enlaceService;
     private final AvisosDeOperacion avisosDeOperacion;
+    private final SolicitudReprogramacionRepository solicitudReprogramacionRepository;
 
     public ReservaService(
             ReservaRepository reservaRepository,
@@ -76,7 +79,8 @@ public class ReservaService {
             NotificacionService notificacionService,
             GeneradorCodigoReserva generadorCodigo,
             EnlaceReservaService enlaceService,
-            AvisosDeOperacion avisosDeOperacion) {
+            AvisosDeOperacion avisosDeOperacion,
+            SolicitudReprogramacionRepository solicitudReprogramacionRepository) {
         this.reservaRepository = reservaRepository;
         this.reservaIntegranteRepository = reservaIntegranteRepository;
         this.historialRepository = historialRepository;
@@ -87,6 +91,7 @@ public class ReservaService {
         this.generadorCodigo = generadorCodigo;
         this.enlaceService = enlaceService;
         this.avisosDeOperacion = avisosDeOperacion;
+        this.solicitudReprogramacionRepository = solicitudReprogramacionRepository;
     }
 
     /**
@@ -222,6 +227,10 @@ public class ReservaService {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT, "La reserva no esta pendiente de revision manual");
         }
+        if (reprogramacionPendiente(actual)) {
+            throw new BusinessRuleException(
+                    HttpStatus.CONFLICT, "La reserva espera una decision de reprogramacion; resuelvela en esa bandeja");
+        }
 
         Reserva actualizada;
         if (aprobar) {
@@ -249,6 +258,7 @@ public class ReservaService {
     @Transactional(readOnly = true)
     public List<ReservaResponse> listarEnRevision() {
         return reservaRepository.findByEstadoOrderByCreatedAtAsc(EstadoReserva.EN_REVISION).stream()
+                .filter(r -> !reprogramacionPendiente(r))
                 .map(this::conIntegrantes)
                 .toList();
     }
@@ -264,6 +274,11 @@ public class ReservaService {
                 .filter(r -> estado == null || r.getEstado() == estado)
                 .map(this::conIntegrantes)
                 .toList();
+    }
+
+    private boolean reprogramacionPendiente(Reserva reserva) {
+        return solicitudReprogramacionRepository.existsByReservaIdAndEstado(
+                reserva.getId(), EstadoSolicitudReprogramacion.PENDIENTE);
     }
 
     private void avisarRevisionAprobada(Reserva reserva) {

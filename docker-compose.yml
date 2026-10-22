@@ -53,6 +53,7 @@ services:
       # Cuentas del equipo creadas al primer arranque; cada una recibe el enlace para crear su clave.
       APP_EQUIPO_ADMINISTRADORES: ${APP_EQUIPO_ADMINISTRADORES:-}
       APP_EQUIPO_GUIAS: ${APP_EQUIPO_GUIAS:-}
+      APP_ARCHIVOS_DIRECTORIO: /datos/archivos
       SPRINGDOC_ENABLED: ${SPRINGDOC_ENABLED:-true}
       # Correo: por defecto va a Mailpit; para Gmail se definen MAIL_* en el .env.
       MAIL_HOST: ${MAIL_HOST:-mailpit}
@@ -77,6 +78,8 @@ services:
       ANTHROPIC_MAX_TOKENS: ${ANTHROPIC_MAX_TOKENS:-1024}
     ports:
       - "8080:8080"
+    volumes:
+      - nativatrips_archivos:/datos/archivos
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
       interval: 10s
@@ -98,3 +101,4 @@ services:
 
 volumes:
   nativatrips_pgdata:
+  nativatrips_archivos:
