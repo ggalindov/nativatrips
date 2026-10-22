@@ -14,6 +14,7 @@ public record ReservaResponse(
         String codigoReserva,
         Long senderoId,
         UUID guiaId,
+        String guiaNombre,
         LocalDate fechaTour,
         int cantidadPersonas,
         TipoGrupo tipoGrupo,
@@ -24,12 +25,13 @@ public record ReservaResponse(
         Instant creadaEn,
         List<IntegranteResponse> integrantes) {
 
-    public static ReservaResponse from(Reserva reserva, List<IntegranteResponse> integrantes) {
+    public static ReservaResponse from(Reserva reserva, String guiaNombre, List<IntegranteResponse> integrantes) {
         return new ReservaResponse(
                 reserva.getId(),
                 reserva.getCodigoReserva(),
                 reserva.getSenderoId(),
                 reserva.getGuiaId(),
+                guiaNombre,
                 reserva.getFechaTour(),
                 reserva.getCantidadPersonas(),
                 reserva.getTipoGrupo(),

@@ -450,6 +450,9 @@ public class ReservaService {
         List<IntegranteResponse> integrantes = reservaIntegranteRepository.findByReservaId(reserva.getId()).stream()
                 .map(IntegranteResponse::from)
                 .toList();
-        return ReservaResponse.from(reserva, integrantes);
+        String guia = reserva.getGuiaId() == null
+                ? null
+                : usuarioRepository.findById(reserva.getGuiaId()).map(Usuario::getNombreCompleto).orElse(null);
+        return ReservaResponse.from(reserva, guia, integrantes);
     }
 }
