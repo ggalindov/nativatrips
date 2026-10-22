@@ -1,7 +1,7 @@
 import type { IdFoto } from '@/contenido/fotos';
 import type { CategoriaMedio } from '@/domain/biblioteca';
 import type { CategoriaEquipaje, Capas } from '@/domain/clima';
-import type { ErrorValidacion, EstadoReserva, TipoDocumento } from '@/domain/reserva';
+import type { CausalReprogramacion, ErrorValidacion, EstadoReserva, EstadoSolicitud, TipoDocumento, TipoGrupo } from '@/domain/reserva';
 import type { Dificultad } from '@/domain/sendero';
 import type { CodigoError } from '@/services/puertos';
 
@@ -191,6 +191,9 @@ export const es = {
     cargando: 'Cargando senderos…',
   },
   ficha: {
+    requisitos: 'Requisitos de ingreso',
+    requisitosPendientes: 'El equipo los confirma por correo antes de la salida.',
+    fotosEquipo: 'Fotos del recorrido',
     noEncontrado: 'No encontramos ese sendero.',
     verTodos: 'Ver los 13 senderos',
     migas: 'Ruta de navegación',
@@ -225,11 +228,29 @@ export const es = {
     reservarAhora: 'Reservar ahora',
   },
   fechas: {
+    cerrada: 'Sin abrir',
+    noAbierta: 'aún sin cupos publicados',
     elegir: 'Elegir fecha',
     lleno: 'Lleno',
     sinCupos: 'sin cupos',
   },
   reserva: {
+    grupo: 'Tipo de grupo',
+    grupoNota: 'Los grupos especiales los revisa el equipo antes del pago',
+    tiposGrupo: {
+      ESTANDAR: 'Visitantes',
+      GRUPO_CORPORATIVO: 'Grupo corporativo o institucional',
+      NECESIDAD_ESPECIAL: 'Grupo con necesidades especiales',
+    } satisfies Record<TipoGrupo, string>,
+    tiposGrupoDetalle: {
+      ESTANDAR: 'Familia, amigos o viaje individual. Pagas al reservar.',
+      GRUPO_CORPORATIVO: 'Empresas, colegios o universidades. El equipo confirma guías y logística antes del pago.',
+      NECESIDAD_ESPECIAL: 'Movilidad reducida, salud o alimentación. El equipo prepara la salida antes del pago.',
+    } satisfies Record<TipoGrupo, string>,
+    requerimientos: 'Qué debe saber el guía',
+    requerimientosAyuda: 'Por ejemplo: una persona en silla de ruedas, alergias o una condición médica.',
+    revisionAviso: 'Guardamos tu cupo y el equipo te escribe en menos de un día hábil. El pago se habilita al aprobarse.',
+    enviarRevision: 'Enviar solicitud al equipo',
     etiqueta: 'Reservar',
     pregunta: '¿Qué sendero quieres recorrer?',
     pasos: ['Reserva', 'Pago', 'Enlace'],
@@ -251,7 +272,7 @@ export const es = {
     salida: 'Salida',
     total: 'Total',
     apartar: 'Apartar cupo y pagar con Wompi',
-    apartado: 'El cupo queda apartado [MINUTOS] minutos mientras completas el pago.',
+    apartado: 'El cupo queda apartado 15 minutos mientras completas el pago.',
   },
   persona: {
     nombre: 'Nombre completo',
@@ -294,6 +315,7 @@ export const es = {
     },
   },
   validacion: {
+    requerimientos: 'Cuéntanos qué necesita el grupo para preparar la salida.',
     fecha: 'Elige una fecha.',
     personas: 'La reserva debe tener al menos una persona.',
     nombre: 'Escribe el nombre completo.',
@@ -306,6 +328,8 @@ export const es = {
     celularInternacional: 'Escribe el celular sin el indicativo, entre 6 y 14 dígitos.',
   } satisfies Record<ErrorValidacion, string>,
   apartada: {
+    tituloRevision: 'Tu solicitud está en revisión.',
+    enviamosRevisionDespues: 'para seguir el estado. Te escribimos apenas el equipo la apruebe; desde ese momento tienes 15 minutos para pagar.',
     reserva: (codigo: string) => `Reserva ${codigo}`,
     titulo: 'Tu cupo está apartado.',
     enviamosAntes: 'Enviamos un enlace a',
@@ -345,6 +369,35 @@ export const es = {
     COMPLETADA: 'Realizada',
   } satisfies Record<EstadoReserva, string>,
   miReserva: {
+    grupo: 'Tipo de grupo',
+    requerimientos: 'Lo que sabrá tu guía',
+    enRevisionGrupo: 'El equipo está revisando tu grupo. Te escribimos apenas lo apruebe para que pagues.',
+    reprogramar: 'Cambiar la fecha',
+    reprogramarTexto: 'Una reserva pagada no se cancela con devolución. Si ocurre una de estas causales puedes pedir otra fecha, sobre el mismo cupo, adjuntando el soporte.',
+    sinCausal: 'Por otras causas (cambio de planes, no asistencia) la reserva no se reembolsa ni se reprograma.',
+    causal: 'Causal',
+    causales: {
+      INCAPACIDAD_MEDICA: 'Incapacidad médica de una persona del grupo',
+      FALLECIMIENTO_FAMILIAR: 'Fallecimiento de un familiar en primer grado',
+      FUERZA_MAYOR: 'Otra fuerza mayor',
+    } satisfies Record<CausalReprogramacion, string>,
+    soportesCausal: {
+      INCAPACIDAD_MEDICA: 'Certificado médico o incapacidad de una entidad de salud.',
+      FALLECIMIENTO_FAMILIAR: 'Registro civil de defunción o documento equivalente.',
+      FUERZA_MAYOR: 'El documento que lo demuestre; cada caso lo evalúa la gerencia.',
+    } satisfies Record<CausalReprogramacion, string>,
+    queOcurrio: 'Qué ocurrió',
+    fechaNueva: 'Fecha que prefieres',
+    soporte: 'Soporte',
+    soporteAyuda: 'PDF, JPG o PNG de hasta 5 MB.',
+    soporteGrande: 'El archivo pesa más de 5 MB.',
+    faltanDatos: 'Elige la causal, cuéntanos qué ocurrió, la fecha y adjunta el soporte.',
+    enviarSolicitud: 'Enviar solicitud',
+    reprogramacion: {
+      PENDIENTE: (fecha: string) => `Pediste pasar tu salida al ${fecha}. El equipo revisa el soporte y te escribe; tu cupo original sigue guardado.`,
+      APROBADA: (fecha: string) => `El equipo aprobó el cambio de fecha al ${fecha}.`,
+      RECHAZADA: () => 'El equipo no aprobó el cambio de fecha y la reserva quedó cancelada sin devolución.',
+    } satisfies Record<EstadoSolicitud, (fecha: string) => string>,
     abriendo: 'Abriendo tu reserva…',
     pedirNuevo: 'Pedir un enlace nuevo →',
     reserva: (codigo: string) => `Reserva ${codigo}`,
@@ -368,12 +421,9 @@ export const es = {
     tuGuia: 'Tu guía',
     seAsigna: 'Se asigna al confirmar',
     teEscribira: 'Te escribirá el día anterior.',
-    cancelarPregunta: '¿Cancelar la reserva? Los cupos se liberan para otras personas.',
-    siCancelar: 'Sí, cancelar',
-    cancelar: 'Cancelar reserva',
-    politica: 'Política de cancelación: [CONDICIONES Y PLAZOS]',
   },
   solicitar: {
+    verTodas: '¿Quieres ver todas tus reservas? →',
     lema: 'Tu reserva, a un enlace de distancia.',
     etiqueta: 'Mi reserva',
     titulo: 'Te enviamos un enlace.',
@@ -382,6 +432,20 @@ export const es = {
     codigo: 'Código de reserva',
     correo: 'Correo',
     enviar: 'Enviarme el enlace',
+  },
+  misReservas: {
+    etiqueta: 'Mis reservas',
+    lema: 'Tu historial, a un enlace de distancia.',
+    titulo: 'Todas tus reservas, con tu correo.',
+    texto: 'Escribe el correo con el que reservaste y te enviamos un enlace con tu historial. Sirve durante 24 horas.',
+    correo: 'Correo',
+    enviar: 'Enviarme el enlace',
+    enviado: 'Si hay reservas con ese correo, en unos minutos te llega el enlace. Revisa también la carpeta de spam.',
+    abriendo: 'Abriendo tu historial…',
+    historial: 'Tu historial',
+    vacio: 'No hay reservas con este correo.',
+    gestionar: 'Para gestionar una reserva pide su enlace con el código →',
+    pedirNuevo: 'Pedir un enlace nuevo →',
   },
   antes: {
     etiqueta: 'Guía pre-tour de alta montaña',
@@ -516,6 +580,8 @@ export const es = {
     aviso: 'Frailín puede equivocarse. Verifica cupos y precios antes de pagar.',
   },
   errores: {
+    archivoNoPermitido: 'Ese archivo no se acepta. Usa PDF, JPG o PNG de hasta 5 MB.',
+    reservasFuturas: 'El sendero tiene reservas desde hoy.',
     generico: 'Algo salió mal. Intenta de nuevo.',
     senderoInexistente: 'Ese sendero no existe.',
     enlaceInvalido: 'El enlace no es válido o ya caducó. Pide uno nuevo con tu código y tu correo.',

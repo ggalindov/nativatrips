@@ -17,7 +17,7 @@ import { PildoraDificultad, TarjetaSendero } from './TarjetaSendero';
 type Vista = 'cuadricula' | 'lista';
 
 function VistaRapida({ sendero, onCerrar }: { sendero: Sendero | null; onCerrar: () => void }) {
-  const f = sendero ? fotoDeSendero(sendero.id) : null;
+  const f = sendero ? fotoDeSendero(sendero.clave) : null;
   const { t } = useIdioma();
   const c = useContenido();
   return (
@@ -61,7 +61,7 @@ function VistaRapida({ sendero, onCerrar }: { sendero: Sendero | null; onCerrar:
 }
 
 function FilaSendero({ sendero: s }: { sendero: Sendero }) {
-  const f = fotoDeSendero(s.id);
+  const f = fotoDeSendero(s.clave);
   const { t } = useIdioma();
   const c = useContenido();
   return (

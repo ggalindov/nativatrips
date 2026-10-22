@@ -1,6 +1,8 @@
 import { motion } from 'motion/react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { fotoDeSendero } from '@/contenido/fotos';
+import type { EstadoReserva } from '@/domain/reserva';
+import { claveDeSendero } from '@/domain/sendero';
 import type { Diccionario } from '@/i18n/diccionarios/es';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { useContenido } from '@/i18n/useContenido';
@@ -9,6 +11,7 @@ import { Aparecer, CURVA } from '@/ui/movimiento';
 
 interface EstadoNavegacion {
   codigo: string;
+  estado?: EstadoReserva;
   correo: string;
   titular?: string;
   senderoId?: string;
@@ -72,7 +75,8 @@ export function ReservaApartadaPage() {
   const c = useContenido();
   if (!estado?.codigo) return <Navigate to="/reservar" replace />;
 
-  const f = fotoDeSendero(estado.senderoId ?? '');
+  const f = fotoDeSendero(claveDeSendero(estado.senderoNombre ?? ''));
+  const enRevision = estado.estado === 'EN_REVISION';
   const calendario = enlaceCalendario(estado, t);
   const mensaje = encodeURIComponent(t.apartada.mensajeWhatsapp(estado.senderoNombre ?? t.apartada.unSendero, estado.codigo));
   const a = t.apartada;
@@ -92,11 +96,12 @@ export function ReservaApartadaPage() {
         </motion.div>
         <Aparecer>
           <span className="font-mono text-sm text-tinta-suave">{a.reserva(estado.codigo)}</span>
-          <h1 className="m-0 mt-2 font-display text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">{a.titulo}</h1>
+          <h1 className="m-0 mt-2 font-display text-4xl leading-none font-extrabold tracking-tight sm:text-5xl">{enRevision ? a.tituloRevision : a.titulo}</h1>
         </Aparecer>
         <Aparecer retraso={0.1}>
           <p className="m-0 max-w-2xl text-lg leading-relaxed text-tinta">
-            {a.enviamosAntes} <strong className="font-semibold text-bosque">{estado.correo}</strong> {a.enviamosDespues}
+            {a.enviamosAntes} <strong className="font-semibold text-bosque">{estado.correo}</strong>{' '}
+            {enRevision ? a.enviamosRevisionDespues : a.enviamosDespues}
           </p>
         </Aparecer>
       </div>
@@ -111,7 +116,7 @@ export function ReservaApartadaPage() {
         <div className="flex flex-col">
           <div className="flex items-center justify-between bg-bosque px-7 py-4 text-white">
             <span className="font-display text-lg font-extrabold">{a.pase}</span>
-            <span className="rounded-full bg-lima/20 px-3 py-1 text-xs font-bold text-lima">{a.pendientePago}</span>
+            <span className="rounded-full bg-lima/20 px-3 py-1 text-xs font-bold text-lima">{enRevision ? t.estados.EN_REVISION : a.pendientePago}</span>
           </div>
           <div className="relative h-40">
             <img src={f.srcPequena} alt={c.alt(f)} className="h-full w-full object-cover" />

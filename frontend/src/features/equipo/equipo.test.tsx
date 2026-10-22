@@ -47,16 +47,17 @@ describe('acceso del equipo y paneles por rol', () => {
     renderizarEn({ ruta: '/equipo/guia', sesion: SESION_GUIA });
     const sara = await screen.findByRole('button', { name: /Sara Molina/ });
 
-    expect(screen.getByTestId('asistencia')).toHaveTextContent('2/16');
+    expect(screen.getByTestId('asistencia')).toHaveTextContent('2/10');
     await usuario.click(sara);
     expect(sara).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByTestId('asistencia')).toHaveTextContent('3/16');
+    expect(screen.getByTestId('asistencia')).toHaveTextContent('3/10');
+    expect(sara).toHaveTextContent('2ª visita');
   });
 
   it('el administrador aprueba una reserva en revisión', async () => {
     const usuario = userEvent.setup();
     renderizarEn({ ruta: '/equipo/admin', sesion: SESION_ADMIN });
-    await usuario.click(await screen.findByRole('button', { name: 'Aprobar NT-7Q4K' }));
-    expect(await screen.findByRole('status', { name: '' })).toHaveTextContent('Confirmada');
+    await usuario.click(await screen.findByRole('button', { name: 'Aprobar NT-7Q4KX2' }));
+    expect(await screen.findByRole('status', { name: '' })).toHaveTextContent('Aprobada · pago habilitado');
   });
 });

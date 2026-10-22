@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { Persona, Reserva, SolicitudReserva } from './reserva';
-import { acompanantesPendientes, celularValido, extranjerosEn, pasosRecorrido, puedeCancelarse, validarPersona, validarSolicitud } from './reserva';
+import { acompanantesPendientes, admiteCambios, celularValido, extranjerosEn, pasosRecorrido, puedeReprogramarse, validarPersona, validarSolicitud } from './reserva';
 
 const solicitud: SolicitudReserva = {
   senderoId: 'lagunas-de-siecha',
   fecha: '2026-10-16',
   personas: 2,
   titular: { nombre: 'Laura Gómez', tipoDocumento: 'CC', documento: '1020304050', nacionalidad: 'CO', correo: 'laura@correo.co', indicativo: '57', celular: '3001234567' },
+  tipoGrupo: 'ESTANDAR',
+  requerimientos: '',
 };
 
 const reserva: Reserva = {
   codigo: 'NT-7Q4K', senderoId: 'lagunas-de-siecha', senderoNombre: 'Lagunas de Siecha', fecha: '2026-10-16',
   horaSalida: '07:00', personas: 3, titular: solicitud.titular, acompanantes: [], estado: 'CONFIRMADA', guia: null, puntoEncuentro: null,
+  tipoGrupo: 'ESTANDAR', requerimientos: null, reprogramacion: null,
 };
 
 describe('reserva', () => {
@@ -58,9 +61,27 @@ describe('reserva', () => {
     expect(acompanantesPendientes({ ...reserva, acompanantes: [{ nombre: 'Diego', tipoDocumento: 'CC', documento: '12345', nacionalidad: 'CO' }] })).toBe(1);
   });
 
-  it('solo permite cancelar reservas activas', () => {
-    expect(puedeCancelarse(reserva)).toBe(true);
-    expect(puedeCancelarse({ ...reserva, estado: 'COMPLETADA' })).toBe(false);
-    expect(puedeCancelarse({ ...reserva, estado: 'CANCELADA' })).toBe(false);
+  it('solo admite cambios en reservas activas', () => {
+    expect(admiteCambios(reserva)).toBe(true);
+    expect(admiteCambios({ ...reserva, estado: 'COMPLETADA' })).toBe(false);
+    expect(admiteCambios({ ...reserva, estado: 'CANCELADA' })).toBe(false);
+  });
+
+  it('un grupo con necesidades especiales debe decir qué necesita', () => {
+    expect(validarSolicitud({ ...solicitud, tipoGrupo: 'NECESIDAD_ESPECIAL' })).toContain('requerimientos');
+    expect(validarSolicitud({ ...solicitud, tipoGrupo: 'NECESIDAD_ESPECIAL', requerimientos: 'Silla de ruedas' })).toEqual([]);
+    expect(validarSolicitud({ ...solicitud, tipoGrupo: 'GRUPO_CORPORATIVO' })).toEqual([]);
+  });
+
+  it('solo se pide otra fecha de una reserva confirmada, hasta el día del tour y sin otra solicitud pendiente', () => {
+    expect(puedeReprogramarse(reserva, '2026-10-16')).toBe(true);
+    expect(puedeReprogramarse(reserva, '2026-10-17')).toBe(false);
+    expect(puedeReprogramarse({ ...reserva, estado: 'PENDIENTE_PAGO' }, '2026-10-10')).toBe(false);
+    expect(
+      puedeReprogramarse(
+        { ...reserva, reprogramacion: { causal: 'INCAPACIDAD_MEDICA', fechaDeseada: '2026-10-30', estado: 'PENDIENTE', motivo: null } },
+        '2026-10-10',
+      ),
+    ).toBe(false);
   });
 });

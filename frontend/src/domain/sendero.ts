@@ -4,6 +4,8 @@ export const DIFICULTADES: readonly Dificultad[] = ['Fácil', 'Moderado', 'Difí
 
 export interface Sendero {
   id: string;
+  /** Identificador de texto del sendero (la-paila): con él se buscan sus fotos y traducciones del portal. */
+  clave: string;
   nombre: string;
   dificultad: Dificultad;
   /** Duración estimada en horas. */
@@ -21,6 +23,20 @@ export interface Sendero {
   descripcion: string;
   destacados: string[];
   puntoEncuentro: string | null;
+  /** RF-02: documentos, equipo y condición física que pide el sendero; null si aún no se registran. */
+  requisitosIngreso: string | null;
+  /** Fotos subidas por el equipo (URL de la API), en orden. */
+  fotos: string[];
+}
+
+/** Clave de texto de un sendero a partir de su nombre: «Los Cáquezas» → «los-caquezas». */
+export function claveDeSendero(nombre: string): string {
+  return nombre
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 const ORDEN_DIFICULTAD: Record<Dificultad, number> = { Fácil: 0, Moderado: 1, Difícil: 2, Exigente: 3 };

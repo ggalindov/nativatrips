@@ -3,14 +3,29 @@ import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link, useParams } from 'react-router-dom';
 import { atributosFoto, fotoDeSendero } from '@/contenido/fotos';
+import { hoyIso, sumarDias } from '@/domain/fechas';
 import { bandera, esExtranjero } from '@/domain/paises';
-import type { ErrorValidacion, Persona, Reserva } from '@/domain/reserva';
-import { PERSONA_VACIA, acompanantesPendientes, pasosRecorrido, puedeCancelarse, validarPersona } from '@/domain/reserva';
+import type { CausalReprogramacion, ErrorValidacion, Persona, Reserva } from '@/domain/reserva';
+import {
+  CAUSALES,
+  PERSONA_VACIA,
+  SOPORTE_MAXIMO_BYTES,
+  SOPORTE_TIPOS,
+  acompanantesPendientes,
+  admiteCambios,
+  pasosRecorrido,
+  puedeReprogramarse,
+  validarPersona,
+} from '@/domain/reserva';
+import { claveDeSendero } from '@/domain/sendero';
 import { AvisoExtranjeros, CamposPersona } from '@/features/reservas/CamposPersona';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta, useMensajeError } from '@/services/useConsulta';
+import { AreaTexto } from '@/ui/AreaTexto';
 import { Boton } from '@/ui/Boton';
+import { Campo } from '@/ui/Campo';
+import { Selector } from '@/ui/Selector';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { FotoAnimada } from '@/ui/movimiento';
 
@@ -83,7 +98,7 @@ function Acompanantes({ reserva, token, onCambio }: { reserva: Reserva; token: s
         <p className="m-0 text-[15px] text-tinta">{m.unaPersona}</p>
       ) : (
         pendientes > 0 &&
-        puedeCancelarse(reserva) && (
+        admiteCambios(reserva) && (
           <form onSubmit={guardar} noValidate className="flex flex-col gap-5 border-t linea pt-5">
             <p className="m-0 text-[15px] leading-relaxed text-tinta">{m.exigeDatos}</p>
             <CamposPersona nombreGrupo="acompanante" persona={persona} errores={errores} onCambio={setPersona} />
@@ -105,14 +120,100 @@ function Acompanantes({ reserva, token, onCambio }: { reserva: Reserva; token: s
   );
 }
 
+/** RF-37 (Anexo 16): pedir otra fecha con una causal y su soporte; la reserva queda en revisión. */
+function Reprogramar({ reserva, token, onCambio }: { reserva: Reserva; token: string; onCambio: (r: Reserva) => void }) {
+  const { reservas } = useServicios();
+  const { t } = useIdioma();
+  const mensajeDeError = useMensajeError();
+  const m = t.miReserva;
+  const manana = sumarDias(hoyIso(), 1);
+  const [abierto, setAbierto] = useState(false);
+  const [causal, setCausal] = useState<CausalReprogramacion>('INCAPACIDAD_MEDICA');
+  const [descripcion, setDescripcion] = useState('');
+  const [fecha, setFecha] = useState('');
+  const [soporte, setSoporte] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+
+  const enviar = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!descripcion.trim() || !fecha || fecha === reserva.fecha || !soporte) {
+      setError(m.faltanDatos);
+      return;
+    }
+    if (soporte.size > SOPORTE_MAXIMO_BYTES) {
+      setError(m.soporteGrande);
+      return;
+    }
+    setEnviando(true);
+    try {
+      onCambio(await reservas.solicitarReprogramacion(token, { causal, descripcion, fechaDeseada: fecha, soporte }));
+      setAbierto(false);
+    } catch (err) {
+      setError(mensajeDeError(err));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <section aria-labelledby="mr-reprogramar" className="tarjeta flex flex-col gap-4 p-6 md:p-8">
+      <h2 id="mr-reprogramar" className="m-0 font-display text-[26px] font-bold">
+        {m.reprogramar}
+      </h2>
+      <p className="m-0 text-[15px] leading-relaxed text-tinta">{m.reprogramarTexto}</p>
+      {!abierto ? (
+        <div>
+          <Boton variante="secundario" onClick={() => setAbierto(true)}>
+            {m.reprogramar}
+          </Boton>
+        </div>
+      ) : (
+        <form onSubmit={enviar} noValidate className="flex flex-col gap-5 border-t linea pt-5">
+          <Selector
+            etiqueta={m.causal}
+            value={causal}
+            onChange={(e) => setCausal(e.target.value as CausalReprogramacion)}
+            opciones={CAUSALES.map((c) => ({ valor: c, texto: m.causales[c] }))}
+            ayuda={m.soportesCausal[causal]}
+          />
+          <AreaTexto etiqueta={m.queOcurrio} valor={descripcion} onCambio={setDescripcion} filas={3} maximo={1000} />
+          <Campo etiqueta={m.fechaNueva} type="date" min={manana} value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          <Campo
+            etiqueta={m.soporte}
+            type="file"
+            accept={SOPORTE_TIPOS}
+            ayuda={m.soporteAyuda}
+            onChange={(e) => setSoporte(e.target.files?.[0] ?? null)}
+            className="[&_input]:h-auto [&_input]:py-3"
+          />
+          {error && (
+            <p role="alert" className="m-0 text-sm text-error">
+              {error}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Boton type="submit" cargando={enviando}>
+              {m.enviarSolicitud}
+            </Boton>
+            <Boton variante="secundario" onClick={() => setAbierto(false)}>
+              {t.comun.volver}
+            </Boton>
+          </div>
+        </form>
+      )}
+      <span className="text-[13px] leading-normal text-tinta-suave">{m.sinCausal}</span>
+    </section>
+  );
+}
+
 export function MiReservaPage() {
   const { token = '' } = useParams();
   const { reservas } = useServicios();
   const { t, f } = useIdioma();
   const m = t.miReserva;
   const { estado, setEstado, recargar } = useConsulta(() => reservas.abrirConEnlace(token), [reservas, token]);
-  const [confirmando, setConfirmando] = useState(false);
-  const [cancelando, setCancelando] = useState(false);
 
   if (estado.tipo === 'cargando') return <div className="mx-auto max-w-7xl px-6 py-20"><Cargando texto={m.abriendo} /></div>;
   if (estado.tipo === 'error') {
@@ -126,22 +227,10 @@ export function MiReservaPage() {
 
   const r = estado.datos;
   const actualizar = (nueva: Reserva) => setEstado({ tipo: 'listo', datos: nueva });
-  const cancelar = async () => {
-    setCancelando(true);
-    try {
-      actualizar(await reservas.cancelar(token));
-    } catch (error) {
-      setEstado({ tipo: 'error', error });
-    } finally {
-      setCancelando(false);
-      setConfirmando(false);
-    }
-  };
-
   return (
     <>
       <section className="relative isolate h-56 overflow-hidden bg-bosque md:h-72" aria-hidden="true">
-        <FotoAnimada {...atributosFoto(fotoDeSendero(r.senderoId))} alt="" kenBurns prioridad />
+        <FotoAnimada {...atributosFoto(fotoDeSendero(claveDeSendero(r.senderoNombre)))} alt="" kenBurns prioridad />
         <div className="absolute inset-0 bg-gradient-to-t from-arena via-arena/20 to-transparent" />
       </section>
       <div className="relative mx-auto -mt-24 flex max-w-7xl flex-col gap-14 px-4 pb-24 sm:px-8 lg:px-12">
@@ -184,7 +273,20 @@ export function MiReservaPage() {
                 </Boton>
               </section>
             )}
+            {r.estado === 'EN_REVISION' && !r.reprogramacion && (
+              <p role="status" className="m-0 rounded-[28px] bg-lima/30 p-6 text-[15px] text-bosque">
+                {m.enRevisionGrupo}
+              </p>
+            )}
             <Acompanantes reserva={r} token={token} onCambio={actualizar} />
+            {r.requerimientos && (
+              <section className="tarjeta flex flex-col gap-2 p-6 md:p-8">
+                <h2 className="m-0 font-display text-[22px] font-bold">{m.requerimientos}</h2>
+                <span className="text-sm text-tinta-suave">{m.grupo}: {t.reserva.tiposGrupo[r.tipoGrupo]}</span>
+                <p className="m-0 text-[15px] text-tinta">{r.requerimientos}</p>
+              </section>
+            )}
+            {puedeReprogramarse(r, hoyIso()) && <Reprogramar reserva={r} token={token} onCambio={actualizar} />}
             <section className="tarjeta flex flex-col gap-3.5 p-6 md:p-8">
               <h2 className="m-0 font-display text-[26px] font-bold">{m.antesSalir}</h2>
               <Link to="/antes-de-subir">{m.queLlevar}</Link>
@@ -200,28 +302,10 @@ export function MiReservaPage() {
               <span className="font-display text-[22px] font-bold">{r.guia ?? m.seAsigna}</span>
               {r.guia && <span className="text-sm text-tinta">{m.teEscribira}</span>}
             </div>
-            {puedeCancelarse(r) && (
-              <div className="flex flex-col gap-3">
-                {confirmando ? (
-                  <div role="alertdialog" aria-labelledby="mr-cancelar" className="flex flex-col gap-3 border-t border-error pt-4">
-                    <p id="mr-cancelar" className="m-0 text-[15px]">
-                      {m.cancelarPregunta}
-                    </p>
-                    <div className="flex gap-2">
-                      <Boton variante="peligro" cargando={cancelando} onClick={cancelar}>
-                        {m.siCancelar}
-                      </Boton>
-                      <Boton variante="secundario" onClick={() => setConfirmando(false)}>
-                        {t.comun.volver}
-                      </Boton>
-                    </div>
-                  </div>
-                ) : (
-                  <button type="button" onClick={() => setConfirmando(true)} className="h-12 bg-transparent font-sans text-[15px] font-semibold text-error underline underline-offset-4">
-                    {m.cancelar}
-                  </button>
-                )}
-                <span className="text-center text-[13px] leading-normal text-tinta-suave">{m.politica}</span>
+            {r.reprogramacion && (
+              <div role="status" className="rounded-3xl border border-bosque/15 bg-superficie p-5 text-[15px] leading-relaxed">
+                {m.reprogramacion[r.reprogramacion.estado](f.fecha(r.reprogramacion.fechaDeseada))}
+                {r.reprogramacion.motivo && <span className="mt-2 block text-sm text-tinta-suave">{r.reprogramacion.motivo}</span>}
               </div>
             )}
           </aside>

@@ -8,6 +8,8 @@ export interface Disponibilidad {
   fecha: string;
   limite: number;
   ocupados: number;
+  /** El día aún no tiene capacidad publicada o queda fuera de la ventana de reserva (ADR-008). */
+  cerrada?: boolean;
 }
 
 export function cuposLibres(d: Disponibilidad): number {
