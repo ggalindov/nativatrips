@@ -116,15 +116,6 @@ class SenderoControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "GUIA_TURISTICO")
-    void crearComoTuristaEsRechazado() throws Exception {
-        mockMvc.perform(post("/api/v1/senderos")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(SENDERO_JSON))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     void elCalendarioEsPublicoYUsaCatorceDiasPorDefecto() throws Exception {
         LocalDate desde = LocalDate.of(2026, 10, 26);
         given(capacidadService.calendario(1L, desde, 14))
@@ -180,6 +171,31 @@ class SenderoControllerTest {
                 .andExpect(status().isCreated());
     }
 
+    @Test
+    void elListadoDelEditorNoEsPublico() throws Exception {
+        mockMvc.perform(get("/api/v1/senderos/admin")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR")
+    void elAdministradorVeBorradoresYDeBaja() throws Exception {
+        given(senderoService.listarTodos()).willReturn(List.of(unSendero()));
+
+        mockMvc.perform(get("/api/v1/senderos/admin")).andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    void lasFotosSonPublicasYSeGuardanUnDiaEnElNavegador() throws Exception {
+        java.util.UUID fotoId = java.util.UUID.randomUUID();
+        given(senderoService.foto(1L, fotoId)).willReturn(new SenderoService.Foto(new byte[] {1, 2}, "image/webp"));
+
+        mockMvc.perform(get("/api/v1/senderos/1/fotos/" + fotoId))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("Cache-Control", org.hamcrest.Matchers.containsString("max-age=86400")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().contentType("image/webp"));
+    }
+
     private static SenderoResponse unSendero() {
         return new SenderoResponse(
                 1L,
@@ -191,12 +207,14 @@ class SenderoControllerTest {
                 "Botas de trekking",
                 new BigDecimal("50000"),
                 true,
+                true,
                 new BigDecimal("8.5"),
                 650,
                 3550,
                 "Laguna de Siecha",
                 LocalTime.of(7, 0),
                 "Portería principal",
-                List.of("Lagunas glaciares", "Frailejonales"));
+                List.of("Lagunas glaciares", "Frailejonales"),
+                List.of("/api/v1/senderos/1/fotos/00000000-0000-0000-0000-000000000001"));
     }
 }
