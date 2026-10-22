@@ -7,4 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SenderoRepository extends JpaRepository<Sendero, Long> {
 
     List<Sendero> findByActivoTrue();
+
+    List<Sendero> findByActivoTrueAndPublicadoTrue();
+
+    List<Sendero> findAllByOrderByNombreAsc();
 }
