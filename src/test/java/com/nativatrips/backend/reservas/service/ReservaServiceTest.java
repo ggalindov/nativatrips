@@ -29,6 +29,7 @@ import com.nativatrips.backend.reservas.model.TipoGrupo;
 import com.nativatrips.backend.reservas.repository.ReservaEstadoHistorialRepository;
 import com.nativatrips.backend.reservas.repository.ReservaIntegranteRepository;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
+import com.nativatrips.backend.reservas.repository.SolicitudReprogramacionRepository;
 import com.nativatrips.backend.senderos.model.NivelDificultad;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
@@ -82,6 +83,9 @@ class ReservaServiceTest {
     @Mock
     private AvisosDeOperacion avisosDeOperacion;
 
+    @Mock
+    private SolicitudReprogramacionRepository solicitudReprogramacionRepository;
+
     private ReservaService reservaService;
 
     @BeforeEach
@@ -96,7 +100,8 @@ class ReservaServiceTest {
                 notificacionService,
                 new GeneradorCodigoReserva(),
                 enlaceService,
-                avisosDeOperacion);
+                avisosDeOperacion,
+                solicitudReprogramacionRepository);
     }
 
     @Test
@@ -267,6 +272,19 @@ class ReservaServiceTest {
         assertThat(response.estado()).isEqualTo(EstadoReserva.CANCELADA);
         verify(notificacionService).enviarCorreo(
                 eq("laura@example.com"), contains("no fue aprobada"), contains("No hay guia de apoyo ese dia"));
+    }
+
+    @Test
+    void unaReservaQueEsperaReprogramacionNoSeResuelveComoRevisionDeGrupo() {
+        Reserva reserva = conId(reserva(1L, LocalDate.now().plusDays(1), 5, TipoGrupo.GRUPO_CORPORATIVO, null));
+        given(reservaRepository.findById(reserva.getId())).willReturn(Optional.of(reserva));
+        given(solicitudReprogramacionRepository.existsByReservaIdAndEstado(
+                reserva.getId(), com.nativatrips.backend.reservas.model.EstadoSolicitudReprogramacion.PENDIENTE))
+                .willReturn(true);
+
+        assertThatThrownBy(() -> reservaService.revisarReserva(reserva.getId(), true, null, UUID.randomUUID()))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("reprogramacion");
     }
 
     @Test
