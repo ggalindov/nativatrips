@@ -12,6 +12,7 @@ import com.nativatrips.backend.reservas.model.ReservaIntegrante;
 import com.nativatrips.backend.reservas.model.TitularReserva;
 import com.nativatrips.backend.reservas.repository.ReservaIntegranteRepository;
 import com.nativatrips.backend.reservas.repository.ReservaRepository;
+import com.nativatrips.backend.reservas.repository.SolicitudReprogramacionRepository;
 import com.nativatrips.backend.senderos.model.Sendero;
 import com.nativatrips.backend.senderos.repository.SenderoRepository;
 import com.nativatrips.backend.usuarios.model.Usuario;
@@ -35,6 +36,7 @@ public class MiReservaService {
     private final SenderoRepository senderoRepository;
     private final UsuarioRepository usuarioRepository;
     private final NotificacionService notificacionService;
+    private final SolicitudReprogramacionRepository solicitudRepository;
 
     public MiReservaService(
             EnlaceReservaService enlaceService,
@@ -42,13 +44,15 @@ public class MiReservaService {
             ReservaIntegranteRepository integranteRepository,
             SenderoRepository senderoRepository,
             UsuarioRepository usuarioRepository,
-            NotificacionService notificacionService) {
+            NotificacionService notificacionService,
+            SolicitudReprogramacionRepository solicitudRepository) {
         this.enlaceService = enlaceService;
         this.reservaRepository = reservaRepository;
         this.integranteRepository = integranteRepository;
         this.senderoRepository = senderoRepository;
         this.usuarioRepository = usuarioRepository;
         this.notificacionService = notificacionService;
+        this.solicitudRepository = solicitudRepository;
     }
 
     @Transactional(noRollbackFor = BusinessRuleException.class)
@@ -118,7 +122,13 @@ public class MiReservaService {
                 reserva.getEstado(),
                 reserva.getBloqueoExpiraEn(),
                 guia,
-                sendero.getFicha().puntoEncuentro());
+                sendero.getFicha().puntoEncuentro(),
+                reserva.getTipoGrupo(),
+                reserva.getRequerimientosEspeciales(),
+                solicitudRepository.findFirstByReservaIdOrderByCreatedAtDesc(reserva.getId())
+                        .map(s -> new MiReservaResponse.Reprogramacion(
+                                s.getCausal(), s.getFechaDeseada(), s.getEstado(), s.getMotivoDecision()))
+                        .orElse(null));
     }
 
     private static boolean esElTitular(ReservaIntegrante integrante, TitularReserva titular) {

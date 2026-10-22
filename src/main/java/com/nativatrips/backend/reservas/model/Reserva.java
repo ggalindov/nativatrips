@@ -161,6 +161,13 @@ public class Reserva extends Auditable {
         this.bloqueoExpiraEn = bloqueoExpiraEn;
     }
 
+    /** RF-37: la reserva pasa a otra fecha con el mismo cupo pagado; guia y aviso previo se vuelven a hacer. */
+    public void reprogramar(LocalDate nuevaFecha) {
+        this.fechaTour = nuevaFecha;
+        this.guiaId = null;
+        this.avisoPrevioEnviadoEn = null;
+    }
+
     public Instant getAvisoPrevioEnviadoEn() {
         return avisoPrevioEnviadoEn;
     }
