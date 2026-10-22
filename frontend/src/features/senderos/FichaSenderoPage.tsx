@@ -22,7 +22,7 @@ const DIAS_VISIBLES = 14;
 /** Foto principal del sendero y cuatro de la galería del parque, distintas según el sendero. */
 function fotosDe(s: Sendero, indice: number): FotoConRuta[] {
   const extra = Array.from({ length: 4 }, (_, i) => foto(FOTOS_GALERIA[(indice * 3 + i) % FOTOS_GALERIA.length]));
-  return [fotoDeSendero(s.id), ...extra];
+  return [fotoDeSendero(s.clave), ...extra];
 }
 
 function Galeria({ fotos, nombre }: { fotos: FotoConRuta[]; nombre: string }) {
@@ -166,8 +166,29 @@ export function FichaSenderoPage() {
               <span className="etiqueta text-tinta-suave">{t.ficha.puntoEncuentro(s.horaSalida)}</span>
               <span className="font-display text-lg font-bold">{s.puntoEncuentro ?? t.ficha.seConfirma}</span>
             </div>
+            <section aria-labelledby="ficha-requisitos" className="flex flex-col gap-2 rounded-3xl border border-advertencia/25 bg-advertencia/5 p-5">
+              <h2 id="ficha-requisitos" className="m-0 text-base font-bold text-advertencia">
+                {t.ficha.requisitos}
+              </h2>
+              <p className="m-0 text-[15px] leading-relaxed text-tinta">{s.requisitosIngreso ?? t.ficha.requisitosPendientes}</p>
+            </section>
           </Aparecer>
         </div>
+
+        {s.fotos.length > 0 && (
+          <section aria-labelledby="ficha-fotos" className="flex flex-col gap-4">
+            <h2 id="ficha-fotos" className="m-0 font-display text-2xl font-bold">
+              {t.ficha.fotosEquipo}
+            </h2>
+            <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 md:grid-cols-4">
+              {s.fotos.map((url, i) => (
+                <li key={url} className="aspect-[4/3] overflow-hidden rounded-2xl">
+                  <img src={url} alt={t.ficha.verFoto(i + 1, s.nombre)} loading="lazy" className="h-full w-full object-cover" />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <Escalonado className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Cifra titulo={t.ficha.duracionEstimada} valor={s.duracionHoras} sufijo=" h" />

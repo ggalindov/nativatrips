@@ -13,7 +13,7 @@ export function useContenido() {
   return useMemo(
     () => ({
       sendero: (s: Sendero): Sendero => {
-        const tr = t.senderos[s.id];
+        const tr = t.senderos[s.clave];
         return tr ? { ...s, sector: tr.sector ?? s.sector, descripcion: tr.descripcion, destacados: tr.destacados } : s;
       },
       alt: (foto: { id: IdFoto; alt: string }): string => t.fotos[foto.id] ?? foto.alt,

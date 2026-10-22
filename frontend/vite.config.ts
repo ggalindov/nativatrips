@@ -28,6 +28,10 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
+    // En desarrollo la API va por el mismo origen, como detrás de Nginx: sin CORS.
+    proxy: {
+      '/api': { target: process.env.API_PROXY ?? 'http://localhost:8080', changeOrigin: true },
+    },
   },
   test: {
     environment: 'jsdom',

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useServicios } from '@/services/ServiciosContext';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { useContenido } from '@/i18n/useContenido';
@@ -64,6 +65,7 @@ export function SolicitarEnlacePage() {
           </Boton>
         </form>
       )}
+      <Link to="/mis-reservas">{t.solicitar.verTodas}</Link>
     </div>
     </div>
   );

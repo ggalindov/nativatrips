@@ -71,35 +71,44 @@ describe('pantallas del personal', () => {
     expect(screen.queryByRole('button', { name: 'Eliminar cuenta' })).not.toBeInTheDocument();
   });
 
-  it('el administrador edita la operación y las tarifas de un recorrido', async () => {
+  it('el administrador cambia la tarifa de un sendero', async () => {
     const usuario = userEvent.setup();
     renderizarEn({ ruta: '/equipo/admin/recorridos', sesion: SESION_ADMIN });
     await usuario.click(await screen.findByRole('button', { name: 'Editar La Paila' }));
-    await usuario.click(screen.getByRole('tab', { name: 'Operación' }));
-    await usuario.click(screen.getByRole('button', { name: 'lunes' }));
-    await usuario.click(screen.getByRole('button', { name: '+ Agregar horario' }));
-    await usuario.click(screen.getByRole('tab', { name: 'Tarifas' }));
-    const tarifa = screen.getByLabelText('Tarifa nacional');
+    await usuario.click(screen.getByRole('tab', { name: 'Ficha técnica y tarifa' }));
+    const tarifa = screen.getByLabelText('Tarifa por persona');
     await usuario.clear(tarifa);
     await usuario.type(tarifa, '99000');
     await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
-    const tarjeta = within(screen.getByRole('list', { name: 'Recorridos' })).getByText('La Paila').closest('li')!;
-    expect(tarjeta).toHaveTextContent(/99\.000/);
-    expect(tarjeta).toHaveTextContent('L M X J V S D · 09:30, 13:00');
+    const tarjeta = within(await screen.findByRole('list', { name: 'Senderos' })).getByText('La Paila').closest('li')!;
+    expect(await within(tarjeta).findByText(/99\.000/)).toBeInTheDocument();
   });
 
-  it('el administrador duplica y elimina un recorrido', async () => {
+  it('un sendero nuevo nace en borrador y solo se publica con descripción y requisitos', async () => {
     const usuario = userEvent.setup();
     renderizarEn({ ruta: '/equipo/admin/recorridos', sesion: SESION_ADMIN });
-    const lista = await screen.findByRole('list', { name: 'Recorridos' });
-    await usuario.click(within(within(lista).getByText('La Paila').closest('li')!).getByRole('button', { name: 'Duplicar' }));
-    expect(within(lista).getByText('La Paila (copia)')).toBeInTheDocument();
+    await usuario.click(await screen.findByRole('button', { name: 'Nuevo sendero' }));
+    await usuario.type(screen.getByLabelText('Nombre'), 'Mirador del Cóndor');
+    await usuario.click(screen.getByRole('tab', { name: 'Ficha técnica y tarifa' }));
+    await usuario.type(screen.getByLabelText('Tarifa por persona'), '150000');
+    await usuario.click(screen.getByRole('button', { name: 'Crear borrador' }));
 
-    await usuario.click(screen.getByRole('button', { name: 'Editar La Paila (copia)' }));
-    await usuario.click(screen.getByRole('button', { name: 'Eliminar recorrido' }));
-    await usuario.click(screen.getByRole('button', { name: 'Sí, eliminar' }));
-    expect(within(lista).queryByText('La Paila (copia)')).not.toBeInTheDocument();
+    const lista = await screen.findByRole('list', { name: 'Senderos' });
+    const tarjeta = (await within(lista).findByText('Mirador del Cóndor')).closest('li')!;
+    expect(tarjeta).toHaveTextContent('Borrador');
+    await usuario.click(screen.getAllByRole('button', { name: 'Cerrar' })[0]);
+    await usuario.click(within(tarjeta).getByRole('button', { name: 'Publicar Mirador del Cóndor' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Revisa los datos del formulario');
+  });
+
+  it('dar de baja un sendero lo saca del catálogo público', async () => {
+    const usuario = userEvent.setup();
+    renderizarEn({ ruta: '/equipo/admin/recorridos', sesion: SESION_ADMIN });
+    await usuario.click(await screen.findByRole('button', { name: 'Dar de baja La Paila' }));
+
+    const tarjeta = within(screen.getByRole('list', { name: 'Senderos' })).getByText('La Paila').closest('li')!;
+    expect(await within(tarjeta).findByText('Dado de baja')).toBeInTheDocument();
   });
 
   describe('biblioteca', () => {
@@ -139,7 +148,7 @@ describe('pantallas del personal', () => {
     renderizarEn({ ruta: '/equipo/guia', sesion: SESION_GUIA });
     await usuario.click(await screen.findByRole('button', { name: 'Cerrar el tour' }));
     await usuario.click(screen.getByRole('button', { name: 'Confirmar cierre' }));
-    expect(await screen.findByText('Tour cerrado · encuesta enviada')).toBeInTheDocument();
+    expect(await screen.findByText('Tour cerrado · asistencia guardada')).toBeInTheDocument();
     await usuario.click(screen.getByRole('button', { name: 'Agenda' }));
     expect(screen.getByRole('heading', { name: 'Mi agenda' })).toBeInTheDocument();
   });

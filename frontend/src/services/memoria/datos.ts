@@ -4,7 +4,17 @@ import type { Sendero } from '@/domain/sendero';
  * Catálogo de los 13 senderos. Sector, desnivel, altitud, tarifa y textos vienen
  * del prototipo de Figma del equipo y deben validarse con el operador.
  */
-export const SENDEROS: readonly Sendero[] = [
+/** Requisitos de ingreso por exigencia, iguales al catálogo inicial del backend; se validan con el operador. */
+const REQUISITOS: Record<Sendero['dificultad'], string> = {
+  Fácil: 'Documento de identidad o pasaporte y código de la reserva. Chaqueta impermeable, ropa abrigada, calzado con agarre y al menos 1,5 litros de agua.',
+  Moderado: 'Documento de identidad o pasaporte y código de la reserva. Chaqueta impermeable, polar o chaqueta térmica, botas con agarre, guantes, gorro y al menos 1,5 litros de agua. Condición física básica.',
+  Difícil: 'Documento de identidad o pasaporte y código de la reserva. Botas de montaña, chaqueta impermeable, ropa térmica, guantes, gorro, bastones y al menos 2 litros de agua. Buena condición física y experiencia previa en caminatas largas.',
+  Exigente: 'Documento de identidad o pasaporte y código de la reserva. Botas de montaña, chaqueta impermeable, ropa térmica, guantes, gorro, bastones, comida para la jornada y al menos 2 litros de agua. Muy buena condición física y experiencia en alta montaña.',
+};
+
+type SenderoBase = Omit<Sendero, 'clave' | 'requisitosIngreso' | 'fotos'>;
+
+const BASE: readonly SenderoBase[] = [
   {
     id: 'la-paila', nombre: 'La Paila', dificultad: 'Fácil', duracionHoras: 1, distanciaKm: 1.8, horaSalida: '09:30',
     sector: 'Sector La Paila', desnivelM: 60, altitudMaxM: 3080, precioPorPersona: 120000,
@@ -97,6 +107,8 @@ export const SENDEROS: readonly Sendero[] = [
     puntoEncuentro: 'Parador Choachí La Palma',
   },
 ];
+
+export const SENDEROS: readonly Sendero[] = BASE.map((s) => ({ ...s, clave: s.id, requisitosIngreso: REQUISITOS[s.dificultad], fotos: [] }));
 
 /** Cuentas del equipo disponibles solo con la fuente de datos en memoria. */
 export const CUENTAS_DEMO = [

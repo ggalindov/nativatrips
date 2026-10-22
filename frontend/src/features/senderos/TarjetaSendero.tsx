@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
-  const f = fotoDeSendero(s.id);
+  const f = fotoDeSendero(s.clave);
   const { t } = useIdioma();
   const c = useContenido();
   return (

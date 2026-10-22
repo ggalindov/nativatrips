@@ -6,14 +6,15 @@ import { atributosFoto, fotoDeSendero } from '@/contenido/fotos';
 import { ajustarPersonas, cuposLibres, nivelAforo } from '@/domain/aforo';
 import { hoyIso, sumarDias } from '@/domain/fechas';
 import { esExtranjero } from '@/domain/paises';
-import type { ErrorValidacion, SolicitudReserva, Titular } from '@/domain/reserva';
-import { PERSONA_VACIA, validarSolicitud } from '@/domain/reserva';
+import type { ErrorValidacion, SolicitudReserva, TipoGrupo, Titular } from '@/domain/reserva';
+import { PERSONA_VACIA, TIPOS_GRUPO, requiereRevision, validarSolicitud } from '@/domain/reserva';
 import { ordenarPorExigencia, totalReserva } from '@/domain/sendero';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { useContenido } from '@/i18n/useContenido';
 import { useServicios } from '@/services/ServiciosContext';
 import { useConsulta, useMensajeError } from '@/services/useConsulta';
 import { Boton } from '@/ui/Boton';
+import { AreaTexto } from '@/ui/AreaTexto';
 import { Cargando, ErrorCarga } from '@/ui/Estados';
 import { Aparecer, CURVA, Escalonado, FotoAnimada, itemEscalonado } from '@/ui/movimiento';
 import { AvisoExtranjeros, CamposContacto, CamposPersona, ajustarIndicativo } from './CamposPersona';
@@ -76,6 +77,8 @@ export function ReservaPage() {
   const [fecha, setFecha] = useState<string | null>(null);
   const [personas, setPersonas] = useState(1);
   const [titular, setTitular] = useState<Titular>(TITULAR_VACIO);
+  const [tipoGrupo, setTipoGrupo] = useState<TipoGrupo>('ESTANDAR');
+  const [requerimientos, setRequerimientos] = useState('');
   const [errores, setErrores] = useState<ErrorValidacion[]>([]);
   const [errorServidor, setErrorServidor] = useState<string | null>(null);
   const [intentado, setIntentado] = useState(false);
@@ -86,12 +89,13 @@ export function ReservaPage() {
   const dispFecha = dias.estado.tipo === 'listo' ? dias.estado.datos.find((d) => d.fecha === fecha) : undefined;
   const maximo = dispFecha ? cuposLibres(dispFecha) : 0;
   const total = sendero ? totalReserva(sendero, personas) : null;
-  const solicitud: SolicitudReserva = { senderoId: idActual ?? '', fecha: fecha ?? '', personas, titular };
+  const solicitud: SolicitudReserva = { senderoId: idActual ?? '', fecha: fecha ?? '', personas, titular, tipoGrupo, requerimientos };
+  const enRevision = requiereRevision(tipoGrupo);
 
   // Tras el primer intento, los errores se recalculan mientras la persona corrige.
   useEffect(() => {
-    if (intentado) setErrores(validarSolicitud({ senderoId: idActual ?? '', fecha: fecha ?? '', personas, titular }));
-  }, [intentado, idActual, fecha, personas, titular]);
+    if (intentado) setErrores(validarSolicitud({ senderoId: idActual ?? '', fecha: fecha ?? '', personas, titular, tipoGrupo, requerimientos }));
+  }, [intentado, idActual, fecha, personas, titular, tipoGrupo, requerimientos]);
 
   // Si se llega desde la ficha con ?fecha=, se preselecciona cuando hay cupos.
   const fechaSugerida = parametros.get('fecha');
@@ -120,7 +124,7 @@ export function ReservaPage() {
       const datos = { ...titular, nombre: titular.nombre.trim(), documento: titular.documento.trim().toUpperCase(), correo: titular.correo.trim() };
       const creada = await reservas.crear({ ...solicitud, titular: datos });
       navegar('/reserva/apartada', {
-        state: { ...creada, correo: datos.correo, titular: datos.nombre, senderoId: idActual, senderoNombre: sendero?.nombre, fecha, personas, total, horaSalida: sendero?.horaSalida, puntoEncuentro: sendero?.puntoEncuentro },
+        state: { ...creada, tipoGrupo, correo: datos.correo, titular: datos.nombre, senderoId: idActual, senderoNombre: sendero?.nombre, fecha, personas, total, horaSalida: sendero?.horaSalida, puntoEncuentro: sendero?.puntoEncuentro },
       });
     } catch (err) {
       setErrorServidor(mensajeError(err));
@@ -142,7 +146,7 @@ export function ReservaPage() {
         </Aparecer>
         <Escalonado inmediato como="ul" className="m-0 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
           {ordenarPorExigencia(catalogo.estado.datos).map((s) => {
-            const foto = fotoDeSendero(s.id);
+            const foto = fotoDeSendero(s.clave);
             return (
               <motion.li key={s.id} variants={itemEscalonado}>
                 <button
@@ -165,7 +169,7 @@ export function ReservaPage() {
     );
   }
 
-  const portada = fotoDeSendero(sendero.id);
+  const portada = fotoDeSendero(sendero.clave);
   const resumen: [string, string][] = [
     [t.reserva.sendero, sendero.nombre],
     [t.reserva.fecha, fecha ? f.fecha(fecha) : '—'],
@@ -231,7 +235,43 @@ export function ReservaPage() {
             </div>
           </Seccion>
 
-          <Seccion id="rv-contacto" numero={3} titulo={t.reserva.quienReserva} nota={t.reserva.enlaceCorreo}>
+          <Seccion id="rv-grupo" numero={3} titulo={t.reserva.grupo} nota={t.reserva.grupoNota}>
+            <div role="radiogroup" aria-labelledby="rv-grupo" className="grid gap-3 sm:grid-cols-3">
+              {TIPOS_GRUPO.map((tipo) => (
+                <button
+                  key={tipo}
+                  type="button"
+                  role="radio"
+                  aria-checked={tipoGrupo === tipo}
+                  onClick={() => setTipoGrupo(tipo)}
+                  className={`flex flex-col gap-1.5 rounded-2xl border p-4 text-left transition-colors ${
+                    tipoGrupo === tipo ? 'border-bosque bg-bosque text-arena' : 'border-bosque/20 bg-superficie text-bosque hover:border-bosque'
+                  }`}
+                >
+                  <span className="font-semibold">{t.reserva.tiposGrupo[tipo]}</span>
+                  <span className={`text-sm ${tipoGrupo === tipo ? 'text-arena/80' : 'text-tinta-suave'}`}>{t.reserva.tiposGrupoDetalle[tipo]}</span>
+                </button>
+              ))}
+            </div>
+            <AreaTexto
+              etiqueta={t.reserva.requerimientos}
+              valor={requerimientos}
+              onCambio={setRequerimientos}
+              filas={3}
+              maximo={500}
+              ayuda={t.reserva.requerimientosAyuda}
+              error={errores.includes('requerimientos') ? t.validacion.requerimientos : undefined}
+            />
+            <AnimatePresence>
+              {enRevision && (
+                <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="m-0 rounded-2xl bg-lima/30 p-4 text-[15px] text-bosque">
+                  {t.reserva.revisionAviso}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </Seccion>
+
+          <Seccion id="rv-contacto" numero={4} titulo={t.reserva.quienReserva} nota={t.reserva.enlaceCorreo}>
             <CamposPersona nombreGrupo="titular" persona={titular} errores={errores} onCambio={(p) => setTitular((ant) => ajustarIndicativo(ant, { ...ant, ...p }))} />
             <CamposContacto titular={titular} errores={errores} onCambio={setTitular} />
             <AnimatePresence>{esExtranjero(titular.nacionalidad) && <AvisoExtranjeros />}</AnimatePresence>
@@ -270,9 +310,9 @@ export function ReservaPage() {
               </ul>
             )}
             <Boton type="submit" conFlecha cargando={enviando} className="h-14">
-              {t.reserva.apartar}
+              {enRevision ? t.reserva.enviarRevision : t.reserva.apartar}
             </Boton>
-            <span className="text-[13px] leading-normal text-white/60">{t.reserva.apartado}</span>
+            <span className="text-[13px] leading-normal text-white/60">{enRevision ? t.reserva.revisionAviso : t.reserva.apartado}</span>
           </div>
         </aside>
       </form>

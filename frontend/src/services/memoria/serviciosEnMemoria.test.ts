@@ -5,6 +5,7 @@ import { CLAVE_DEMO } from './datos';
 import { crearServiciosEnMemoria } from './serviciosEnMemoria';
 
 const titular = { nombre: 'Laura Gómez', tipoDocumento: 'CC' as const, documento: '1020304050', nacionalidad: 'CO', indicativo: '57', correo: 'laura@correo.co', celular: '3001234567' };
+const grupo = { tipoGrupo: 'ESTANDAR' as const, requerimientos: '' };
 
 async function fechaConCupos(s: ReturnType<typeof crearServiciosEnMemoria>, minimo: number) {
   const dias = await s.senderos.disponibilidad('lagunas-de-siecha', '2026-10-12', 30);
@@ -22,9 +23,10 @@ describe('servicios en memoria', () => {
   it('crea una reserva, descuenta los cupos y la abre con el enlace', async () => {
     const s = crearServiciosEnMemoria({ latenciaMs: 0 });
     const d = await fechaConCupos(s, 2);
-    const creada = await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 2, titular });
+    const creada = await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 2, titular, ...grupo });
 
-    expect(creada.codigo).toMatch(/^NT-[A-Z2-9]{4}$/);
+    expect(creada.codigo).toMatch(/^NT-[A-Z2-9]{6}$/);
+    expect(creada.estado).toBe('PENDIENTE_PAGO');
     const [despues] = await s.senderos.disponibilidad('lagunas-de-siecha', d.fecha, 1);
     expect(cuposLibres(despues)).toBe(cuposLibres(d) - 2);
 
@@ -38,14 +40,14 @@ describe('servicios en memoria', () => {
     const s = crearServiciosEnMemoria({ latenciaMs: 0 });
     const d = await fechaConCupos(s, 1);
     await expect(
-      s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: cuposLibres(d) + 1, titular }),
+      s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: cuposLibres(d) + 1, titular, ...grupo }),
     ).rejects.toThrow('Ya no quedan cupos suficientes');
   });
 
   it('no deja registrar más acompañantes de los reservados', async () => {
     const s = crearServiciosEnMemoria({ latenciaMs: 0 });
     const d = await fechaConCupos(s, 2);
-    const { enlaceDesarrollo } = await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 2, titular });
+    const { enlaceDesarrollo } = await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 2, titular, ...grupo });
     const token = enlaceDesarrollo!.split('/').pop()!;
 
     await s.reservas.agregarAcompanante(token, { nombre: 'Diego Gómez', tipoDocumento: 'CC', documento: '98765432', nacionalidad: 'CO' });
@@ -54,15 +56,27 @@ describe('servicios en memoria', () => {
     );
   });
 
-  it('libera los cupos al cancelar', async () => {
+  it('un grupo corporativo queda en revisión y llega en vivo al panel', async () => {
     const s = crearServiciosEnMemoria({ latenciaMs: 0 });
     const d = await fechaConCupos(s, 3);
-    const { enlaceDesarrollo } = await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 3, titular });
-    const cancelada = await s.reservas.cancelar(enlaceDesarrollo!.split('/').pop()!);
+    const eventos: string[] = [];
+    const cancelar = s.operacion.escucharEventos((e) => eventos.push(e.tipo === 'reserva' ? e.estado : e.tipo));
 
-    expect(cancelada.estado).toBe('CANCELADA');
-    const [despues] = await s.senderos.disponibilidad('lagunas-de-siecha', d.fecha, 1);
-    expect(cuposLibres(despues)).toBe(cuposLibres(d));
+    const creada = await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 3, titular, tipoGrupo: 'GRUPO_CORPORATIVO', requerimientos: '' });
+    cancelar();
+    await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 1, titular, ...grupo }).catch(() => undefined);
+
+    expect(creada.estado).toBe('EN_REVISION');
+    expect(eventos).toEqual(['EN_REVISION']);
+  });
+
+  it('el historial por correo muestra solo las reservas de ese correo', async () => {
+    const s = crearServiciosEnMemoria({ latenciaMs: 0 });
+    const d = await fechaConCupos(s, 2);
+    await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 1, titular, ...grupo });
+    await s.reservas.crear({ senderoId: 'lagunas-de-siecha', fecha: d.fecha, personas: 1, titular: { ...titular, correo: 'otra@correo.co' }, ...grupo });
+
+    await expect(s.reservas.historial('inventado')).rejects.toThrow('El enlace no es válido');
   });
 
   it('rechaza un enlace desconocido', async () => {

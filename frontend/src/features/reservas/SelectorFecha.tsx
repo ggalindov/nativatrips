@@ -23,20 +23,20 @@ export function SelectorFecha({ dias, seleccionada, onElegir }: Props) {
             type="button"
             disabled={nivel === 'lleno'}
             aria-pressed={activa}
-            aria-label={`${f.fechaLarga(d.fecha)}, ${nivel === 'lleno' ? t.fechas.sinCupos : t.comun.cupos(libres)}`}
+            aria-label={`${f.fechaLarga(d.fecha)}, ${d.cerrada ? t.fechas.noAbierta : nivel === 'lleno' ? t.fechas.sinCupos : t.comun.cupos(libres)}`}
             onClick={() => onElegir(d.fecha)}
             className={`flex min-h-[84px] flex-col items-start gap-1.5 rounded-2xl border p-3 text-left ${
               activa
                 ? 'border-bosque bg-bosque text-arena'
                 : nivel === 'lleno'
-                  ? 'cursor-not-allowed border-bosque/15 bg-transparent text-tinta-suave/70 line-through'
+                  ? `cursor-not-allowed border-bosque/15 bg-transparent text-tinta-suave/70 ${d.cerrada ? '' : 'line-through'}`
                   : 'border-bosque/20 bg-superficie text-bosque hover:border-bosque'
             }`}
           >
             <span className="font-mono text-[11px] tracking-[0.1em] uppercase">{f.diaSemana(d.fecha)}</span>
             <span className="font-display text-[22px] font-bold">{diaDelMes(d.fecha)}</span>
             <span className={`font-mono text-xs ${!activa && nivel === 'alerta' ? 'text-advertencia' : ''}`}>
-              {nivel === 'lleno' ? t.fechas.lleno : t.comun.cupos(libres)}
+              {d.cerrada ? t.fechas.cerrada : nivel === 'lleno' ? t.fechas.lleno : t.comun.cupos(libres)}
             </span>
           </button>
         );

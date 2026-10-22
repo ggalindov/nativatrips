@@ -5,10 +5,13 @@ import type { OpcionesCliente } from './http/clienteHttp';
 import { crearServiciosEnMemoria } from './memoria/serviciosEnMemoria';
 import type { Servicios } from './puertos';
 
-/** Elige el adaptador según VITE_FUENTE_DATOS; por defecto, datos en memoria. */
+/**
+ * Elige el adaptador según VITE_FUENTE_DATOS; por defecto, datos en memoria. La API va en el mismo
+ * origen que el sitio (Nginx en el compose, el proxy de Vite en desarrollo) salvo que VITE_API_URL diga otra.
+ */
 export function crearServicios(opciones: Pick<OpcionesCliente, 'idioma' | 'token' | 'alSesionInvalida'>): Servicios {
   if (import.meta.env.VITE_FUENTE_DATOS === 'http') {
-    return crearServiciosHttp({ baseUrl: import.meta.env.VITE_API_URL ?? 'http://localhost:8080', ...opciones });
+    return crearServiciosHttp({ baseUrl: import.meta.env.VITE_API_URL ?? '', ...opciones });
   }
   return crearServiciosEnMemoria();
 }

@@ -66,13 +66,64 @@ export interface Reserva {
   estado: EstadoReserva;
   guia: string | null;
   puntoEncuentro: string | null;
+  tipoGrupo: TipoGrupo;
+  requerimientos: string | null;
+  /** Última solicitud de cambio de fecha, si la hay. */
+  reprogramacion: Reprogramacion | null;
 }
+
+/** Tipo de grupo (RF-09): los corporativos y con necesidades especiales pasan por revisión del equipo antes del pago. */
+export type TipoGrupo = 'ESTANDAR' | 'GRUPO_CORPORATIVO' | 'NECESIDAD_ESPECIAL';
+
+export const TIPOS_GRUPO: readonly TipoGrupo[] = ['ESTANDAR', 'GRUPO_CORPORATIVO', 'NECESIDAD_ESPECIAL'];
+
+export function requiereRevision(tipo: TipoGrupo): boolean {
+  return tipo !== 'ESTANDAR';
+}
+
+/** Causales de reprogramación del Anexo 16: las únicas que permiten cambiar la fecha de una reserva pagada. */
+export type CausalReprogramacion = 'INCAPACIDAD_MEDICA' | 'FALLECIMIENTO_FAMILIAR' | 'FUERZA_MAYOR';
+
+export const CAUSALES: readonly CausalReprogramacion[] = ['INCAPACIDAD_MEDICA', 'FALLECIMIENTO_FAMILIAR', 'FUERZA_MAYOR'];
+
+export type EstadoSolicitud = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+
+export interface Reprogramacion {
+  causal: CausalReprogramacion;
+  fechaDeseada: string;
+  estado: EstadoSolicitud;
+  motivo: string | null;
+}
+
+export interface SolicitudReprogramacion {
+  causal: CausalReprogramacion;
+  descripcion: string;
+  fechaDeseada: string;
+  soporte: File;
+}
+
+/** Soporte del Anexo 16: PDF, JPG o PNG de hasta 5 MB (el servidor revisa el tipo real del archivo). */
+export const SOPORTE_MAXIMO_BYTES = 5 * 1024 * 1024;
+export const SOPORTE_TIPOS = 'application/pdf,image/jpeg,image/png';
 
 export interface SolicitudReserva {
   senderoId: string;
   fecha: string;
   personas: number;
   titular: Titular;
+  tipoGrupo: TipoGrupo;
+  /** Lo que el guía debe saber del grupo: obligatorio para necesidades especiales. */
+  requerimientos: string;
+}
+
+/** Una reserva en el historial de un correo (RF-36). */
+export interface ReservaDelHistorial {
+  codigo: string;
+  senderoId: string;
+  senderoNombre: string;
+  fecha: string;
+  personas: number;
+  estado: EstadoReserva;
 }
 
 export type PasoRecorrido = 'hecho' | 'actual' | 'pendiente';
@@ -90,8 +141,17 @@ export function acompanantesPendientes(r: Reserva): number {
   return Math.max(0, r.personas - 1 - r.acompanantes.length);
 }
 
-export function puedeCancelarse(r: Reserva): boolean {
+/** Mientras la reserva sigue en pie se pueden registrar acompañantes. */
+export function admiteCambios(r: Reserva): boolean {
   return r.estado === 'PENDIENTE_PAGO' || r.estado === 'EN_REVISION' || r.estado === 'CONFIRMADA';
+}
+
+/**
+ * RF-37 (Anexo 16): una reserva pagada no se cancela con devolución; solo se pide otra fecha, hasta el
+ * día del tour y sin otra solicitud esperando decisión.
+ */
+export function puedeReprogramarse(r: Reserva, hoy: string): boolean {
+  return r.estado === 'CONFIRMADA' && r.fecha >= hoy && r.reprogramacion?.estado !== 'PENDIENTE';
 }
 
 /** Personas extranjeras en la reserva (titular y acompañantes registrados). */
@@ -110,7 +170,8 @@ export type ErrorValidacion =
   | 'documentoAlfanumerico'
   | 'correo'
   | 'celularColombia'
-  | 'celularInternacional';
+  | 'celularInternacional'
+  | 'requerimientos';
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -136,5 +197,6 @@ export function validarSolicitud(s: SolicitudReserva): ErrorValidacion[] {
   errores.push(...validarPersona(s.titular));
   if (!CORREO.test(s.titular.correo.trim())) errores.push('correo');
   if (!celularValido(s.titular.indicativo, s.titular.celular)) errores.push(s.titular.indicativo === '57' ? 'celularColombia' : 'celularInternacional');
+  if (s.tipoGrupo === 'NECESIDAD_ESPECIAL' && s.requerimientos.trim().length < 5) errores.push('requerimientos');
   return errores;
 }
