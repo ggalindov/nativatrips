@@ -50,6 +50,10 @@ public class Sendero extends Auditable {
     @Column(nullable = false)
     private boolean activo = true;
 
+    /** RF-35: en borrador el publico no lo ve ni se puede reservar. SenderoService crea en borrador. */
+    @Column(nullable = false)
+    private boolean publicado = true;
+
     @Embedded
     private FichaTecnica ficha = FichaTecnica.sinDatos();
 
@@ -144,6 +148,19 @@ public class Sendero extends Auditable {
 
     public boolean isActivo() {
         return activo;
+    }
+
+    public boolean isPublicado() {
+        return publicado;
+    }
+
+    public void setPublicado(boolean publicado) {
+        this.publicado = publicado;
+    }
+
+    /** Lo ve el publico y se puede reservar: activo y publicado. */
+    public boolean isVisible() {
+        return activo && publicado;
     }
 
     public void setActivo(boolean activo) {

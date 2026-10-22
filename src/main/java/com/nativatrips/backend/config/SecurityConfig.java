@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         // Contrato OpenAPI y Swagger UI: se apagan en produccion con SPRINGDOC_ENABLED=false.
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/senderos/admin").hasRole("ADMINISTRADOR") // RF-35
                         .requestMatchers(HttpMethod.GET, "/api/v1/senderos/**").permitAll() // RF-01/02: catalogo publico
                         .requestMatchers(HttpMethod.POST, "/api/v1/asistente/mensajes").permitAll() // BUG-04: visitantes
                         .requestMatchers(HttpMethod.POST, "/api/v1/reservas/sin-cuenta").permitAll() // HU-02, ADR-004

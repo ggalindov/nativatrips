@@ -157,7 +157,7 @@ public class ReservaService {
     /** El sendero existe y esta activo, la fecha esta en la ventana y alcanza el cupo del dia. */
     private Sendero apartarCupo(Long senderoId, LocalDate fecha, int personas) {
         Sendero sendero = senderoRepository.findById(senderoId)
-                .filter(Sendero::isActivo)
+                .filter(Sendero::isVisible)
                 .orElseThrow(() -> new ResourceNotFoundException("Sendero no encontrado"));
 
         capacidadService.verificarVentanaDeReserva(fecha);
@@ -348,6 +348,12 @@ public class ReservaService {
         }
         int ocupacion = ocupacionActual(senderoId, fecha);
         return capacidadService.verificarDisponibilidad(senderoId, fecha, ocupacion);
+    }
+
+    /** RF-35: reservas que siguen en pie desde hoy; el administrador las ve antes de dar de baja el sendero. */
+    @Transactional(readOnly = true)
+    public long contarReservasFuturas(Long senderoId) {
+        return reservaRepository.contarDesde(senderoId, LocalDate.now(), EstadoReserva.queOcupanCupo());
     }
 
     private int ocupacionActual(Long senderoId, LocalDate fecha) {

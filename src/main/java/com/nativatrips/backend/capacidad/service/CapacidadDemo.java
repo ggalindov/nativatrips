@@ -60,7 +60,7 @@ public class CapacidadDemo implements ApplicationRunner {
         }
         LocalDate hasta = capacidadService.ultimoDiaReservable();
         int creados = 0;
-        for (Sendero sendero : senderoRepository.findByActivoTrue()) {
+        for (Sendero sendero : senderoRepository.findByActivoTrueAndPublicadoTrue()) {
             for (LocalDate dia = LocalDate.now(reloj); !dia.isAfter(hasta); dia = dia.plusDays(1)) {
                 if (capacidadDiaRepository.findBySenderoIdAndFecha(sendero.getId(), dia).isEmpty()) {
                     capacidadDiaRepository.save(new CapacidadDia(

@@ -41,6 +41,15 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
             @Param("fechaTour") LocalDate fechaTour,
             @Param("estadosActivos") List<EstadoReserva> estadosActivos);
 
+    @Query("""
+            SELECT COUNT(r) FROM Reserva r
+            WHERE r.senderoId = :senderoId AND r.fechaTour >= :desde AND r.estado IN :estados
+            """)
+    long contarDesde(
+            @Param("senderoId") Long senderoId,
+            @Param("desde") LocalDate desde,
+            @Param("estados") List<EstadoReserva> estados);
+
     List<Reserva> findByEstadoAndBloqueoExpiraEnBefore(EstadoReserva estado, Instant instante);
 
     /** RF-10: reservas confirmadas con tour en la ventana del aviso previo que aun no lo recibieron. */

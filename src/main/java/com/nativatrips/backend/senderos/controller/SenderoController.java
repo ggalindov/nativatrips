@@ -9,9 +9,13 @@ import com.nativatrips.backend.senderos.dto.SenderoResponse;
 import com.nativatrips.backend.senderos.service.SenderoService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,7 +26,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/senderos")
@@ -78,8 +84,44 @@ public class SenderoController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> desactivar(@PathVariable Long id) {
-        senderoService.desactivar(id);
+    public ResponseEntity<Void> desactivar(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean confirmar) {
+        senderoService.desactivar(id, reservaService.contarReservasFuturas(id), confirmar);
         return ResponseEntity.noContent().build();
+    }
+
+    /** RF-35: el editor del administrador ve tambien borradores y senderos de baja. */
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public List<SenderoResponse> listarParaAdministrador() {
+        return senderoService.listarTodos();
+    }
+
+    @PostMapping("/{id}/publicacion")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public SenderoResponse publicar(@PathVariable Long id, @RequestParam boolean publicado) {
+        return senderoService.cambiarPublicacion(id, publicado);
+    }
+
+    @PostMapping(value = "/{id}/fotos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public SenderoResponse agregarFoto(@PathVariable Long id, @RequestPart("foto") MultipartFile foto) {
+        return senderoService.agregarFoto(id, foto);
+    }
+
+    @DeleteMapping("/{id}/fotos/{fotoId}")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public SenderoResponse borrarFoto(@PathVariable Long id, @PathVariable UUID fotoId) {
+        return senderoService.borrarFoto(id, fotoId);
+    }
+
+    /** Publica: las fotos cambian poco y el navegador las guarda un dia. */
+    @GetMapping("/{id}/fotos/{fotoId}")
+    public ResponseEntity<byte[]> foto(@PathVariable Long id, @PathVariable UUID fotoId) {
+        SenderoService.Foto foto = senderoService.foto(id, fotoId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(foto.tipo()))
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(1)).cachePublic())
+                .header("X-Content-Type-Options", "nosniff")
+                .body(foto.contenido());
     }
 }
