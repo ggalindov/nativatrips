@@ -57,8 +57,10 @@ class WompiPasarelaTest {
 
         assertThatThrownBy(() -> pasarela.prepararCheckout(
                         new Pago(UUID.randomUUID(), "REF", new BigDecimal("1000"), "COP"), VENCE, null))
-                .isInstanceOfSatisfying(BusinessRuleException.class,
-                        ex -> assertThat(ex.getStatus().value()).isEqualTo(503));
+                .isInstanceOfSatisfying(BusinessRuleException.class, ex -> {
+                    assertThat(ex.getStatus().value()).isEqualTo(503);
+                    assertThat(ex.getCodigo()).isEqualTo(WompiPasarela.PAGOS_NO_CONFIGURADOS);
+                });
     }
 
     @Test
