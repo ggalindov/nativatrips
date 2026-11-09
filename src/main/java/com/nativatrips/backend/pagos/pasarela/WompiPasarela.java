@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 /** Adaptador de Wompi Web Checkout (ADR-005): el navegador va a Wompi con la firma de integridad. */
 @Component
 public class WompiPasarela implements PasarelaPago {
+
+    /** Codigo de error para que la interfaz explique que el pago en linea aun no esta habilitado. */
+    public static final String PAGOS_NO_CONFIGURADOS = "PAGOS_NO_CONFIGURADOS";
 
     private final WompiProperties propiedades;
     private final String urlRedireccion;
@@ -34,7 +38,10 @@ public class WompiPasarela implements PasarelaPago {
     public CheckoutPago prepararCheckout(Pago pago, Instant venceEn, String correoComprador) {
         if (!propiedades.isConfigurado()) {
             throw new BusinessRuleException(
-                    HttpStatus.SERVICE_UNAVAILABLE, "Los pagos no estan configurados: faltan las llaves de Wompi");
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "Los pagos no estan configurados: faltan las llaves de Wompi",
+                    PAGOS_NO_CONFIGURADOS,
+                    Map.of());
         }
         long montoEnCentavos = enCentavos(pago.getMonto());
         String expiracion = DateTimeFormatter.ISO_INSTANT.format(venceEn.truncatedTo(ChronoUnit.MILLIS));
