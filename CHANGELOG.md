@@ -48,6 +48,26 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 - Análisis estático con CodeQL para Java, TypeScript y los flujos de GitHub Actions (#53).
 - README con la descripción, instalación, ejecución, pruebas, flujo de trabajo y estado del
   proyecto; licencia propietaria y política de seguridad con reporte privado (#54).
+- Enlace mágico de la reserva sin cuenta: llega por correo al reservar, vence y se guarda solo
+  como hash; «mi reserva» permite consultarla, pedir otro enlace y registrar acompañantes (#76).
+- Pago total con Wompi desde el enlace de la reserva: checkout con firma de integridad,
+  eventos con verificación del checksum, idempotencia y dos reintentos tras un rechazo (#77).
+- Antes de liberar el cupo de una reserva vencida se consulta a Wompi; el titular recibe el
+  comprobante al aprobarse y un aviso de rechazo con los intentos que quedan (#78).
+- Catálogo inicial con los trece senderos del portal y cuentas del equipo creadas en el primer
+  arranque, con un enlace para fijar la clave (#79).
+- Grupos corporativos y con necesidades especiales pasan a revisión del administrador; el guía
+  marca la asistencia de cada persona y ve el requerimiento de su grupo (#79).
+- Panel del administrador en vivo: reservas nuevas y alertas de aforo por SSE, aviso por correo
+  al cruzar el umbral del día y asignación de guía a las reservas confirmadas (#79).
+- Aviso 48 horas antes al titular y lista del grupo al guía (#79).
+- Historial de reservas por correo con enlace de 24 horas (#79).
+- Reprogramación con causal y soporte (PDF, JPG o PNG verificado por su firma), con aprobación
+  o rechazo del administrador según el Anexo 16 (#79).
+- Editor de senderos con borrador, publicación, hasta ocho fotos y aviso de las reservas
+  futuras al dar de baja un sendero (#79).
+- Portal y paneles conectados a la API real, con pago desde «mi reserva» y aviso en los cuatro
+  idiomas cuando los pagos aún no están configurados (#79).
 
 ### Seguridad
 
@@ -65,6 +85,10 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   *force push*; alertas de vulnerabilidades de Dependabot activadas.
 - `source-map-js` 1.2.2: cierra la alerta alta de denegación de servicio (#24).
 - Vite 6.4.4: control de acceso del servidor de desarrollo a los módulos (#33).
+- Un evento de Wompi falsificado o con otro monto no cambia el estado de ningún pago, y el
+  mismo evento repetido se aplica una sola vez (#77).
+- Los métodos no soportados responden 405 y los cuerpos o parámetros inválidos 400, en lugar
+  de un 500 (#79).
 
 ### Cambiado
 
@@ -83,6 +107,13 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   dependency-review v5 (#28).
 - Los diagramas y las presentaciones salen del repositorio; se mantienen en el espacio
   documental del trabajo de grado (#52).
+- La reserva sin cuenta reemplaza al registro público y a la reserva con cuenta, y la
+  cancelación por estado se sustituye por la reprogramación con causal (#79).
+
+### Retirado
+
+- PayU: código, configuración, columnas y pruebas; Wompi es la única pasarela (#78).
+- El registro público de turistas y el rol `TURISTA` (#79).
 
 ## [0.2.0] - 2026-10-13
 
