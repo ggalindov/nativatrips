@@ -1,6 +1,6 @@
 import type { Disponibilidad } from '@/domain/aforo';
 import { cuposLibres } from '@/domain/aforo';
-import type { Persona, Reserva, ReservaDelHistorial } from '@/domain/reserva';
+import type { EstadoReserva, Persona, Reserva, ReservaDelHistorial } from '@/domain/reserva';
 import { SOPORTE_MAXIMO_BYTES, requiereRevision, validarPersona, validarSolicitud } from '@/domain/reserva';
 import type { Sendero } from '@/domain/sendero';
 import { claveDeSendero } from '@/domain/sendero';
@@ -9,8 +9,11 @@ import { hoyIso, sumarDias } from '@/domain/fechas';
 import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
 import type {
+  CapacidadDia,
   EventoPanel,
+  GuiaEquipo,
   OcupacionSendero,
+  ReservaDelPanel,
   ReprogramacionEnRevision,
   ReservaEnRevision,
   SenderoAdmin,
@@ -73,8 +76,34 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
   }));
   let salidaCerrada = false;
 
+  const guias: GuiaEquipo[] = [
+    { id: 'g1', nombre: 'Marta León', correo: 'guia@ecopalacio.co' },
+    { id: 'g2', nombre: 'Julián Pardo', correo: 'julian@ecopalacio.co' },
+  ];
+  /** Capacidad que el administrador cargó en esta sesión; el resto sale de aforoBase. */
+  const capacidadCargada = new Map<string, { cupoMaximo: number; umbralPct: number }>();
+  /** Reservas de demostración del panel, más las que se crean en la sesión. */
+  const panel: ReservaDelPanel[] = [
+    ['p1', 'NT-5HC1MA', 'lagunas-de-siecha', 1, 2, 'CONFIRMADA', 'g1', 'Sara Molina', 'FR'],
+    ['p2', 'NT-8LP0WE', 'lagunas-de-siecha', 1, 3, 'CONFIRMADA', null, 'Valentina Ríos', 'CO'],
+    ['p3', 'NT-K4W9ZT', 'suasie', 3, 2, 'PENDIENTE_PAGO', null, 'Lucas Ferreira', 'BR'],
+    ['p4', 'NT-7Q4KX2', 'bosque-de-niebla', 4, 20, 'EN_REVISION', null, 'Colegio Los Andes', 'CO'],
+    ['p5', 'NT-Q9D5HU', 'laguna-seca', -5, 3, 'COMPLETADA', 'g2', 'Pedro Sánchez', 'CO'],
+  ].map(([id, codigo, senderoId, dias, personas, estado, guiaId, nombre, pais]) => {
+    const sendero = SENDEROS.find((x) => x.id === senderoId) ?? SENDEROS[0];
+    const titular = { nombre: String(nombre), tipoDocumento: 'CC' as const, documento: `10${String(id).slice(1)}2030`, nacionalidad: String(pais) };
+    return {
+      id: String(id), codigo: String(codigo), senderoId: sendero.id, senderoNombre: sendero.nombre, fecha: sumarDias(hoyIso(), Number(dias)),
+      hora: sendero.horaSalida, personas: Number(personas), tipoGrupo: Number(personas) > 12 ? 'GRUPO_CORPORATIVO' : 'ESTANDAR', estado: estado as EstadoReserva,
+      guiaId: guiaId as string | null, guiaNombre: guias.find((g) => g.id === guiaId)?.nombre ?? null,
+      titular: { ...titular, correo: `${String(codigo).toLowerCase()}@correo.co`, celular: '+57 300 123 4567' },
+      integrantes: [titular], requerimientos: null, creada: new Date().toISOString(),
+    };
+  });
+
   const disponibilidad = (id: string, fecha: string): Disponibilidad => {
-    const base = aforoBase(id, fecha);
+    const cargada = capacidadCargada.get(`${id}|${fecha}`);
+    const base = cargada ? { ...aforoBase(id, fecha), limite: cargada.cupoMaximo } : aforoBase(id, fecha);
     return { ...base, ocupados: Math.min(base.limite, base.ocupados + (ocupacionExtra.get(`${id}|${fecha}`) ?? 0)) };
   };
 
@@ -174,6 +203,11 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
         ocupacionExtra.set(clave, (ocupacionExtra.get(clave) ?? 0) + s.personas);
         const t = token();
         enlaces.set(t, codigo);
+        panel.push({
+          id: codigo, codigo, senderoId: sendero.id, senderoNombre: sendero.nombre, fecha: s.fecha, hora: sendero.horaSalida, personas: s.personas,
+          tipoGrupo: s.tipoGrupo, estado, guiaId: null, guiaNombre: null, titular: s.titular, integrantes: [s.titular],
+          requerimientos: s.requerimientos.trim() || null, creada: new Date().toISOString(),
+        });
         emitir({ tipo: 'reserva', codigo, estado, senderoNombre: sendero.nombre, fecha: s.fecha, personas: s.personas, tipoGrupo: s.tipoGrupo, titular: s.titular.nombre });
         return esperar({ codigo, estado, enlaceDesarrollo: `/mi-reserva/${t}` });
       },
@@ -197,6 +231,9 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
       solicitarHistorial: async (correo) => {
         historiales.set(token(), correo.trim().toLowerCase());
         return esperar(undefined);
+      },
+      iniciarPago: async () => {
+        throw new ErrorServicio('Con los datos de demostración no hay pagos: la pasarela solo existe con la API.', 'noDisponible');
       },
       historial: async (t) => {
         const correo = historiales.get(t);
@@ -231,6 +268,38 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
         { hora: '08:00', senderoNombre: 'Bosque de Niebla', personas: 11, guia: null },
         { hora: '09:30', senderoNombre: 'La Paila', personas: 8, guia: 'Andrés C.' },
       ]),
+      reservasDelPeriodo: (desde, hasta) =>
+        esperar(panel.filter((r) => r.fecha >= desde && r.fecha <= hasta).sort((a, b) => a.fecha.localeCompare(b.fecha)).map((r) => structuredClone(r))),
+      guias: () => esperar(guias.map((g) => ({ ...g }))),
+      asignarGuia: async (reservaId, guiaId) => {
+        const r = panel.find((x) => x.id === reservaId);
+        const g = guias.find((x) => x.id === guiaId);
+        if (!r || !g) throw new ErrorServicio('La reserva o el guía ya no existen.', 'datosInvalidos');
+        if (r.estado !== 'CONFIRMADA') throw new ErrorServicio('Solo se puede asignar un guía a una reserva confirmada.', 'datosInvalidos');
+        r.guiaId = g.id;
+        r.guiaNombre = g.nombre;
+        return esperar(undefined);
+      },
+      capacidad: (desde, hasta) => {
+        const dias: CapacidadDia[] = [];
+        for (let fecha = desde; fecha <= hasta; fecha = sumarDias(fecha, 1)) {
+          for (const s of catalogo.filter((x) => x.activo)) {
+            const d = disponibilidad(s.id, fecha);
+            dias.push({ senderoId: s.id, fecha, cupoMaximo: d.limite, umbralPct: capacidadCargada.get(`${s.id}|${fecha}`)?.umbralPct ?? 80, ocupacion: d.ocupados });
+          }
+        }
+        return esperar(dias);
+      },
+      cargarCapacidad: async (senderoId, dias) => {
+        buscarSendero(senderoId);
+        for (const d of dias) {
+          if (d.cupoMaximo < disponibilidad(senderoId, d.fecha).ocupados) {
+            throw new ErrorServicio(`El cupo del ${d.fecha} no puede quedar por debajo de las personas ya reservadas.`, 'datosInvalidos');
+          }
+        }
+        dias.forEach((d) => capacidadCargada.set(`${senderoId}|${d.fecha}`, { cupoMaximo: d.cupoMaximo, umbralPct: d.umbralPct }));
+        return esperar(undefined);
+      },
       ocupacion: (fecha) => esperar(
         ['lagunas-de-siecha', 'chorreras', 'bosque-de-niebla', 'suasie', 'la-paila'].map((id): OcupacionSendero => {
           const d = disponibilidad(id, fecha);

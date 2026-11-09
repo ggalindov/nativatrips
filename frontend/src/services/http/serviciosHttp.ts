@@ -14,7 +14,7 @@ import type {
 } from '@/domain/reserva';
 import { cargarBiblioteca } from '../biblioteca/cargarBiblioteca';
 import { ErrorServicio } from '../puertos';
-import type { DatosSendero, EventoPanel, SalidaGuia, SenderoAdmin, Servicios, TourAgenda, Visitante } from '../puertos';
+import type { DatosSendero, EventoPanel, ReservaDelPanel, SalidaGuia, SenderoAdmin, Servicios, TourAgenda, Visitante } from '../puertos';
 import { crearClienteHttp } from './clienteHttp';
 import type { OpcionesCliente } from './clienteHttp';
 
@@ -91,20 +91,30 @@ interface ReservaEquipoApi {
   id: string;
   codigoReserva: string;
   senderoId: number;
+  guiaId: string | null;
   guiaNombre: string | null;
   fechaTour: string;
   cantidadPersonas: number;
   tipoGrupo: TipoGrupo;
   estado: EstadoReserva;
-  titular: { nombre: string; documento: string; tipoDocumento: TipoDocumento } | null;
+  titular: (PersonaApi & { correo: string; indicativo: string; celular: string }) | null;
   requerimientosEspeciales: string | null;
+  creadaEn: string;
+  integrantes: IntegranteApi[] | null;
 }
 
 interface CapacidadApi {
   senderoId: number;
+  fecha: string;
   cupoMaximo: number;
   umbralAlertaPct: number;
   ocupacion: number;
+}
+
+interface GuiaApi {
+  id: string;
+  email: string;
+  nombreCompleto: string;
 }
 
 interface ReprogramacionApi {
@@ -202,6 +212,33 @@ function cuerpoSendero(d: DatosSendero) {
 
 const enlace = (cabecera: string, token: string) => ({ [cabecera]: token });
 
+function aReservaDelPanel(r: ReservaEquipoApi, sendero: Sendero | undefined): ReservaDelPanel {
+  return {
+    id: r.id,
+    codigo: r.codigoReserva,
+    senderoId: String(r.senderoId),
+    senderoNombre: sendero?.nombre ?? '',
+    fecha: r.fechaTour,
+    hora: sendero?.horaSalida ?? '07:00',
+    personas: r.cantidadPersonas,
+    tipoGrupo: r.tipoGrupo,
+    estado: r.estado,
+    guiaId: r.guiaId,
+    guiaNombre: r.guiaNombre,
+    titular: r.titular
+      ? { ...aPersona(r.titular), correo: r.titular.correo, celular: [r.titular.indicativo ? `+${r.titular.indicativo}` : '', r.titular.celular ?? ''].join(' ').trim() }
+      : null,
+    integrantes: (r.integrantes ?? []).map((p) => ({
+      nombre: p.nombreCompleto,
+      tipoDocumento: p.tipoDocumento ?? 'CC',
+      documento: p.documentoIdentidad,
+      nacionalidad: p.nacionalidad ?? 'CO',
+    })),
+    requerimientos: r.requerimientosEspeciales,
+    creada: r.creadaEn,
+  };
+}
+
 /**
  * Adaptador contra la API REST del backend. El indicador de gerencia (resumen del mes) es del
  * Sprint 5 y todavía responde con un error explícito.
@@ -223,6 +260,25 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
 
   const reservasDelGuia = async (fecha?: string) =>
     pedir<ReservaEquipoApi[]>(`/api/v1/reservas/agenda-guia${fecha ? `?fecha=${fecha}` : ''}`);
+
+  // Una sola conexión de eventos por pestaña, compartida por todo lo que la escucha (la campana y el panel de hoy).
+  const oyentesPanel = new Set<(e: EventoPanel) => void>();
+  let cortarEventos: (() => void) | null = null;
+  const escucharPanel = (alEvento: (e: EventoPanel) => void) => {
+    oyentesPanel.add(alEvento);
+    cortarEventos ??= escuchar('/api/v1/panel/eventos', (nombre, datos) => {
+      if (nombre !== 'reserva' && nombre !== 'aforo') return;
+      const evento = { tipo: nombre, ...JSON.parse(datos) } as EventoPanel;
+      oyentesPanel.forEach((oyente) => oyente(evento));
+    });
+    return () => {
+      oyentesPanel.delete(alEvento);
+      if (oyentesPanel.size === 0) {
+        cortarEventos?.();
+        cortarEventos = null;
+      }
+    };
+  };
 
   return {
     senderos: {
@@ -298,6 +354,8 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
       solicitarHistorial: async (correo) => {
         await pedir<void>('/api/v1/mis-reservas/enlace', { method: 'POST', body: JSON.stringify({ correo: correo.trim() }) });
       },
+      iniciarPago: async (token) =>
+        (await pedir<{ url: string }>('/api/v1/mi-reserva/pago', { method: 'POST', headers: enlace('X-Enlace-Reserva', token) })).url,
       historial: async (token) =>
         (await pedir<(Omit<ReservaDelHistorial, 'senderoId'> & { senderoId: number })[]>('/api/v1/mis-reservas', {
           headers: enlace('X-Enlace-Historial', token),
@@ -358,6 +416,33 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
             };
           })
           .sort((a, b) => a.hora.localeCompare(b.hora));
+      },
+      reservasDelPeriodo: async (desde, hasta) => {
+        const [reservas, senderos] = await Promise.all([
+          pedir<ReservaEquipoApi[]>(`/api/v1/reservas?desde=${desde}&hasta=${hasta}`),
+          senderosDelEquipo(),
+        ]);
+        const nombres = porId(senderos);
+        return reservas.map((r) => aReservaDelPanel(r, nombres.get(String(r.senderoId))));
+      },
+      guias: async () =>
+        (await pedir<GuiaApi[]>('/api/v1/usuarios/guias')).map((g) => ({ id: g.id, nombre: g.nombreCompleto, correo: g.email })),
+      asignarGuia: async (reservaId, guiaId) => {
+        await pedir<void>(`/api/v1/reservas/${reservaId}/asignar-guia`, { method: 'POST', body: JSON.stringify({ guiaId }) });
+      },
+      capacidad: async (desde, hasta) =>
+        (await pedir<CapacidadApi[]>(`/api/v1/capacidad?desde=${desde}&hasta=${hasta}`)).map((d) => ({
+          senderoId: String(d.senderoId),
+          fecha: d.fecha,
+          cupoMaximo: d.cupoMaximo,
+          umbralPct: d.umbralAlertaPct,
+          ocupacion: d.ocupacion,
+        })),
+      cargarCapacidad: async (senderoId, dias) => {
+        await pedir<void>(`/api/v1/senderos/${senderoId}/capacidad`, {
+          method: 'PUT',
+          body: JSON.stringify({ dias: dias.map((d) => ({ fecha: d.fecha, cupoMaximo: d.cupoMaximo, umbralAlertaPct: d.umbralPct })) }),
+        });
       },
       ocupacion: async (fecha) => {
         const [dias, senderos] = await Promise.all([
@@ -436,11 +521,7 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
           });
         return [...tours.values()].sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora));
       },
-      escucharEventos: (alEvento) =>
-        escuchar('/api/v1/panel/eventos', (nombre, datos) => {
-          if (nombre !== 'reserva' && nombre !== 'aforo') return;
-          alEvento({ tipo: nombre, ...JSON.parse(datos) } as EventoPanel);
-        }),
+      escucharEventos: escucharPanel,
       resumenGerencia: async () => pendiente(),
     },
 

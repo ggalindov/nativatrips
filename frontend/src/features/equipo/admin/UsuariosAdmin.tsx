@@ -9,7 +9,7 @@ import { Selector } from '@/ui/Selector';
 import { useSesion } from '../SesionContext';
 import { CUENTAS } from '../ejemplo';
 import type { CuentaEquipo } from '../ejemplo';
-import { BorrarConConfirmacion, Busqueda, CabeceraPanel, Cajon, Insignia, Interruptor, Pestanas, useAviso } from '../ui';
+import { AvisoEjemplo, BorrarConConfirmacion, Busqueda, CabeceraPanel, Cajon, Insignia, Interruptor, Pestanas, useAviso } from '../ui';
 
 type Filtro = 'todos' | RolEquipo | 'inactivas';
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -140,6 +140,7 @@ export function UsuariosAdmin() {
           Nueva cuenta
         </Boton>
       </CabeceraPanel>
+      <AvisoEjemplo>La gestión de cuentas desde el panel se conecta en un sprint posterior. Hoy las cuentas del equipo se crean al instalar el sistema y cada persona recibe un correo para crear su contraseña.</AvisoEjemplo>
 
       <div className="flex flex-col gap-3">
         <Pestanas

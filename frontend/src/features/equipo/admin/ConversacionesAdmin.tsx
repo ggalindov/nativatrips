@@ -5,7 +5,7 @@ import { Frailin } from '@/features/asistente/Frailin';
 import { Boton } from '@/ui/Boton';
 import { CONVERSACIONES } from '../ejemplo';
 import type { Conversacion } from '../ejemplo';
-import { CabeceraPanel, Insignia, Pestanas, useAviso } from '../ui';
+import { AvisoEjemplo, CabeceraPanel, Insignia, Pestanas, useAviso } from '../ui';
 
 const IDIOMA = { es: 'Español', en: 'Inglés', fr: 'Francés', pt: 'Portugués' } as const;
 type Filtro = 'abiertas' | 'resueltas';
@@ -44,6 +44,7 @@ export function ConversacionesAdmin() {
           </div>
         </dl>
       </CabeceraPanel>
+      <AvisoEjemplo>La bandeja de conversaciones derivadas desde Frailín se conecta en un sprint posterior.</AvisoEjemplo>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
         <section aria-label="Bandeja" className={`flex flex-col gap-3 ${actual ? 'max-lg:hidden' : ''}`}>
