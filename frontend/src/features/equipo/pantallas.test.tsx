@@ -11,27 +11,33 @@ describe('pantallas del personal', () => {
     renderizarEn({ ruta: '/equipo/admin/reservas', sesion: SESION_ADMIN });
     await usuario.selectOptions(await screen.findByLabelText('Procedencia'), 'extranjeros');
     const lista = screen.getByRole('region', { name: 'Lista de reservas' });
-    expect(within(lista).getByText('Claire Martin')).toBeInTheDocument();
-    expect(within(lista).queryByText('Pedro Sánchez')).not.toBeInTheDocument();
+    expect(within(lista).getByText('Sara Molina')).toBeInTheDocument();
+    expect(within(lista).queryByText('Valentina Ríos')).not.toBeInTheDocument();
 
-    await usuario.click(within(lista).getByRole('button', { name: 'Ver reserva NT-5HC1' }));
-    expect((await screen.findAllByText('Pasaporte 19AB12345')).length).toBeGreaterThan(0);
-    expect(screen.getByText(/tarifa diferenciada/)).toBeInTheDocument();
+    await usuario.click(within(lista).getByRole('button', { name: 'Ver reserva NT-5HC1MA' }));
+    expect(await screen.findByText(/tarifa diferenciada/)).toBeInTheDocument();
+    expect(screen.getByText('nt-5hc1ma@correo.co')).toBeInTheDocument();
   });
 
-  it('el administrador corrige los datos de una reserva', async () => {
+  it('el administrador asigna un guía a una reserva confirmada', async () => {
     const usuario = userEvent.setup();
     renderizarEn({ ruta: '/equipo/admin/reservas', sesion: SESION_ADMIN });
     const lista = await screen.findByRole('region', { name: 'Lista de reservas' });
-    await usuario.click(within(lista).getByRole('button', { name: 'Ver reserva NT-5HC1' }));
-    await usuario.click(await screen.findByRole('button', { name: 'Editar datos' }));
-    const formulario = screen.getByRole('form', { name: 'Editar datos de la reserva' });
-    const nombre = within(formulario).getByLabelText('Nombre del titular');
-    await usuario.clear(nombre);
-    await usuario.type(nombre, 'Claire Dubois');
-    await usuario.click(within(formulario).getByRole('button', { name: 'Guardar datos' }));
-    expect((await screen.findAllByText('Datos de NT-5HC1 actualizados')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Claire Dubois').length).toBeGreaterThan(0);
+    await usuario.click(within(lista).getByRole('button', { name: 'Ver reserva NT-8LP0WE' }));
+    await usuario.selectOptions(await screen.findByLabelText('Guía asignado'), 'Julián Pardo');
+    expect((await screen.findAllByText('Julián Pardo asignado a NT-8LP0WE')).length).toBeGreaterThan(0);
+  });
+
+  it('el administrador carga el cupo de una semana para un sendero', async () => {
+    const usuario = userEvent.setup();
+    renderizarEn({ ruta: '/equipo/admin/capacidad', sesion: SESION_ADMIN });
+    const fila = (await screen.findByRole('rowheader', { name: /Chorreras/ })).closest('tr') as HTMLElement;
+    const [primero] = within(fila).getAllByLabelText(/Cupo de Chorreras/);
+    await usuario.clear(primero);
+    await usuario.type(primero, '60');
+    await usuario.click(within(fila).getByRole('button', { name: 'Toda la semana' }));
+    await usuario.click(within(fila).getByRole('button', { name: 'Guardar' }));
+    expect((await screen.findAllByText('Capacidad de Chorreras guardada: 7 días')).length).toBeGreaterThan(0);
   });
 
   it('un solo menú reúne operación, contenido, indicadores y accesos', async () => {

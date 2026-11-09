@@ -25,6 +25,16 @@ export function CabeceraPanel({ etiqueta, titulo, fotoId, children }: { etiqueta
   );
 }
 
+/** Aviso de una pantalla que todavía muestra datos de ejemplo porque su API llega en un sprint posterior. */
+export function AvisoEjemplo({ children }: { children: ReactNode }) {
+  return (
+    <p role="note" className="m-0 flex items-start gap-3 rounded-3xl border border-dashed border-bosque/30 bg-superficie px-5 py-4 text-sm text-tinta">
+      <span className="mt-0.5 rounded-full bg-lima px-2.5 py-0.5 font-mono text-[11px] font-bold tracking-[0.08em] text-bosque uppercase">Datos de ejemplo</span>
+      <span>{children}</span>
+    </p>
+  );
+}
+
 export function TituloSeccion({ id, children, nota, accion }: { id: string; children: ReactNode; nota?: string; accion?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 pb-3">

@@ -41,6 +41,7 @@ const CODIGOS_SERVIDOR: Record<string, CodigoError> = {
   CUPO_INSUFICIENTE: 'sinCupos',
   TIPO_NO_PERMITIDO: 'archivoNoPermitido',
   RESERVAS_FUTURAS: 'reservasFuturas',
+  PAGOS_NO_CONFIGURADOS: 'pagosNoConfigurados',
 };
 
 /** Código de error que la interfaz traduce, según el estado HTTP. */

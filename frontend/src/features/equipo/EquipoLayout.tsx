@@ -3,10 +3,12 @@ import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { ETIQUETA_ROL } from '@/domain/equipo';
+import { formatearFechaCorta } from '@/domain/fechas';
+import type { EventoPanel } from '@/services/puertos';
+import { useServicios } from '@/services/ServiciosContext';
 import { CargandoPagina } from '@/ui/Estados';
 import { Logo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
-import { NOTIFICACIONES } from './ejemplo';
 import { useSesion } from './SesionContext';
 import { useSalir } from './useSalir';
 import { AvisoProvider } from './ui';
@@ -80,11 +82,66 @@ const MENU: { grupo: string; entradas: EntradaMenu[] }[] = [
   },
 ];
 
-/** Notificaciones del personal (RF-08: reservas nuevas sin recargar, alertas de capacidad, chats derivados). */
+interface Notificacion {
+  id: string;
+  texto: string;
+  hora: string;
+  tipo: 'reserva' | 'alerta' | 'revision';
+}
+
+const MAXIMO_NOTIFICACIONES = 12;
+const horaCorta = () => new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+
+function aNotificacion(e: EventoPanel): Notificacion {
+  const id = `${Date.now()}-${Math.random()}`;
+  if (e.tipo === 'aforo') {
+    return { id, tipo: 'alerta', hora: horaCorta(), texto: `${e.senderoNombre} llegó al ${e.porcentaje} % del cupo del ${formatearFechaCorta(e.fecha)}` };
+  }
+  const tipo = e.estado === 'EN_REVISION' ? 'revision' : 'reserva';
+  const texto =
+    e.estado === 'EN_REVISION'
+      ? `${e.codigo} espera revisión · ${e.senderoNombre}, ${e.personas} personas`
+      : e.estado === 'PENDIENTE_PAGO'
+        ? `Nueva reserva ${e.codigo} · ${e.senderoNombre}, ${formatearFechaCorta(e.fecha)}`
+        : `${e.codigo} pasó a ${e.estado.toLowerCase().replace('_', ' ')} · ${e.senderoNombre}`;
+  return { id, tipo, hora: horaCorta(), texto };
+}
+
+/** Notificaciones del personal (RF-08 y RF-26): pendientes al entrar y, después, lo que llega en vivo. */
 function Notificaciones() {
+  const { operacion } = useServicios();
   const [abierto, setAbierto] = useState(false);
-  const [leidas, setLeidas] = useState(false);
+  const [lista, setLista] = useState<Notificacion[]>([]);
+  const [nuevas, setNuevas] = useState(0);
   const raiz = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let vigente = true;
+    Promise.all([operacion.enRevision(), operacion.reprogramaciones()]).then(
+      ([revision, reprogramaciones]) => {
+        if (!vigente) return;
+        const pendientes: Notificacion[] = [];
+        if (revision.length > 0) {
+          pendientes.push({ id: 'revision', tipo: 'revision', hora: 'pendiente', texto: `${revision.length} ${revision.length === 1 ? 'reserva de grupo espera' : 'reservas de grupo esperan'} revisión` });
+        }
+        if (reprogramaciones.length > 0) {
+          pendientes.push({ id: 'reprogramacion', tipo: 'revision', hora: 'pendiente', texto: `${reprogramaciones.length} solicitud${reprogramaciones.length === 1 ? '' : 'es'} de reprogramación por decidir` });
+        }
+        setLista((l) => [...l, ...pendientes]);
+        setNuevas((n) => n + pendientes.length);
+      },
+      () => undefined,
+    );
+    const cortar = operacion.escucharEventos((e) => {
+      setLista((l) => [aNotificacion(e), ...l].slice(0, MAXIMO_NOTIFICACIONES));
+      setNuevas((n) => n + 1);
+    });
+    return () => {
+      vigente = false;
+      cortar();
+    };
+  }, [operacion]);
+
   useEffect(() => {
     if (!abierto) return;
     const fuera = (e: PointerEvent) => !raiz.current?.contains(e.target as Node) && setAbierto(false);
@@ -96,16 +153,16 @@ function Notificaciones() {
       document.removeEventListener('keydown', tecla);
     };
   }, [abierto]);
-  const color = { reserva: 'bg-[#3a8a5c]', alerta: 'bg-advertencia', chat: 'bg-lima', revision: 'bg-salvia' } as const;
+  const color = { reserva: 'bg-[#3a8a5c]', alerta: 'bg-advertencia', revision: 'bg-salvia' } as const;
   return (
     <div ref={raiz} className="relative">
       <button
         type="button"
         aria-expanded={abierto}
-        aria-label={`Notificaciones${leidas ? '' : `, ${NOTIFICACIONES.length} nuevas`}`}
+        aria-label={`Notificaciones${nuevas > 0 ? `, ${nuevas} nuevas` : ''}`}
         onClick={() => {
           setAbierto((a) => !a);
-          setLeidas(true);
+          setNuevas(0);
         }}
         className="relative flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
       >
@@ -122,9 +179,9 @@ function Notificaciones() {
         >
           <path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9zM10 20a2 2 0 0 0 4 0" />
         </svg>
-        {!leidas && (
+        {nuevas > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex size-5 items-center justify-center rounded-full bg-lima font-mono text-[10px] font-bold text-bosque">
-            {NOTIFICACIONES.length}
+            {nuevas > 9 ? '9+' : nuevas}
           </span>
         )}
       </button>
@@ -135,16 +192,17 @@ function Notificaciones() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2, ease: CURVA }}
-            className="absolute top-[calc(100%+8px)] right-0 z-50 w-[min(340px,calc(100vw-2rem))] overflow-hidden rounded-3xl bg-superficie text-bosque shadow-2xl lg:right-auto lg:left-0"
+            className="absolute top-[calc(100%+8px)] right-0 z-50 w-[min(340px,calc(100vw-2rem))] overflow-hidden rounded-3xl bg-superficie text-bosque shadow-2xl lg:fixed lg:top-6 lg:right-auto lg:left-[276px]"
           >
             <div className="border-b linea px-5 py-3 font-display font-bold">Notificaciones</div>
-            <ul className="m-0 list-none p-0">
-              {NOTIFICACIONES.map((n) => (
+            {lista.length === 0 && <p className="m-0 px-5 py-4 text-sm text-tinta-suave">Sin novedades. Las reservas nuevas y las alertas de aforo aparecen aquí al instante.</p>}
+            <ul className="m-0 max-h-[60vh] list-none overflow-y-auto p-0">
+              {lista.map((n) => (
                 <li key={n.id} className="flex gap-3 border-b linea px-5 py-3 last:border-0">
                   <span aria-hidden="true" className={`mt-1.5 size-2 flex-none rounded-full ${color[n.tipo]}`} />
                   <span className="flex flex-col gap-0.5">
                     <span className="text-sm">{n.texto}</span>
-                    <span className="text-xs text-tinta-suave">{n.hace}</span>
+                    <span className="text-xs text-tinta-suave">{n.hora}</span>
                   </span>
                 </li>
               ))}
@@ -165,7 +223,7 @@ export function EquipoLayout() {
   return (
     <AvisoProvider>
       <div className="flex min-h-screen flex-col bg-arena text-bosque lg:flex-row">
-        <aside className="flex flex-wrap items-center gap-x-3 gap-y-3 bg-bosque px-4 py-4 text-arena lg:sticky lg:top-0 lg:h-screen lg:w-[264px] lg:flex-none lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-5 lg:overflow-y-auto lg:py-7">
+        <aside className="relative z-30 flex flex-wrap items-center gap-x-3 gap-y-3 bg-bosque px-4 py-4 text-arena lg:sticky lg:top-0 lg:h-screen lg:w-[264px] lg:flex-none lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-5 lg:overflow-y-auto lg:py-7">
           <div className="flex flex-1 items-center justify-between gap-3 lg:flex-none">
             <Link to="/" className="px-1 text-arena no-underline hover:text-arena lg:px-3">
               <Logo lema="Equipo" />

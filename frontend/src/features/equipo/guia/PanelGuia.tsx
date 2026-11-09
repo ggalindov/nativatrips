@@ -11,7 +11,6 @@ import { useSesion } from '../SesionContext';
 import { useSalir } from '../useSalir';
 import { AvisoProvider, Insignia, Pais, formatoFecha, useAviso } from '../ui';
 
-const NOVEDADES = ['Visitante con síntomas de altura', 'Retraso en la salida', 'Cambio de ruta por clima', 'Daño en el sendero', 'Fauna en el sendero', 'Otra novedad'];
 
 function Hoja({ abierta, onCerrar, titulo, children }: { abierta: boolean; onCerrar: () => void; titulo: string; children: ReactNode }) {
   return (
@@ -63,9 +62,7 @@ function Hoy() {
   const salida = useConsulta(() => operacion.salidaDelGuia(hoy), [operacion, hoy]);
   const [cambios, setCambios] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
-  const [hoja, setHoja] = useState<'novedad' | 'cierre' | null>(null);
-  const [tipoNovedad, setTipoNovedad] = useState(NOVEDADES[0]);
-  const [detalle, setDetalle] = useState('');
+  const [hoja, setHoja] = useState<'cierre' | null>(null);
   const [cerradoAhora, setCerradoAhora] = useState(false);
   const [cerrando, setCerrando] = useState(false);
 
@@ -183,40 +180,11 @@ function Hoy() {
             <button type="button" disabled={cerrado} onClick={() => setHoja('cierre')} className="h-12 rounded-full bg-bosque font-semibold text-white disabled:opacity-40">
               {cerrado ? 'Tour cerrado' : 'Cerrar el tour'}
             </button>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setHoja('novedad')} className="h-12 rounded-full border border-bosque bg-transparent font-semibold text-bosque">
-                Reportar novedad
-              </button>
-              <a href="tel:[TELEFONO-EMERGENCIA]" className="flex h-12 items-center justify-center rounded-full bg-error font-semibold text-white no-underline hover:text-white">
-                Emergencia
-              </a>
-            </div>
+            {/* Línea nacional de emergencias de Colombia. */}
+            <a href="tel:123" className="flex h-12 items-center justify-center rounded-full bg-error font-semibold text-white no-underline hover:text-white">
+              Emergencia · 123
+            </a>
           </div>
-
-          <Hoja abierta={hoja === 'novedad'} onCerrar={() => setHoja(null)} titulo="Reportar novedad">
-            <div role="radiogroup" aria-label="Tipo de novedad" className="flex flex-wrap gap-2">
-              {NOVEDADES.map((n) => (
-                <button key={n} type="button" role="radio" aria-checked={tipoNovedad === n} onClick={() => setTipoNovedad(n)} className={`rounded-full px-4 py-2 text-sm font-semibold ${tipoNovedad === n ? 'bg-bosque text-lima' : 'bg-superficie text-bosque'}`}>
-                  {n}
-                </button>
-              ))}
-            </div>
-            <label className="flex flex-col gap-1.5">
-              <span className="etiqueta text-tinta-suave">Detalle</span>
-              <textarea value={detalle} onChange={(e) => setDetalle(e.target.value)} rows={3} className="rounded-2xl border border-bosque/15 bg-superficie p-3 text-[15px] focus:border-bosque focus:outline-none" />
-            </label>
-            <button
-              type="button"
-              onClick={() => {
-                setHoja(null);
-                setDetalle('');
-                avisar(`Novedad enviada a la oficina: ${tipoNovedad.toLowerCase()}`);
-              }}
-              className="h-12 rounded-full bg-lima font-display font-bold text-bosque"
-            >
-              Enviar a la oficina
-            </button>
-          </Hoja>
 
           <Hoja abierta={hoja === 'cierre'} onCerrar={() => setHoja(null)} titulo="Cerrar el tour">
             <p className="m-0 text-[15px] text-tinta">

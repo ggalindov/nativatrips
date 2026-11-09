@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { fotoDeSendero } from '@/contenido/fotos';
 import { Boton } from '@/ui/Boton';
 import { PESOS_RECOMENDACION, nombreSendero } from '../ejemplo';
-import { CabeceraPanel, Insignia, TituloSeccion, useAviso } from '../ui';
+import { AvisoEjemplo, CabeceraPanel, Insignia, TituloSeccion, useAviso } from '../ui';
 
 type Peso = keyof typeof PESOS_RECOMENDACION;
 
@@ -33,6 +33,7 @@ export function RecomendacionesAdmin() {
           Guardar reglas
         </Boton>
       </CabeceraPanel>
+      <AvisoEjemplo>El motor de recomendación es del Sprint 5; esta pantalla muestra cómo se configurará.</AvisoEjemplo>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-10 xl:grid-cols-[1.2fr_1fr]">
         <section aria-labelledby="rec-pesos" className="flex flex-col gap-4">

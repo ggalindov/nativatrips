@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Boton } from '@/ui/Boton';
 import { REPORTE_AMBIENTAL, nombreSendero } from './ejemplo';
-import { CabeceraPanel, Indicador, Insignia, TituloSeccion, useAviso } from './ui';
+import { AvisoEjemplo, CabeceraPanel, Indicador, Insignia, TituloSeccion, useAviso } from './ui';
 
 const MESES = [
   { valor: '2026-10', texto: 'Octubre 2026' },
@@ -40,6 +40,7 @@ export function ReportesPage() {
           </Boton>
         </div>
       </CabeceraPanel>
+      <AvisoEjemplo>El reporte ambiental con datos reales de ocupación es del Sprint 5.</AvisoEjemplo>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Indicador titulo="Visitantes del mes" valor={entero.format(total.visitantes)} nota={`de ${entero.format(total.limite)} autorizados`} />

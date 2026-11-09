@@ -81,6 +81,8 @@ export interface ReservasServicio {
   /** RF-36: envía al correo un enlace con todas sus reservas. Responde igual exista o no. */
   solicitarHistorial(correo: string): Promise<void>;
   historial(token: string): Promise<ReservaDelHistorial[]>;
+  /** Prepara el pago en Wompi y devuelve la dirección del checkout, a la que se lleva al navegador. */
+  iniciarPago(token: string): Promise<string>;
 }
 
 export interface ReservaEnRevision {
@@ -166,6 +168,42 @@ export interface ResumenGerencia {
   ranking: { senderoNombre: string; visitantes: number; ocupacionPct: number }[];
 }
 
+/** Una reserva tal como la ve el administrador en su panel. */
+export interface ReservaDelPanel {
+  id: string;
+  codigo: string;
+  senderoId: string;
+  senderoNombre: string;
+  fecha: string;
+  hora: string;
+  personas: number;
+  tipoGrupo: TipoGrupo;
+  estado: EstadoReserva;
+  guiaId: string | null;
+  guiaNombre: string | null;
+  titular: (Persona & { correo: string; celular: string }) | null;
+  /** Personas ya registradas, titular incluido. */
+  integrantes: Persona[];
+  requerimientos: string | null;
+  /** Instante ISO en que se creó. */
+  creada: string;
+}
+
+export interface GuiaEquipo {
+  id: string;
+  nombre: string;
+  correo: string;
+}
+
+/** RF-23 a RF-26: capacidad publicada de un sendero en un día, con su ocupación. */
+export interface CapacidadDia {
+  senderoId: string;
+  fecha: string;
+  cupoMaximo: number;
+  umbralPct: number;
+  ocupacion: number;
+}
+
 /** RF-08 y RF-26: lo que llega en vivo al panel. */
 export type EventoPanel =
   | {
@@ -188,6 +226,14 @@ export interface OperacionServicio {
   soporteReprogramacion(id: string): Promise<Blob>;
   decidirReprogramacion(id: string, aprobar: boolean, motivo?: string): Promise<void>;
   salidasDelDia(fecha: string): Promise<Salida[]>;
+  /** Reservas con fecha de tour en el rango (máximo 62 días), de todos los estados. */
+  reservasDelPeriodo(desde: string, hasta: string): Promise<ReservaDelPanel[]>;
+  guias(): Promise<GuiaEquipo[]>;
+  /** Solo para reservas confirmadas. */
+  asignarGuia(reservaId: string, guiaId: string): Promise<void>;
+  capacidad(desde: string, hasta: string): Promise<CapacidadDia[]>;
+  /** RF-23: carga o corrige la capacidad de varios días de un sendero. */
+  cargarCapacidad(senderoId: string, dias: Omit<CapacidadDia, 'senderoId' | 'ocupacion'>[]): Promise<void>;
   ocupacion(fecha: string): Promise<OcupacionSendero[]>;
   salidaDelGuia(fecha: string): Promise<SalidaGuia | null>;
   marcarAsistencia(visitante: Pick<Visitante, 'id' | 'reservaId'>, presente: boolean): Promise<void>;
@@ -240,7 +286,8 @@ export type CodigoError =
   | 'sesionVencida'
   | 'enlaceRecuperacionVencido'
   | 'archivoNoPermitido'
-  | 'reservasFuturas';
+  | 'reservasFuturas'
+  | 'pagosNoConfigurados';
 
 /**
  * Error esperable de negocio. `codigo` permite mostrarlo en el idioma de la
