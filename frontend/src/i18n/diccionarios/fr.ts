@@ -382,6 +382,8 @@ export const fr: Diccionario = {
     faltaPago: 'Paiement en attente',
     faltaPagoTexto: 'Finalisez le paiement pour que nous puissions vérifier et confirmer la réservation.',
     pagar: 'Payer avec Wompi',
+    pagoEnProceso: 'Nous attendons la confirmation de Wompi. Cette page se met à jour toute seule ; la confirmation vous parvient aussi par e-mail.',
+    pagoSinEnlace: 'Nous ne trouvons pas la réservation de ce paiement dans ce navigateur. Ouvrez le lien reçu par e-mail pour voir son état.',
     pagoPendiente: 'Le paiement se fait sur Wompi et la réservation est confirmée dès son approbation',
     acompanantes: 'Accompagnants',
     completo: 'Complet',
@@ -559,6 +561,7 @@ export const fr: Diccionario = {
   errores: {
     archivoNoPermitido: 'Ce fichier n’est pas accepté. Utilisez PDF, JPG ou PNG jusqu’à 5 Mo.',
     reservasFuturas: 'Le sentier a des réservations à partir d’aujourd’hui.',
+    pagosNoConfigurados: 'Le paiement en ligne n’est pas encore activé. Réessayez plus tard.',
     generico: 'Une erreur s’est produite. Veuillez réessayer.',
     senderoInexistente: 'Ce sentier n’existe pas.',
     enlaceInvalido: 'Ce lien n’est pas valide ou a expiré. Demandez-en un nouveau avec votre code et votre e-mail.',

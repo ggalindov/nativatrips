@@ -405,6 +405,8 @@ export const es = {
     faltaPago: 'Falta el pago',
     faltaPagoTexto: 'Completa el pago para que revisemos y confirmemos la reserva.',
     pagar: 'Pagar con Wompi',
+    pagoEnProceso: 'Estamos esperando la confirmación de Wompi. Esta página se actualiza sola; la confirmación también te llega al correo.',
+    pagoSinEnlace: 'No encontramos la reserva de este pago en este navegador. Abre el enlace que te llegó al correo para ver su estado.',
     pagoPendiente: 'El pago se hace en Wompi y la reserva se confirma cuando se aprueba',
     acompanantes: 'Acompañantes',
     completo: 'Completo',
@@ -582,6 +584,7 @@ export const es = {
   errores: {
     archivoNoPermitido: 'Ese archivo no se acepta. Usa PDF, JPG o PNG de hasta 5 MB.',
     reservasFuturas: 'El sendero tiene reservas desde hoy.',
+    pagosNoConfigurados: 'El pago en línea todavía no está habilitado. Intenta de nuevo más tarde.',
     generico: 'Algo salió mal. Intenta de nuevo.',
     senderoInexistente: 'Ese sendero no existe.',
     enlaceInvalido: 'El enlace no es válido o ya caducó. Pide uno nuevo con tu código y tu correo.',

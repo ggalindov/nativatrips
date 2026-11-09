@@ -31,6 +31,7 @@ const UsuariosAdmin = perezosa(() => import('@/features/equipo/admin/UsuariosAdm
 const EquipoLayout = perezosa(() => import('@/features/equipo/EquipoLayout').then((m) => m.EquipoLayout));
 const PanelGuia = perezosa(() => import('@/features/equipo/guia/PanelGuia').then((m) => m.PanelGuia));
 const MiReservaPage = perezosa(() => import('@/features/mi-reserva/MiReservaPage').then((m) => m.MiReservaPage));
+const ResultadoPagoPage = perezosa(() => import('@/features/mi-reserva/MiReservaPage').then((m) => m.ResultadoPagoPage));
 const SolicitarEnlacePage = perezosa(() => import('@/features/mi-reserva/SolicitarEnlacePage').then((m) => m.SolicitarEnlacePage));
 const MisReservasPage = perezosa(() => import('@/features/mi-reserva/MisReservasPage').then((m) => m.MisReservasPage));
 const SolicitarHistorialPage = perezosa(() => import('@/features/mi-reserva/MisReservasPage').then((m) => m.SolicitarHistorialPage));
@@ -75,6 +76,7 @@ export function Rutas() {
         <Route path="reservar/:senderoId" element={<ReservaPage />} />
         <Route path="reserva/apartada" element={<ReservaApartadaPage />} />
         <Route path="mi-reserva" element={<SolicitarEnlacePage />} />
+        <Route path="mi-reserva/resultado-pago" element={<ResultadoPagoPage />} />
         <Route path="mi-reserva/:token" element={<MiReservaPage />} />
         <Route path="mis-reservas" element={<SolicitarHistorialPage />} />
         <Route path="mis-reservas/:token" element={<MisReservasPage />} />

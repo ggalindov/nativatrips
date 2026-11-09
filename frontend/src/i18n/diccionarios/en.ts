@@ -382,6 +382,8 @@ export const en: Diccionario = {
     faltaPago: 'Payment pending',
     faltaPagoTexto: 'Complete the payment so we can review and confirm your booking.',
     pagar: 'Pay with Wompi',
+    pagoEnProceso: 'We are waiting for Wompi to confirm your payment. This page updates by itself, and the confirmation is also sent to your email.',
+    pagoSinEnlace: 'We couldn’t find the booking for this payment in this browser. Open the link we emailed you to check its status.',
     pagoPendiente: 'You pay on Wompi and your booking is confirmed once the payment is approved',
     acompanantes: 'Companions',
     completo: 'Complete',
@@ -559,6 +561,7 @@ export const en: Diccionario = {
   errores: {
     archivoNoPermitido: 'That file is not accepted. Use PDF, JPG or PNG up to 5 MB.',
     reservasFuturas: 'The trail has bookings from today on.',
+    pagosNoConfigurados: 'Online payment is not enabled yet. Please try again later.',
     generico: 'Something went wrong. Please try again.',
     senderoInexistente: 'That trail doesn’t exist.',
     enlaceInvalido: 'This link is invalid or has expired. Request a new one with your code and email.',
