@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { atributosFoto, fotoDeSendero } from '@/contenido/fotos';
 import { hoyIso, sumarDias } from '@/domain/fechas';
 import { bandera, esExtranjero } from '@/domain/paises';
@@ -208,12 +208,100 @@ function Reprogramar({ reserva, token, onCambio }: { reserva: Reserva; token: st
   );
 }
 
+/** Guarda el enlace antes de ir a Wompi: la página de regreso lo usa para volver a esta reserva. */
+export const CLAVE_PAGO = 'nativatrips.pago-enlace';
+/** Mientras Wompi confirma, la reserva se vuelve a consultar cada tanto, hasta este límite. */
+const CONSULTA_PAGO_MS = 5000;
+const ESPERA_PAGO_MS = 3 * 60_000;
+
+/** Lleva al checkout de Wompi; la reserva se confirma solo cuando llega el evento firmado de Wompi. */
+function Pagar({ token }: { token: string }) {
+  const { reservas } = useServicios();
+  const { t } = useIdioma();
+  const mensajeDeError = useMensajeError();
+  const [yendo, setYendo] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const pagar = async () => {
+    setError(null);
+    setYendo(true);
+    try {
+      const url = await reservas.iniciarPago(token);
+      try {
+        sessionStorage.setItem(CLAVE_PAGO, token);
+      } catch {
+        /* sin almacenamiento: al volver se abre la reserva desde el correo */
+      }
+      window.location.assign(url);
+    } catch (e) {
+      setError(mensajeDeError(e));
+      setYendo(false);
+    }
+  };
+
+  return (
+    <>
+      <Boton variante="primario" conFlecha cargando={yendo} onClick={pagar} title={t.miReserva.pagoPendiente}>
+        {t.miReserva.pagar}
+      </Boton>
+      {error && (
+        <p role="alert" className="m-0 rounded-2xl bg-white/10 px-4 py-3 text-sm text-white">
+          {error}
+        </p>
+      )}
+    </>
+  );
+}
+
+function enlaceDelPago(): string | null {
+  try {
+    return sessionStorage.getItem(CLAVE_PAGO);
+  } catch {
+    return null;
+  }
+}
+
+/** Regreso desde Wompi: la URL de regreso no confirma nada, así que solo devuelve a la reserva. */
+export function ResultadoPagoPage() {
+  const { t } = useIdioma();
+  const token = enlaceDelPago();
+  if (token) return <Navigate to={`/mi-reserva/${token}?pago=regreso`} replace />;
+  return (
+    <div className="mx-auto flex max-w-xl flex-col gap-6 px-6 py-20">
+      <p role="status" className="m-0 text-[17px] leading-relaxed">
+        {t.miReserva.pagoSinEnlace}
+      </p>
+      <Link to="/mi-reserva">{t.miReserva.pedirNuevo}</Link>
+    </div>
+  );
+}
+
 export function MiReservaPage() {
   const { token = '' } = useParams();
+  const [parametros] = useSearchParams();
+  const regresoDePago = parametros.get('pago') === 'regreso';
   const { reservas } = useServicios();
   const { t, f } = useIdioma();
   const m = t.miReserva;
   const { estado, setEstado, recargar } = useConsulta(() => reservas.abrirConEnlace(token), [reservas, token]);
+  const pendiente = estado.tipo === 'listo' && estado.datos.estado === 'PENDIENTE_PAGO';
+
+  // Al volver de Wompi la confirmación llega por el evento del servidor, no por el navegador: se consulta hasta verla.
+  useEffect(() => {
+    if (!regresoDePago || !pendiente) return;
+    const inicio = Date.now();
+    const intervalo = setInterval(() => {
+      if (Date.now() - inicio > ESPERA_PAGO_MS) {
+        clearInterval(intervalo);
+        return;
+      }
+      reservas.abrirConEnlace(token).then(
+        (nueva) => nueva.estado !== 'PENDIENTE_PAGO' && setEstado({ tipo: 'listo', datos: nueva }),
+        () => undefined,
+      );
+    }, CONSULTA_PAGO_MS);
+    return () => clearInterval(intervalo);
+  }, [regresoDePago, pendiente, reservas, token, setEstado]);
 
   if (estado.tipo === 'cargando') return <div className="mx-auto max-w-7xl px-6 py-20"><Cargando texto={m.abriendo} /></div>;
   if (estado.tipo === 'error') {
@@ -268,9 +356,12 @@ export function MiReservaPage() {
               <section className="flex flex-col items-start gap-4 rounded-[28px] bg-bosque p-6 text-white md:p-8">
                 <h2 className="m-0 font-display text-[26px] font-bold">{m.faltaPago}</h2>
                 <p className="m-0 text-[15px] text-white/75">{m.faltaPagoTexto}</p>
-                <Boton variante="primario" conFlecha disabled title={m.pagoPendiente}>
-                  {m.pagar}
-                </Boton>
+                {regresoDePago && (
+                  <p role="status" className="m-0 rounded-2xl bg-lima/15 px-4 py-3 text-[15px] text-white">
+                    {m.pagoEnProceso}
+                  </p>
+                )}
+                <Pagar token={token} />
               </section>
             )}
             {r.estado === 'EN_REVISION' && !r.reprogramacion && (

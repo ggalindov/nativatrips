@@ -382,6 +382,8 @@ export const pt: Diccionario = {
     faltaPago: 'Falta o pagamento',
     faltaPagoTexto: 'Conclua o pagamento para que possamos analisar e confirmar a reserva.',
     pagar: 'Pagar com Wompi',
+    pagoEnProceso: 'Estamos aguardando a confirmação da Wompi. Esta página se atualiza sozinha, e a confirmação também chega ao seu e-mail.',
+    pagoSinEnlace: 'Não encontramos a reserva deste pagamento neste navegador. Abra o link que enviamos ao seu e-mail para ver o status.',
     pagoPendiente: 'O pagamento é feito na Wompi e a reserva é confirmada quando for aprovado',
     acompanantes: 'Acompanhantes',
     completo: 'Completo',
@@ -559,6 +561,7 @@ export const pt: Diccionario = {
   errores: {
     archivoNoPermitido: 'Esse arquivo não é aceito. Use PDF, JPG ou PNG de até 5 MB.',
     reservasFuturas: 'A trilha tem reservas a partir de hoje.',
+    pagosNoConfigurados: 'O pagamento on-line ainda não está habilitado. Tente novamente mais tarde.',
     generico: 'Algo deu errado. Tente de novo.',
     senderoInexistente: 'Essa trilha não existe.',
     enlaceInvalido: 'O link não é válido ou expirou. Peça um novo com seu código e seu e-mail.',
