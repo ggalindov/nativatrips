@@ -2,6 +2,7 @@ package com.nativatrips.backend.pagos.service;
 
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
+import com.nativatrips.backend.common.log.Registro;
 import com.nativatrips.backend.config.WompiProperties;
 import com.nativatrips.backend.pagos.dto.PagoResponse;
 import com.nativatrips.backend.pagos.model.EstadoPago;
@@ -150,7 +151,7 @@ public class PagoService {
         }
         if (eventoRepository.existsByTransaccionIdAndEstado(resultado.transaccionId(), resultado.estado())) {
             log.info("Evento repetido de la transaccion {} ({}); no se vuelve a aplicar",
-                    resultado.transaccionId(), resultado.estado());
+                    Registro.limpio(resultado.transaccionId()), resultado.estado());
             return;
         }
         eventoRepository.save(new EventoPago(pago.getId(), resultado.transaccionId(), resultado.estado(), Instant.now()));
