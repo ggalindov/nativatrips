@@ -59,7 +59,7 @@ describe('Frailín, el asistente', () => {
       { rol: 'user', contenido: '¿Qué debo llevar?' },
       { rol: 'assistant', contenido: 'Lleva ropa abrigada y agua.' },
       { rol: 'user', contenido: '¿Hay cupos?' },
-    ]);
+    ], null);
   });
 
   it('si el servidor limita los mensajes lo dice en el idioma activo y no lo reenvía como respuesta', async () => {
@@ -83,7 +83,7 @@ describe('Frailín, el asistente', () => {
     expect(conversar).toHaveBeenLastCalledWith([
       { rol: 'user', contenido: 'Hola' },
       { rol: 'user', contenido: 'Otra vez' },
-    ]);
+    ], null);
   });
   it('ofrece el formulario con el sendero que el visitante quiere reservar (RF-20)', async () => {
     sessionStorage.clear();
@@ -147,5 +147,20 @@ describe('Frailín, el asistente', () => {
     const contacto = await within(chat).findByRole('region', { name: '¿Prefieres hablar con una persona?' });
     expect(within(contacto).getByRole('link', { name: 'Escribir por correo' })).toBeInTheDocument();
     expect(within(contacto).queryByRole('link', { name: 'Escribir por WhatsApp' })).not.toBeInTheDocument();
+  });
+  it('en la página de su reserva envía el enlace para que el asistente responda sobre ella (HU-07)', async () => {
+    sessionStorage.clear();
+    const conversar = vi.fn<(m: MensajeAsistente[], enlace?: string | null) => Promise<RespuestaAsistente | null>>()
+      .mockResolvedValue(texto('Tu salida es el sábado a las 7:00.'));
+    const servicios = { ...crearServiciosEnMemoria({ latenciaMs: 0 }), asistente: { conversar } };
+    const usuario = userEvent.setup();
+    renderizarEn({ ruta: '/mi-reserva/token-del-enlace', servicios });
+
+    await usuario.click(await screen.findByRole('button', { name: 'Hablar con Frailín' }));
+    const chat = screen.getByRole('dialog', { name: 'Conversación con Frailín' });
+    await usuario.type(within(chat).getByRole('textbox'), '¿Cuándo es mi salida?{Enter}');
+
+    expect(await within(chat).findByText('Tu salida es el sábado a las 7:00.')).toBeInTheDocument();
+    expect(conversar).toHaveBeenLastCalledWith([{ rol: 'user', contenido: '¿Cuándo es mi salida?' }], 'token-del-enlace');
   });
 });

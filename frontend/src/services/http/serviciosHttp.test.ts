@@ -97,4 +97,16 @@ describe('asistente contra la API', () => {
       codigo: 'demasiadosMensajes',
     });
   });
+  it('en la página de la reserva envía el enlace en la cabecera y nunca en el cuerpo', async () => {
+    const fetchFalso = vi.fn<typeof fetch>().mockImplementation(async () => respuesta(200, { rol: 'assistant', contenido: 'Listo' }));
+
+    await serviciosCon(fetchFalso, null).asistente.conversar([{ rol: 'user', contenido: '¿Cuándo salgo?' }], 'token-del-enlace');
+    await serviciosCon(fetchFalso, null).asistente.conversar([{ rol: 'user', contenido: 'Hola' }]);
+
+    const [, conEnlace] = fetchFalso.mock.calls[0];
+    expect(new Headers(conEnlace?.headers).get('X-Enlace-Reserva')).toBe('token-del-enlace');
+    expect(conEnlace?.body as string).not.toContain('token-del-enlace');
+    const [, sinEnlace] = fetchFalso.mock.calls[1];
+    expect(new Headers(sinEnlace?.headers).has('X-Enlace-Reserva')).toBe(false);
+  });
 });
