@@ -46,6 +46,10 @@ app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
   asistente:
     mensajes-por-hora: ${ASISTENTE_MENSAJES_POR_HORA:20}
+    # Contacto que el asistente ofrece cuando deriva a una persona (RF-22). WhatsApp en formato
+    # internacional sin signos (ej. 573001234567). Vacios: el portal muestra solo el mensaje.
+    contacto-correo: ${ASISTENTE_CONTACTO_CORREO:}
+    contacto-whatsapp: ${ASISTENTE_CONTACTO_WHATSAPP:}
   correo:
     # Direccion que ve el turista; si queda vacia se usa MAIL_USUARIO.
     remitente: ${MAIL_REMITENTE:}

@@ -9,7 +9,12 @@ import static org.mockito.Mockito.verify;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
 import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.senderos.service.SenderoService;
+import com.nativatrips.backend.asistente.dto.Derivacion;
+import com.nativatrips.backend.senderos.dto.SenderoResponse;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,14 +38,15 @@ class AsistenteToolsTest {
 
     @BeforeEach
     void setUp() {
-        asistenteTools = new AsistenteTools(senderoService, reservaService, JsonMapper.builder().build());
+        Clock reloj = Clock.fixed(Instant.parse("2026-11-18T15:00:00Z"), ZoneId.of("America/Bogota"));
+        asistenteTools = new AsistenteTools(senderoService, reservaService, JsonMapper.builder().build(), reloj);
     }
 
     @Test
     void ningunaHerramientaDevuelveReservas() {
         assertThat(asistenteTools.definiciones())
                 .extracting(definicion -> definicion.get("name"))
-                .containsExactly("buscar_senderos", "consultar_disponibilidad");
+                .containsExactly("buscar_senderos", "consultar_disponibilidad", "preparar_reserva", "derivar_a_persona");
     }
 
     @Test
@@ -88,5 +94,62 @@ class AsistenteToolsTest {
         String resultado = asistenteTools.ejecutar("herramienta_inventada", Map.of());
 
         assertThat(resultado).contains("Herramienta desconocida");
+    }
+    private SenderoResponse sendero(long id, String nombre) {
+        return new SenderoResponse(id, nombre, null, null, 240, null, null, null, true, true,
+                null, null, null, null, null, null, List.of(), List.of());
+    }
+
+    @Test
+    void prepararReservaDejaElSenderoYLaFechaParaElBoton() {
+        given(senderoService.obtener(3L)).willReturn(sendero(3L, "Lagunas de Siecha"));
+
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3, "fecha", "2026-11-28"));
+
+        assertThat(resultado.reserva()).isNotNull();
+        assertThat(resultado.reserva().senderoId()).isEqualTo(3L);
+        assertThat(resultado.reserva().senderoNombre()).isEqualTo("Lagunas de Siecha");
+        assertThat(resultado.reserva().fecha()).isEqualTo("2026-11-28");
+        assertThat(resultado.motivoDerivacion()).isNull();
+        org.mockito.Mockito.verifyNoInteractions(reservaService);
+    }
+
+    @Test
+    void prepararReservaSinFechaDejaSoloElSendero() {
+        given(senderoService.obtener(3L)).willReturn(sendero(3L, "Lagunas de Siecha"));
+
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3));
+
+        assertThat(resultado.reserva().fecha()).isNull();
+    }
+
+    @Test
+    void prepararReservaConUnaFechaPasadaNoOfreceElBoton() {
+        given(senderoService.obtener(3L)).willReturn(sendero(3L, "Lagunas de Siecha"));
+
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3, "fecha", "2026-11-01"));
+
+        assertThat(resultado.reserva()).isNull();
+        assertThat(resultado.contenido()).contains("ya paso");
+    }
+
+    @Test
+    void prepararReservaDeUnSenderoQueNoSeOfreceDevuelveError() {
+        given(senderoService.obtener(9L)).willThrow(new ResourceNotFoundException("Sendero no encontrado"));
+
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 9));
+
+        assertThat(resultado.reserva()).isNull();
+        assertThat(resultado.contenido()).contains("Sendero no encontrado");
+    }
+
+    @Test
+    void derivarAPersonaDejaElMotivo() {
+        var pide = asistenteTools.ejecutarConEfectos("derivar_a_persona", Map.of("motivo", "PIDE_PERSONA"));
+        var otro = asistenteTools.ejecutarConEfectos("derivar_a_persona", Map.of("motivo", "cualquier cosa"));
+
+        assertThat(pide.motivoDerivacion()).isEqualTo(Derivacion.PIDE_PERSONA);
+        assertThat(otro.motivoDerivacion()).isEqualTo(Derivacion.NO_RESUELTO);
+        assertThat(pide.reserva()).isNull();
     }
 }
