@@ -17,4 +17,11 @@ class LogNotificacionServiceTest {
         assertThat(LogNotificacionService.enmascarar("@correo.co")).isEqualTo("***");
         assertThat(LogNotificacionService.enmascarar(null)).isEqualTo("***");
     }
+
+    @Test
+    void unDominioConSaltoDeLineaNoPuedeAbrirOtraLineaDelRegistro() {
+        assertThat(LogNotificacionService.enmascarar("ana@correo.co\nINFO falso"))
+                .isEqualTo("a***@correo.co_INFO falso")
+                .doesNotContain("\n");
+    }
 }
