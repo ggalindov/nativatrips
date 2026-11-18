@@ -15,6 +15,8 @@ interface Mensaje {
   texto: string;
   /** Aviso propio de la interfaz (demostración o error): se muestra, pero no se reenvía al servidor. */
   local?: boolean;
+  /** Respuesta de demostración (sin servidor): tras ella se ofrece el contacto. */
+  demo?: boolean;
   /** RF-20: el asistente preparó una reserva y se ofrece el formulario. */
   reserva?: ReservaSugerida | null;
 }
@@ -204,7 +206,7 @@ export function Asistente() {
     asistente
       .conversar(turnosParaApi(historial))
       .then((respuesta): Mensaje => {
-        if (respuesta === null) return { id: 0, rol: 'frailin', texto: c.demo, local: true };
+        if (respuesta === null) return { id: 0, rol: 'frailin', texto: c.demo, local: true, demo: true };
         atenderDerivacion(respuesta.derivacion);
         return { id: 0, rol: 'frailin', texto: respuesta.texto, reserva: respuesta.reserva };
       })
@@ -228,7 +230,7 @@ export function Asistente() {
   };
 
   // Sin servidor no hay derivación: tras la demostración se ofrece igual el contacto.
-  const enDemostracion = mensajes.some((m) => m.local && m.texto === c.demo);
+  const enDemostracion = mensajes.some((m) => m.demo);
   const mostrarContacto = contacto !== null || enDemostracion;
 
   return (
