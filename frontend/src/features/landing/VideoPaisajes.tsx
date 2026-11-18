@@ -1,22 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'motion/react';
+import { fuenteVideoPaisajes, medioNoDisponible, medioPrecargado, suscribirMedios } from '@/app/medios';
 import { atributosFoto, foto } from '@/contenido/fotos';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { EnlaceBoton } from '@/ui/Boton';
-import { conexionLimitada, pantallaPequena } from '@/ui/conexion';
+import { conexionLimitada } from '@/ui/conexion';
 import { Aparecer } from '@/ui/movimiento';
 
 /**
  * Video de paisajes del parque en bucle y sin sonido. Se descarga cuando la
  * sección está por aparecer, en 480p para celulares, y se pausa cuando sale
  * de la pantalla. Con ahorro de datos o conexión 2G espera a que la persona
- * lo pida y mientras tanto muestra su imagen fija.
+ * lo pida y mientras tanto muestra su imagen fija. Si la pantalla de carga
+ * ya lo descargó, usa esa copia; si el servidor no lo tiene, muestra la foto
+ * de la laguna sin intentar reproducirlo.
  */
 export function VideoPaisajes() {
   const seccion = useRef<HTMLElement>(null);
   const { t } = useIdioma();
   const video = useRef<HTMLVideoElement>(null);
-  const [sinVideo, setSinVideo] = useState(false);
+  const [fallo, setFallo] = useState(false);
   const { scrollYProgress } = useScroll({ target: seccion, offset: ['start end', 'end start'] });
   const escala = useTransform(scrollYProgress, [0, 0.5, 1], [1.15, 1, 1.08]);
   const recorte = useTransform(scrollYProgress, [0, 0.35], ['inset(10% 3% 10% 3% round 40px)', 'inset(0% 0% 0% 0% round 0px)']);
@@ -24,11 +27,14 @@ export function VideoPaisajes() {
   const cerca = useInView(seccion, { margin: '400px 0px' });
   const [permitido, setPermitido] = useState(() => !conexionLimitada());
   const [descargar, setDescargar] = useState(false);
-  const fuente = useMemo(() => (pantallaPequena() ? '/media/chingaza-paisajes-480.mp4' : '/media/chingaza-paisajes.mp4'), []);
+  const fuente = useMemo(() => fuenteVideoPaisajes(), []);
+  const precargado = useSyncExternalStore(suscribirMedios, () => medioPrecargado(fuente), () => undefined);
+  const noExiste = useSyncExternalStore(suscribirMedios, () => medioNoDisponible(fuente), () => false);
+  const sinVideo = fallo || noExiste;
 
   useEffect(() => {
-    if (cerca && permitido) setDescargar(true);
-  }, [cerca, permitido]);
+    if (cerca && permitido && !noExiste) setDescargar(true);
+  }, [cerca, permitido, noExiste]);
 
   useEffect(() => {
     const v = video.current;
@@ -44,10 +50,10 @@ export function VideoPaisajes() {
         {sinVideo && <img {...atributosFoto(foto('laguna-chingaza'))} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />}
         <motion.video
           ref={video}
-          onError={() => setSinVideo(true)}
+          onError={() => setFallo(true)}
           style={{ scale: escala }}
-          className="absolute inset-0 h-full w-full object-cover"
-          src={descargar ? fuente : undefined}
+          className={`absolute inset-0 h-full w-full object-cover ${sinVideo ? 'hidden' : ''}`}
+          src={descargar ? (precargado ?? fuente) : undefined}
           poster="/media/chingaza-paisajes.jpg"
           autoPlay={descargar}
           muted
@@ -56,7 +62,7 @@ export function VideoPaisajes() {
           preload={descargar ? 'auto' : 'none'}
           aria-label={t.video.aria}
         />
-        {!permitido && (
+        {!permitido && !sinVideo && (
           <button
             type="button"
             onClick={() => setPermitido(true)}
