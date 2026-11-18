@@ -40,7 +40,7 @@ class AsistenteServiceTest {
     @BeforeEach
     void setUp() {
         asistenteService = new AsistenteService(anthropicClient, tools, "reservas@ecopalacio.co", " ");
-        org.mockito.Mockito.lenient().when(tools.definiciones()).thenReturn(List.of());
+        org.mockito.Mockito.lenient().when(tools.definiciones(any(AsistenteTools.Contexto.class))).thenReturn(List.of());
     }
 
     @Test
@@ -76,14 +76,14 @@ class AsistenteServiceTest {
         given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList()))
                 .willReturn(primeraRespuesta)
                 .willReturn(segundaRespuesta);
-        given(tools.ejecutarConEfectos(eq("buscar_senderos"), anyMap()))
+        given(tools.ejecutarConEfectos(eq("buscar_senderos"), anyMap(), any()))
                 .willReturn(new AsistenteTools.Resultado("[{\"nombre\":\"Piedras Gordas\"}]", null, null));
 
         var request = new ChatRequest(List.of(new MensajeChat("user", "Que senderos hay?")));
         var response = asistenteService.conversar(request);
 
         assertThat(response.contenido()).isEqualTo("Tenemos el sendero Piedras Gordas disponible.");
-        verify(tools).ejecutarConEfectos(eq("buscar_senderos"), anyMap());
+        verify(tools).ejecutarConEfectos(eq("buscar_senderos"), anyMap(), eq(AsistenteTools.Contexto.VACIO));
         assertThat(response.reserva()).isNull();
         assertThat(response.derivacion()).isNull();
         verify(anthropicClient, times(2)).enviarMensaje(anyString(), anyList(), anyList());
@@ -98,7 +98,7 @@ class AsistenteServiceTest {
                 new AnthropicResponse.Usage(20, 10));
 
         given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList())).willReturn(siempreToolUse);
-        given(tools.ejecutarConEfectos(any(), any())).willReturn(new AsistenteTools.Resultado("[]", null, null));
+        given(tools.ejecutarConEfectos(any(), any(), any())).willReturn(new AsistenteTools.Resultado("[]", null, null));
 
         var request = new ChatRequest(List.of(new MensajeChat("user", "Hola")));
 
@@ -124,7 +124,7 @@ class AsistenteServiceTest {
         given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList()))
                 .willReturn(pideHerramienta("preparar_reserva", Map.of("senderoId", 3, "fecha", "2026-11-28")))
                 .willReturn(texto("Listo, abre el formulario con el boton."));
-        given(tools.ejecutarConEfectos(eq("preparar_reserva"), anyMap()))
+        given(tools.ejecutarConEfectos(eq("preparar_reserva"), anyMap(), any()))
                 .willReturn(new AsistenteTools.Resultado("{\"listo\":true}", sugerida, null));
 
         var response = asistenteService.conversar(new ChatRequest(List.of(new MensajeChat("user", "Quiero reservar Siecha el 28"))));
@@ -138,12 +138,28 @@ class AsistenteServiceTest {
         given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList()))
                 .willReturn(pideHerramienta("derivar_a_persona", Map.of("motivo", "PIDE_PERSONA")))
                 .willReturn(texto("Te dejo el contacto del equipo."));
-        given(tools.ejecutarConEfectos(eq("derivar_a_persona"), anyMap()))
+        given(tools.ejecutarConEfectos(eq("derivar_a_persona"), anyMap(), any()))
                 .willReturn(new AsistenteTools.Resultado("{\"listo\":true}", null, Derivacion.PIDE_PERSONA));
 
         var response = asistenteService.conversar(new ChatRequest(List.of(new MensajeChat("user", "Quiero hablar con alguien"))));
 
         assertThat(response.derivacion()).isEqualTo(new Derivacion(Derivacion.PIDE_PERSONA, "reservas@ecopalacio.co", null));
         assertThat(response.reserva()).isNull();
+    }
+    @Test
+    void elEnlaceDeLaReservaLlegaALasHerramientasSinPasarPorElModelo() {
+        var contexto = new AsistenteTools.Contexto("token-del-enlace", "203.0.113.7");
+        given(anthropicClient.enviarMensaje(anyString(), anyList(), anyList()))
+                .willReturn(pideHerramienta("consultar_mi_reserva", Map.of()))
+                .willReturn(texto("Tu salida es el 28 de noviembre."));
+        given(tools.ejecutarConEfectos(eq("consultar_mi_reserva"), anyMap(), eq(contexto)))
+                .willReturn(new AsistenteTools.Resultado("{\"codigo\":\"NT-7Q4KX2\"}", null, null));
+
+        var response = asistenteService.conversar(
+                new ChatRequest(List.of(new MensajeChat("user", "Cuando es mi salida?"))), contexto);
+
+        assertThat(response.contenido()).isEqualTo("Tu salida es el 28 de noviembre.");
+        verify(tools).definiciones(contexto);
+        verify(tools).ejecutarConEfectos(eq("consultar_mi_reserva"), anyMap(), eq(contexto));
     }
 }
