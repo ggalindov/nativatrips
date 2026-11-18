@@ -54,6 +54,10 @@ public class Reserva extends Auditable {
     @Column(name = "asistencia_registrada_en")
     private Instant asistenciaRegistradaEn;
 
+    /** RF-41: idioma del portal con el que se hizo la reserva; los correos al turista salen en el. */
+    @Column(nullable = false, length = 2)
+    private String idioma = "es";
+
     /** RF-10: cuando salio el aviso previo al tour; null mientras no se envie. */
     @Column(name = "aviso_previo_enviado_en")
     private Instant avisoPrevioEnviadoEn;
@@ -106,6 +110,14 @@ public class Reserva extends Auditable {
 
     public UUID getId() {
         return id;
+    }
+
+    public String getIdioma() {
+        return idioma == null ? "es" : idioma;
+    }
+
+    public void asignarIdioma(String idioma) {
+        this.idioma = com.nativatrips.backend.common.correo.Idioma.normalizar(idioma);
     }
 
     public String getCodigoReserva() {
