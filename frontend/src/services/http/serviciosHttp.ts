@@ -532,10 +532,12 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
     },
 
     asistente: {
-      conversar: async (mensajes) => {
+      conversar: async (mensajes, enlaceReserva) => {
         const r = await pedir<RespuestaAsistenteApi>('/api/v1/asistente/mensajes', {
           method: 'POST',
           body: JSON.stringify({ mensajes }),
+          // Misma cabecera que «mi reserva»: el enlace nunca viaja en la URL ni en el texto del chat.
+          headers: enlaceReserva ? enlace('X-Enlace-Reserva', enlaceReserva) : undefined,
         });
         return {
           texto: r.contenido,

@@ -116,6 +116,9 @@ export function Asistente() {
   const { asistente } = useServicios();
   const mensajeDeError = useMensajeError();
   const { pathname } = useLocation();
+  // En la página de su reserva, el asistente puede responder sobre ella (HU-07, criterio 3).
+  const tokenDeLaRuta = /^\/mi-reserva\/([^/]+)$/.exec(pathname)?.[1];
+  const enlaceReserva = tokenDeLaRuta && tokenDeLaRuta !== 'resultado-pago' ? tokenDeLaRuta : null;
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>(leerConversacion);
   const [texto, setTexto] = useState('');
@@ -204,7 +207,7 @@ export function Asistente() {
     setTexto('');
     setEscribiendo(true);
     asistente
-      .conversar(turnosParaApi(historial))
+      .conversar(turnosParaApi(historial), enlaceReserva)
       .then((respuesta): Mensaje => {
         if (respuesta === null) return { id: 0, rol: 'frailin', texto: c.demo, local: true, demo: true };
         atenderDerivacion(respuesta.derivacion);

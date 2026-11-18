@@ -290,9 +290,11 @@ export interface RespuestaAsistente {
 export interface AsistenteServicio {
   /**
    * Envía el historial completo y devuelve la respuesta del asistente. Devuelve `null` cuando no hay
-   * servidor (datos en memoria): la interfaz muestra entonces su mensaje de demostración.
+   * servidor (datos en memoria): la interfaz muestra entonces su mensaje de demostración. Con
+   * `enlaceReserva` (el visitante está en la página de su reserva) el asistente puede responder
+   * sobre esa reserva y ninguna otra.
    */
-  conversar(mensajes: MensajeAsistente[]): Promise<RespuestaAsistente | null>;
+  conversar(mensajes: MensajeAsistente[], enlaceReserva?: string | null): Promise<RespuestaAsistente | null>;
 }
 
 export interface Servicios {
