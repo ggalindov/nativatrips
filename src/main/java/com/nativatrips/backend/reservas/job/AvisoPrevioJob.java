@@ -1,5 +1,7 @@
 package com.nativatrips.backend.reservas.job;
 
+import static com.nativatrips.backend.common.correo.TextosCorreo.texto;
+
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.reservas.model.EstadoReserva;
 import com.nativatrips.backend.reservas.model.Reserva;
@@ -14,6 +16,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +40,12 @@ public class AvisoPrevioJob {
     private static final Logger log = LoggerFactory.getLogger(AvisoPrevioJob.class);
     private static final DateTimeFormatter FECHA =
             DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale.forLanguageTag("es-CO"));
+    /** RF-41: la fecha del aviso al turista, escrita como se lee en su idioma. */
+    private static final Map<String, DateTimeFormatter> FECHA_POR_IDIOMA = Map.of(
+            "es", FECHA,
+            "en", DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH),
+            "fr", DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.FRENCH),
+            "pt", DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale.forLanguageTag("pt-BR")));
     private static final DateTimeFormatter HORA = DateTimeFormatter.ofPattern("HH:mm");
 
     private final ReservaRepository reservaRepository;
@@ -88,16 +97,22 @@ public class AvisoPrevioJob {
         String punto = sendero.getFicha().puntoEncuentro() != null ? sendero.getFicha().puntoEncuentro() : "el punto que te indique el equipo";
 
         if (reserva.getTitular() != null) {
+            String idioma = reserva.getIdioma();
+            String salidaTurista = texto(idioma, "previo.salida",
+                    FECHA_POR_IDIOMA.getOrDefault(idioma, FECHA).format(reserva.getFechaTour()),
+                    HORA.format(sendero.getFicha().horaSalida()));
+            String puntoTurista = sendero.getFicha().puntoEncuentro() != null
+                    ? sendero.getFicha().puntoEncuentro()
+                    : texto(idioma, "previo.puntoDesconocido");
             notificacionService.enviarCorreo(
                     reserva.getTitular().getCorreo(),
-                    "Tu salida a " + sendero.getNombre() + " es en dos días - NativaTrips " + reserva.getCodigoReserva(),
-                    "Hola " + reserva.getTitular().getNombre() + ". Te esperamos el " + salida + " en " + punto + ", "
-                            + reserva.getCantidadPersonas() + " persona(s). Llega 20 minutos antes."
-                            + (sendero.getRequisitosIngreso() != null ? "\n\nPara entrar: " + sendero.getRequisitosIngreso() : "")
-                            + "\n\nQué llevar, cómo vestirte para el frío y cómo evitar el mal de altura:\n"
-                            + urlFrontend + "/antes-de-subir"
-                            + "\n\nSi algo cambia en el clima o en el sendero te escribimos. Para consultar tu reserva usa el"
-                            + " enlace que te enviamos al reservar.");
+                    texto(idioma, "previo.asunto", sendero.getNombre(), reserva.getCodigoReserva()),
+                    texto(idioma, "previo.cuerpo", reserva.getTitular().getNombre(), salidaTurista, puntoTurista,
+                                    reserva.getCantidadPersonas())
+                            + (sendero.getRequisitosIngreso() != null
+                                    ? texto(idioma, "previo.requisitos", sendero.getRequisitosIngreso())
+                                    : "")
+                            + texto(idioma, "previo.cierre", urlFrontend));
         }
 
         if (reserva.getGuiaId() != null) {

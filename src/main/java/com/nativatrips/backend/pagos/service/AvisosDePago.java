@@ -1,5 +1,7 @@
 package com.nativatrips.backend.pagos.service;
 
+import static com.nativatrips.backend.common.correo.TextosCorreo.texto;
+
 import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.pagos.model.Pago;
@@ -45,33 +47,32 @@ class AvisosDePago {
         }
         Sendero sendero = senderoRepository.findById(reserva.getSenderoId()).orElseThrow();
         String punto = sendero.getFicha().puntoEncuentro();
+        String idioma = reserva.getIdioma();
         notificacionService.enviarCorreo(
                 correo.get(),
-                "Comprobante de pago - NativaTrips " + identificador(reserva),
-                "Tu pago fue aprobado y tu reserva quedo confirmada.\n\n"
-                        + "Reserva: " + identificador(reserva) + "\n"
-                        + "Sendero: " + sendero.getNombre() + "\n"
-                        + "Fecha: " + reserva.getFechaTour() + ", salida a las " + sendero.getFicha().horaSalida() + "\n"
-                        + (punto == null ? "" : "Punto de encuentro: " + punto + "\n")
-                        + "Personas: " + reserva.getCantidadPersonas() + "\n"
-                        + "Valor pagado: " + pesos(pago) + "\n"
-                        + "Transaccion Wompi: " + pago.getTransaccionId() + "\n"
-                        + "Referencia: " + pago.getReferencia() + "\n"
-                        + "Fecha del pago: " + FECHA_Y_HORA.format(aprobadoEn) + " (hora de Colombia)\n\n"
-                        + "Este correo es tu comprobante. No hay reembolsos; si necesitas cambiar la fecha, solicita la"
-                        + " reprogramacion desde el enlace de tu reserva.");
+                texto(idioma, "comprobante.asunto", identificador(reserva)),
+                texto(idioma, "comprobante.titulo") + "\n\n"
+                        + texto(idioma, "comprobante.reserva", identificador(reserva)) + "\n"
+                        + texto(idioma, "comprobante.sendero", sendero.getNombre()) + "\n"
+                        + texto(idioma, "comprobante.fecha", reserva.getFechaTour(), sendero.getFicha().horaSalida()) + "\n"
+                        + (punto == null ? "" : texto(idioma, "comprobante.punto", punto) + "\n")
+                        + texto(idioma, "comprobante.personas", reserva.getCantidadPersonas()) + "\n"
+                        + texto(idioma, "comprobante.valor", pesos(pago)) + "\n"
+                        + texto(idioma, "comprobante.transaccion", pago.getTransaccionId()) + "\n"
+                        + texto(idioma, "comprobante.referencia", pago.getReferencia()) + "\n"
+                        + texto(idioma, "comprobante.fechaPago", FECHA_Y_HORA.format(aprobadoEn)) + "\n\n"
+                        + texto(idioma, "comprobante.cierre"));
     }
 
     void rechazo(Reserva reserva, Pago pago, long intentosRestantes) {
+        String idioma = reserva.getIdioma();
         correoDelTitular(reserva).ifPresent(correo -> notificacionService.enviarCorreo(
                 correo,
-                "Tu pago no fue aprobado - NativaTrips " + identificador(reserva),
+                texto(idioma, "rechazo.asunto", identificador(reserva)),
                 intentosRestantes > 0
-                        ? "Wompi no aprobo el pago de " + pesos(pago) + ". Puedes intentarlo de nuevo desde el enlace de tu"
-                                + " reserva: te quedan " + intentosRestantes + " intento(s) y el cupo se guarda hasta las "
-                                + HORA.format(reserva.getBloqueoExpiraEn()) + " (hora de Colombia)."
-                        : "Wompi no aprobo el pago de " + pesos(pago) + " por tercera vez, asi que la reserva se cancelo y"
-                                + " el cupo se libero. Puedes hacer una reserva nueva cuando quieras."));
+                        ? texto(idioma, "rechazo.reintentar", pesos(pago), intentosRestantes,
+                                HORA.format(reserva.getBloqueoExpiraEn()))
+                        : texto(idioma, "rechazo.cancelada", pesos(pago))));
     }
 
     private Optional<String> correoDelTitular(Reserva reserva) {

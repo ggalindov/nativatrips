@@ -1,5 +1,8 @@
 package com.nativatrips.backend.reservas.service;
 
+import static com.nativatrips.backend.common.correo.TextosCorreo.texto;
+
+import com.nativatrips.backend.common.correo.Idioma;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.common.seguridad.TokenSeguro;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
@@ -64,12 +67,12 @@ public class HistorialPorCorreoService {
         String token = TokenSeguro.generar();
         Instant ahora = reloj.instant();
         enlaceRepository.save(new EnlaceHistorial(correo, TokenSeguro.hash(token), ahora.plus(VIGENCIA), ahora));
+        // No hay una reserva concreta: el correo sale en el idioma en que se pidio.
+        String idioma = Idioma.deLaSolicitud();
         notificacionService.enviarCorreo(
                 correo,
-                "Tus reservas en NativaTrips",
-                "Hola. Pediste ver las reservas hechas con este correo. Este enlace sirve durante 24 horas:"
-                        + "\n\n" + urlFrontend + "/mis-reservas/" + token
-                        + "\n\nSi no lo pediste, ignora este correo: nadie más puede abrirlo.");
+                texto(idioma, "historial.asunto"),
+                texto(idioma, "historial.cuerpo", urlFrontend + "/mis-reservas/" + token));
     }
 
     @Transactional(readOnly = true)

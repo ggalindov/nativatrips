@@ -1,5 +1,7 @@
 package com.nativatrips.backend.reservas.service;
 
+import static com.nativatrips.backend.common.correo.TextosCorreo.texto;
+
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.notificaciones.service.NotificacionService;
 import com.nativatrips.backend.reservas.dto.AcompananteRequest;
@@ -92,10 +94,9 @@ public class MiReservaService {
                     EnlaceReservaService.EnlaceEmitido enlace = enlaceService.emitir(reserva);
                     notificacionService.enviarCorreo(
                             reserva.getTitular().getCorreo(),
-                            "Tu nuevo enlace de reserva - NativaTrips " + reserva.getCodigoReserva(),
-                            "Hola " + reserva.getTitular().getNombre() + ". Este es el nuevo enlace de tu reserva "
-                                    + reserva.getCodigoReserva() + "; el anterior ya no funciona:\n\n" + enlace.url()
-                                    + "\n\nSi no lo pediste, no hagas nada: solo quien tenga tu correo puede usarlo.");
+                            texto(reserva.getIdioma(), "enlace.asunto", reserva.getCodigoReserva()),
+                            texto(reserva.getIdioma(), "enlace.cuerpo", reserva.getTitular().getNombre(),
+                                    reserva.getCodigoReserva(), enlace.url()));
                 });
     }
 
