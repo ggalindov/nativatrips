@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { CURVA } from '@/ui/movimiento';
 import { useMensajeError } from '@/services/useConsulta';
 import { useServicios } from '@/services/ServiciosContext';
-import type { MensajeAsistente } from '@/services/puertos';
+import type { Derivacion, MensajeAsistente, ReservaSugerida } from '@/services/puertos';
 import { Frailin } from './Frailin';
 
 interface Mensaje {
@@ -15,9 +15,13 @@ interface Mensaje {
   texto: string;
   /** Aviso propio de la interfaz (demostración o error): se muestra, pero no se reenvía al servidor. */
   local?: boolean;
+  /** RF-20: el asistente preparó una reserva y se ofrece el formulario. */
+  reserva?: ReservaSugerida | null;
 }
 
 const MAX_TURNOS = 50;
+/** RF-22: respuestas sin resolver seguidas antes de ofrecer hablar con una persona. */
+const INTENTOS_ANTES_DE_DERIVAR = 2;
 
 /** Historial que espera la API: solo lo conversado de verdad, empezando por quien escribe. */
 function turnosParaApi(mensajes: Mensaje[]): MensajeAsistente[] {
@@ -99,11 +103,13 @@ function Escribiendo({ etiqueta }: { etiqueta: string }) {
 
 /**
  * Frailín, el asistente del sitio (RF-19). Envía la conversación al asistente del
- * servidor y ofrece hablar con una persona (RF-22). Sin servidor (datos en memoria)
- * responde con un mensaje de demostración.
+ * servidor. Si el visitante quiere reservar, ofrece el formulario con el sendero ya
+ * elegido (RF-20); si pide una persona o el asistente no resuelve dos veces seguidas,
+ * muestra cómo contactar al equipo (RF-22). Sin servidor (datos en memoria) responde
+ * con un mensaje de demostración.
  */
 export function Asistente() {
-  const { t } = useIdioma();
+  const { t, f } = useIdioma();
   const c = t.chat;
   const { asistente } = useServicios();
   const mensajeDeError = useMensajeError();
@@ -113,6 +119,8 @@ export function Asistente() {
   const [texto, setTexto] = useState('');
   const [escribiendo, setEscribiendo] = useState(false);
   const [invitacion, setInvitacion] = useState(false);
+  const [contacto, setContacto] = useState<Derivacion | null>(null);
+  const [sinResolver, setSinResolver] = useState(0);
   const lanzador = useRef<HTMLButtonElement>(null);
   const entrada = useRef<HTMLTextAreaElement>(null);
   const fin = useRef<HTMLDivElement>(null);
@@ -168,6 +176,24 @@ export function Asistente() {
     fin.current?.scrollIntoView?.({ block: 'end', behavior: 'smooth' });
   }, [mensajes, escribiendo, abierto]);
 
+  const atenderDerivacion = (derivacion: Derivacion | null) => {
+    if (!derivacion) {
+      setSinResolver(0);
+    } else if (derivacion.motivo === 'PIDE_PERSONA') {
+      setContacto(derivacion);
+    } else {
+      const seguidas = sinResolver + 1;
+      setSinResolver(seguidas);
+      if (seguidas >= INTENTOS_ANTES_DE_DERIVAR) setContacto(derivacion);
+    }
+  };
+
+  const reiniciar = () => {
+    setMensajes([]);
+    setContacto(null);
+    setSinResolver(0);
+  };
+
   const enviar = (contenido: string) => {
     const limpio = contenido.trim().slice(0, MAX_CARACTERES);
     if (!limpio || escribiendo) return;
@@ -177,7 +203,11 @@ export function Asistente() {
     setEscribiendo(true);
     asistente
       .conversar(turnosParaApi(historial))
-      .then((respuesta): Mensaje => (respuesta === null ? { id: 0, rol: 'frailin', texto: c.demo, local: true } : { id: 0, rol: 'frailin', texto: respuesta }))
+      .then((respuesta): Mensaje => {
+        if (respuesta === null) return { id: 0, rol: 'frailin', texto: c.demo, local: true };
+        atenderDerivacion(respuesta.derivacion);
+        return { id: 0, rol: 'frailin', texto: respuesta.texto, reserva: respuesta.reserva };
+      })
       .catch((error: unknown): Mensaje => ({ id: 0, rol: 'frailin', texto: mensajeDeError(error), local: true }))
       .then((respuesta) => {
         setMensajes((m) => [...m, { ...respuesta, id: m.length + 1 }]);
@@ -197,7 +227,9 @@ export function Asistente() {
     }
   };
 
-  const respondio = mensajes.some((m) => m.rol === 'frailin');
+  // Sin servidor no hay derivación: tras la demostración se ofrece igual el contacto.
+  const enDemostracion = mensajes.some((m) => m.local && m.texto === c.demo);
+  const mostrarContacto = contacto !== null || enDemostracion;
 
   return (
     <>
@@ -274,7 +306,7 @@ export function Asistente() {
                 </span>
               </div>
               {mensajes.length > 0 && (
-                <button type="button" onClick={() => setMensajes([])} aria-label={c.reiniciar} title={c.reiniciar} className="flex size-10 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
+                <button type="button" onClick={reiniciar} aria-label={c.reiniciar} title={c.reiniciar} className="flex size-10 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white">
                   <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
                     <path d="M3 3v5h5" />
@@ -304,6 +336,15 @@ export function Asistente() {
                 {mensajes.map((m) => (
                   <Burbuja key={m.id} rol={m.rol}>
                     <TextoConFormato texto={m.texto} />
+                    {m.reserva && (
+                      <Link
+                        to={`/reservar/${encodeURIComponent(m.reserva.senderoId)}${m.reserva.fecha ? `?fecha=${m.reserva.fecha}` : ''}`}
+                        onClick={() => setAbierto(false)}
+                        className="mt-2.5 flex min-h-11 items-center justify-center rounded-full bg-lima px-4 text-center text-sm font-bold text-bosque no-underline hover:text-bosque"
+                      >
+                        {c.reservarEn(m.reserva.senderoNombre, m.reserva.fecha ? f.fecha(m.reserva.fecha) : null)}
+                      </Link>
+                    )}
                   </Burbuja>
                 ))}
                 <AnimatePresence>{escribiendo && <Escribiendo etiqueta={c.escribiendo} />}</AnimatePresence>
@@ -327,11 +368,38 @@ export function Asistente() {
                 </div>
               )}
 
-              {respondio && !escribiendo && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-4 ml-10 flex flex-col gap-1.5 rounded-3xl border border-dashed border-bosque/25 p-4 text-sm">
+              {mostrarContacto && !escribiendo && (
+                <motion.div
+                  role="region"
+                  aria-label={c.humanoTitulo}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 ml-10 flex flex-col gap-2 rounded-3xl border border-dashed border-bosque/25 p-4 text-sm"
+                >
                   <span className="font-display font-bold">{c.humanoTitulo}</span>
                   <span className="text-tinta">{c.humanoTexto}</span>
-                  <span className="font-mono text-xs text-tinta-suave">{c.humanoContacto}</span>
+                  {(contacto?.correo || contacto?.whatsapp) && (
+                    <span className="flex flex-wrap gap-2">
+                      {contacto.whatsapp && (
+                        <a
+                          href={`https://wa.me/${contacto.whatsapp}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex min-h-10 items-center rounded-full bg-bosque px-3.5 text-sm font-semibold text-white no-underline hover:text-lima"
+                        >
+                          {c.escribirWhatsapp}
+                        </a>
+                      )}
+                      {contacto.correo && (
+                        <a
+                          href={`mailto:${contacto.correo}`}
+                          className="flex min-h-10 items-center rounded-full border border-bosque/20 px-3.5 text-sm font-semibold text-bosque no-underline hover:border-bosque"
+                        >
+                          {c.escribirCorreo}
+                        </a>
+                      )}
+                    </span>
+                  )}
                 </motion.div>
               )}
               <div ref={fin} />

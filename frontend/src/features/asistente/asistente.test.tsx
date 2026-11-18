@@ -3,8 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { crearServiciosEnMemoria } from '@/services/memoria/serviciosEnMemoria';
 import { ErrorServicio } from '@/services/puertos';
-import type { MensajeAsistente } from '@/services/puertos';
+import type { MensajeAsistente, RespuestaAsistente } from '@/services/puertos';
 import { renderizarEn } from '@/test/renderizar';
+
+function texto(t: string): RespuestaAsistente {
+  return { texto: t, reserva: null, derivacion: null };
+}
 
 describe('Frailín, el asistente', () => {
   it('se abre, envía una sugerencia y responde con la demostración', async () => {
@@ -37,9 +41,9 @@ describe('Frailín, el asistente', () => {
   it('con servidor muestra la respuesta real y reenvía la conversación completa', async () => {
     sessionStorage.clear();
     const conversar = vi
-      .fn<(m: MensajeAsistente[]) => Promise<string | null>>()
-      .mockResolvedValueOnce('Lleva ropa abrigada y agua.')
-      .mockResolvedValueOnce('Sí, hay cupos el sábado.');
+      .fn<(m: MensajeAsistente[]) => Promise<RespuestaAsistente | null>>()
+      .mockResolvedValueOnce(texto('Lleva ropa abrigada y agua.'))
+      .mockResolvedValueOnce(texto('Sí, hay cupos el sábado.'));
     const servicios = { ...crearServiciosEnMemoria({ latenciaMs: 0 }), asistente: { conversar } };
     const usuario = userEvent.setup();
     renderizarEn({ ruta: '/senderos', servicios });
@@ -61,9 +65,9 @@ describe('Frailín, el asistente', () => {
   it('si el servidor limita los mensajes lo dice en el idioma activo y no lo reenvía como respuesta', async () => {
     sessionStorage.clear();
     const conversar = vi
-      .fn<(m: MensajeAsistente[]) => Promise<string | null>>()
+      .fn<(m: MensajeAsistente[]) => Promise<RespuestaAsistente | null>>()
       .mockRejectedValueOnce(new ErrorServicio('Has enviado muchos mensajes seguidos.', 'demasiadosMensajes'))
-      .mockResolvedValueOnce('Ya puedo responderte.');
+      .mockResolvedValueOnce(texto('Ya puedo responderte.'));
     const servicios = { ...crearServiciosEnMemoria({ latenciaMs: 0 }), asistente: { conversar } };
     const usuario = userEvent.setup();
     renderizarEn({ ruta: '/senderos', servicios });
@@ -80,5 +84,68 @@ describe('Frailín, el asistente', () => {
       { rol: 'user', contenido: 'Hola' },
       { rol: 'user', contenido: 'Otra vez' },
     ]);
+  });
+  it('ofrece el formulario con el sendero que el visitante quiere reservar (RF-20)', async () => {
+    sessionStorage.clear();
+    const conversar = vi.fn<(m: MensajeAsistente[]) => Promise<RespuestaAsistente | null>>().mockResolvedValueOnce({
+      texto: 'Abre el formulario para reservar.',
+      reserva: { senderoId: '3', senderoNombre: 'Lagunas de Siecha', fecha: '2026-11-28' },
+      derivacion: null,
+    });
+    const servicios = { ...crearServiciosEnMemoria({ latenciaMs: 0 }), asistente: { conversar } };
+    const usuario = userEvent.setup();
+    renderizarEn({ ruta: '/senderos', servicios });
+
+    await usuario.click(await screen.findByRole('button', { name: 'Hablar con Frailín' }));
+    const chat = screen.getByRole('dialog', { name: 'Conversación con Frailín' });
+    await usuario.type(within(chat).getByRole('textbox'), 'Quiero reservar Siecha el 28{Enter}');
+
+    const enlace = await within(chat).findByRole('link', { name: /^Reservar Lagunas de Siecha · / });
+    expect(enlace).toHaveAttribute('href', '/reservar/3?fecha=2026-11-28');
+    expect(within(chat).queryByRole('region', { name: '¿Prefieres hablar con una persona?' })).not.toBeInTheDocument();
+  });
+
+  it('muestra el contacto de inmediato si el visitante pide una persona (RF-22)', async () => {
+    sessionStorage.clear();
+    const conversar = vi.fn<(m: MensajeAsistente[]) => Promise<RespuestaAsistente | null>>().mockResolvedValueOnce({
+      texto: 'Te dejo el contacto del equipo.',
+      reserva: null,
+      derivacion: { motivo: 'PIDE_PERSONA', correo: 'reservas@ecopalacio.co', whatsapp: '573000000000' },
+    });
+    const servicios = { ...crearServiciosEnMemoria({ latenciaMs: 0 }), asistente: { conversar } };
+    const usuario = userEvent.setup();
+    renderizarEn({ ruta: '/senderos', servicios });
+
+    await usuario.click(await screen.findByRole('button', { name: 'Hablar con Frailín' }));
+    const chat = screen.getByRole('dialog', { name: 'Conversación con Frailín' });
+    await usuario.type(within(chat).getByRole('textbox'), 'Quiero hablar con una persona{Enter}');
+
+    const contacto = await within(chat).findByRole('region', { name: '¿Prefieres hablar con una persona?' });
+    expect(within(contacto).getByRole('link', { name: 'Escribir por WhatsApp' })).toHaveAttribute('href', 'https://wa.me/573000000000');
+    expect(within(contacto).getByRole('link', { name: 'Escribir por correo' })).toHaveAttribute('href', 'mailto:reservas@ecopalacio.co');
+  });
+
+  it('ofrece el contacto solo tras dos respuestas sin resolver seguidas (RF-22)', async () => {
+    sessionStorage.clear();
+    const sinResolver: RespuestaAsistente = {
+      texto: 'No encontré esa información.',
+      reserva: null,
+      derivacion: { motivo: 'NO_RESUELTO', correo: 'reservas@ecopalacio.co', whatsapp: null },
+    };
+    const conversar = vi.fn<(m: MensajeAsistente[]) => Promise<RespuestaAsistente | null>>().mockResolvedValue(sinResolver);
+    const servicios = { ...crearServiciosEnMemoria({ latenciaMs: 0 }), asistente: { conversar } };
+    const usuario = userEvent.setup();
+    renderizarEn({ ruta: '/senderos', servicios });
+
+    await usuario.click(await screen.findByRole('button', { name: 'Hablar con Frailín' }));
+    const chat = screen.getByRole('dialog', { name: 'Conversación con Frailín' });
+    await usuario.type(within(chat).getByRole('textbox'), '¿Venden recuerdos?{Enter}');
+    await within(chat).findByText('No encontré esa información.');
+    expect(within(chat).queryByRole('region', { name: '¿Prefieres hablar con una persona?' })).not.toBeInTheDocument();
+
+    await usuario.type(within(chat).getByRole('textbox'), '¿Y camisetas?{Enter}');
+    const contacto = await within(chat).findByRole('region', { name: '¿Prefieres hablar con una persona?' });
+    expect(within(contacto).getByRole('link', { name: 'Escribir por correo' })).toBeInTheDocument();
+    expect(within(contacto).queryByRole('link', { name: 'Escribir por WhatsApp' })).not.toBeInTheDocument();
   });
 });
