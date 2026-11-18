@@ -1,5 +1,7 @@
 package com.nativatrips.backend.reservas.service;
 
+import static com.nativatrips.backend.common.correo.TextosCorreo.texto;
+
 import com.nativatrips.backend.capacidad.service.CapacidadService;
 import com.nativatrips.backend.common.archivos.AlmacenArchivos;
 import com.nativatrips.backend.common.archivos.TipoArchivo;
@@ -111,11 +113,9 @@ public class ReprogramacionService {
         Sendero sendero = senderoRepository.findById(reserva.getSenderoId()).orElseThrow();
         notificacionService.enviarCorreo(
                 reserva.getTitular().getCorreo(),
-                "Recibimos tu solicitud de cambio de fecha - NativaTrips " + reserva.getCodigoReserva(),
-                "Hola " + reserva.getTitular().getNombre() + ". Recibimos tu solicitud para pasar tu salida a "
-                        + sendero.getNombre() + " del " + reserva.getFechaTour() + " al " + fechaDeseada
-                        + ". El equipo revisa el soporte y te escribe con la decisión. Mientras tanto tu cupo"
-                        + " original sigue guardado.");
+                texto(reserva.getIdioma(), "reprogramacion.solicitada.asunto", reserva.getCodigoReserva()),
+                texto(reserva.getIdioma(), "reprogramacion.solicitada.cuerpo", reserva.getTitular().getNombre(),
+                        sendero.getNombre(), reserva.getFechaTour(), fechaDeseada));
         for (Usuario admin : usuarioRepository.findByRolAndActivoTrue(Rol.ADMINISTRADOR)) {
             notificacionService.enviarCorreo(
                     admin.getEmail(),
@@ -176,11 +176,9 @@ public class ReprogramacionService {
                     OrigenCambioEstado.ADMINISTRADOR, adminId);
             notificacionService.enviarCorreo(
                     reserva.getTitular().getCorreo(),
-                    "Tu nueva fecha está confirmada - NativaTrips " + reserva.getCodigoReserva(),
-                    "Hola " + reserva.getTitular().getNombre() + ". Aprobamos el cambio: tu salida a " + sendero.getNombre()
-                            + " ahora es el " + fecha + ", con el mismo cupo que ya pagaste."
-                            + "\n\nEste es el enlace de tu reserva con la fecha nueva; el anterior ya no sirve:\n"
-                            + enlaceService.emitir(reserva).url());
+                    texto(reserva.getIdioma(), "reprogramacion.aprobada.asunto", reserva.getCodigoReserva()),
+                    texto(reserva.getIdioma(), "reprogramacion.aprobada.cuerpo", reserva.getTitular().getNombre(),
+                            sendero.getNombre(), fecha, enlaceService.emitir(reserva).url()));
         } else {
             solicitud.decidir(false, adminId, motivoLimpio, reloj.instant());
             reservaService.transicionarEstado(
@@ -189,11 +187,9 @@ public class ReprogramacionService {
                     OrigenCambioEstado.ADMINISTRADOR, adminId);
             notificacionService.enviarCorreo(
                     reserva.getTitular().getCorreo(),
-                    "Tu solicitud de cambio de fecha no fue aprobada - NativaTrips " + reserva.getCodigoReserva(),
-                    "Hola " + reserva.getTitular().getNombre() + ". El equipo revisó el soporte y no pudo aprobar el cambio"
-                            + (motivoLimpio != null ? ": " + motivoLimpio : ".")
-                            + "\n\nSegún la política de reprogramación (Anexo 16), la reserva queda cancelada y el pago no"
-                            + " se reembolsa. Si crees que hay un error, responde a este correo con más información.");
+                    texto(reserva.getIdioma(), "reprogramacion.rechazada.asunto", reserva.getCodigoReserva()),
+                    texto(reserva.getIdioma(), "reprogramacion.rechazada.cuerpo", reserva.getTitular().getNombre(),
+                            motivoLimpio != null ? ": " + motivoLimpio : "."));
         }
         return respuesta(solicitud, reserva);
     }

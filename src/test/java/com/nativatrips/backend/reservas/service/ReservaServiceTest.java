@@ -154,6 +154,25 @@ class ReservaServiceTest {
     }
 
     @Test
+    void laReservaGuardaElIdiomaDelPortalYElCorreoSaleEnEseIdioma() {
+        prepararCreacion();
+        var peticion = new org.springframework.mock.web.MockHttpServletRequest();
+        peticion.addHeader("Accept-Language", "en");
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+                new org.springframework.web.context.request.ServletRequestAttributes(peticion));
+        try {
+            reservaService.crearReservaSinCuenta(solicitud(LocalDate.now().plusDays(1), 2));
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
+
+        var captor = org.mockito.ArgumentCaptor.forClass(Reserva.class);
+        verify(reservaRepository).save(captor.capture());
+        assertThat(captor.getValue().getIdioma()).isEqualTo("en");
+        verify(notificacionService).enviarCorreo(eq("laura@example.com"), contains("Your spot is on hold"), contains("Hello Laura"));
+    }
+
+    @Test
     void unGrupoCorporativoSinCuentaPasaARevisionSinConteoYAvisaAlTitularYAlEquipo() {
         prepararCreacion();
         given(usuarioRepository.findByRolAndActivoTrue(Rol.ADMINISTRADOR))

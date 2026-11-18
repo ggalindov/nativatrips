@@ -1,8 +1,11 @@
 package com.nativatrips.backend.reservas.service;
 
+import static com.nativatrips.backend.common.correo.TextosCorreo.texto;
+
 import com.nativatrips.backend.capacidad.dto.DisponibilidadResponse;
 import com.nativatrips.backend.capacidad.model.CapacidadDia;
 import com.nativatrips.backend.capacidad.service.CapacidadService;
+import com.nativatrips.backend.common.correo.Idioma;
 import com.nativatrips.backend.common.exception.BusinessRuleException;
 import com.nativatrips.backend.config.RelojConfig;
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
@@ -118,7 +121,7 @@ public class ReservaService {
         TitularReserva titular = new TitularReserva(
                 datos.nombre().trim(), datos.tipoDocumento(), datos.documento().trim(), datos.nacionalidad(),
                 datos.correo().trim().toLowerCase(Locale.ROOT), datos.indicativo(), datos.celular());
-        Reserva reserva = reservaRepository.save(Reserva.sinCuenta(
+        Reserva nueva = Reserva.sinCuenta(
                 sendero.getId(),
                 request.fechaTour(),
                 request.personas(),
@@ -126,7 +129,9 @@ public class ReservaService {
                 request.requerimientosEspeciales(),
                 Instant.now().plus(BLOQUEO_MINUTOS, ChronoUnit.MINUTES),
                 codigoNuevo(),
-                titular));
+                titular);
+        nueva.asignarIdioma(Idioma.deLaSolicitud());
+        Reserva reserva = reservaRepository.save(nueva);
 
         reservaIntegranteRepository.save(new ReservaIntegrante(
                 reserva.getId(), titular.getNombre(), titular.getTipoDocumento(), titular.getDocumento(),
@@ -183,34 +188,27 @@ public class ReservaService {
 
     private void notificarCupoApartado(Reserva reserva, Sendero sendero, EnlaceReservaService.EnlaceEmitido enlace) {
         String venceA = HORA.format(reserva.getBloqueoExpiraEn());
+        String idioma = reserva.getIdioma();
         notificacionService.enviarCorreo(
                 reserva.getTitular().getCorreo(),
-                "Tu cupo esta apartado - NativaTrips " + reserva.getCodigoReserva(),
-                "Hola " + reserva.getTitular().getNombre() + ". Apartamos " + reserva.getCantidadPersonas()
-                        + " cupo(s) en " + sendero.getNombre() + " para el " + reserva.getFechaTour()
-                        + ". Tu codigo de reserva es " + reserva.getCodigoReserva()
-                        + ". El cupo se guarda hasta las " + venceA + " (hora de Colombia) mientras completas el pago."
-                        + "\n\nDesde este enlace pagas, registras a tus acompanantes y consultas tu reserva:\n"
-                        + enlace.url()
-                        + "\n\nEs personal: no lo compartas. Si lo pierdes, pide uno nuevo con tu correo y el codigo.");
+                texto(idioma, "cupo.asunto", reserva.getCodigoReserva()),
+                texto(idioma, "cupo.cuerpo", reserva.getTitular().getNombre(), reserva.getCantidadPersonas(),
+                        sendero.getNombre(), reserva.getFechaTour(), reserva.getCodigoReserva(), venceA, enlace.url()));
     }
 
     private void notificarEnRevision(Reserva reserva, Sendero sendero, EnlaceReservaService.EnlaceEmitido enlace) {
+        String idioma = reserva.getIdioma();
         notificacionService.enviarCorreo(
                 reserva.getTitular().getCorreo(),
-                "Recibimos tu solicitud - NativaTrips " + reserva.getCodigoReserva(),
-                "Hola " + reserva.getTitular().getNombre() + ". Guardamos " + reserva.getCantidadPersonas()
-                        + " cupo(s) en " + sendero.getNombre() + " para el " + reserva.getFechaTour()
-                        + ". Como es un " + descripcion(reserva.getTipoGrupo()) + ", el equipo de Eco Palacio la revisa"
-                        + " antes del pago. Te escribimos apenas la aprueben; desde ese momento tienes "
-                        + BLOQUEO_MINUTOS + " minutos para pagar."
-                        + "\n\nDesde este enlace consultas el estado de tu reserva:\n"
-                        + enlace.url()
-                        + "\n\nEs personal: no lo compartas.");
+                texto(idioma, "revision.asunto", reserva.getCodigoReserva()),
+                texto(idioma, "revision.cuerpo", reserva.getTitular().getNombre(), reserva.getCantidadPersonas(),
+                        sendero.getNombre(), reserva.getFechaTour(), descripcion(idioma, reserva.getTipoGrupo()),
+                        BLOQUEO_MINUTOS, enlace.url()));
     }
 
-    private static String descripcion(TipoGrupo tipo) {
-        return tipo == TipoGrupo.GRUPO_CORPORATIVO ? "grupo corporativo" : "grupo con necesidades especiales";
+    /** El tipo de grupo en el idioma del correo; los avisos al equipo van en espanol. */
+    private static String descripcion(String idioma, TipoGrupo tipo) {
+        return texto(idioma, tipo == TipoGrupo.GRUPO_CORPORATIVO ? "grupo.corporativo" : "grupo.especial");
     }
 
     /**
@@ -285,33 +283,32 @@ public class ReservaService {
         if (reserva.getTitular() == null) {
             return;
         }
-        String sendero = senderoRepository.findById(reserva.getSenderoId()).map(Sendero::getNombre).orElse("el sendero");
+        String idioma = reserva.getIdioma();
+        String sendero = senderoRepository.findById(reserva.getSenderoId()).map(Sendero::getNombre)
+                .orElse(texto(idioma, "aprobada.senderoDesconocido"));
         notificacionService.enviarCorreo(
                 reserva.getTitular().getCorreo(),
-                "Tu reserva fue aprobada - NativaTrips " + reserva.getCodigoReserva(),
-                "Hola " + reserva.getTitular().getNombre() + ". El equipo aprobó tu reserva en " + sendero
-                        + " para el " + reserva.getFechaTour() + ". Tienes hasta las "
-                        + HORA.format(reserva.getBloqueoExpiraEn()) + " (hora de Colombia) para pagar desde este enlace:"
-                        + "\n\n" + enlaceService.emitir(reserva).url()
-                        + "\n\nLos enlaces que recibiste antes ya no sirven.");
+                texto(idioma, "aprobada.asunto", reserva.getCodigoReserva()),
+                texto(idioma, "aprobada.cuerpo", reserva.getTitular().getNombre(), sendero, reserva.getFechaTour(),
+                        HORA.format(reserva.getBloqueoExpiraEn()), enlaceService.emitir(reserva).url()));
     }
 
     private void avisarRevisionRechazada(Reserva reserva, String motivo) {
         if (reserva.getTitular() == null) {
             return;
         }
+        String idioma = reserva.getIdioma();
         notificacionService.enviarCorreo(
                 reserva.getTitular().getCorreo(),
-                "Tu reserva no fue aprobada - NativaTrips " + reserva.getCodigoReserva(),
-                "Hola " + reserva.getTitular().getNombre() + ". El equipo de Eco Palacio no pudo aprobar tu reserva para el "
-                        + reserva.getFechaTour() + (motivo != null && !motivo.isBlank() ? ": " + motivo.strip() : ".")
-                        + "\n\nNo se hizo ningún cobro y los cupos quedaron libres. Escríbenos si quieres buscar otra fecha.");
+                texto(idioma, "rechazada.asunto", reserva.getCodigoReserva()),
+                texto(idioma, "rechazada.cuerpo", reserva.getTitular().getNombre(), reserva.getFechaTour(),
+                        motivo != null && !motivo.isBlank() ? ": " + motivo.strip() : "."));
     }
 
     private void notificarAdministradoresRevisionPendiente(Reserva reserva, Sendero sendero) {
         String asunto = "Nueva reserva en revisión - " + reserva.getCodigoReserva();
         String cuerpo = "La reserva " + reserva.getCodigoReserva() + " de " + reserva.getTitular().getNombre() + " ("
-                + descripcion(reserva.getTipoGrupo()) + ", " + reserva.getCantidadPersonas() + " personas) en "
+                + descripcion(Idioma.POR_DEFECTO, reserva.getTipoGrupo()) + ", " + reserva.getCantidadPersonas() + " personas) en "
                 + sendero.getNombre() + " para el " + reserva.getFechaTour() + " espera tu aprobación antes del pago."
                 + (reserva.getRequerimientosEspeciales() != null
                         ? "\n\nRequerimientos: " + reserva.getRequerimientosEspeciales()
