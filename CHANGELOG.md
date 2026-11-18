@@ -7,7 +7,72 @@ Todos los cambios relevantes de NativaTrips quedan en este archivo. El formato s
 
 ## [Sin publicar]
 
-Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 2026).
+## [0.4.0-sprint4] - 2026-11-18
+
+### Agregado
+
+- Enlace mágico de la reserva sin cuenta: llega por correo al reservar, vence y se guarda solo
+  como hash; «mi reserva» permite consultarla, pedir otro enlace y registrar acompañantes (#76).
+- Pago total con Wompi desde el enlace de la reserva: checkout con firma de integridad,
+  eventos con verificación del checksum, idempotencia y dos reintentos tras un rechazo (#77).
+- Antes de liberar el cupo de una reserva vencida se consulta a Wompi; el titular recibe el
+  comprobante al aprobarse y un aviso de rechazo con los intentos que quedan (#78).
+- Catálogo inicial con los trece senderos del portal y cuentas del equipo creadas en el primer
+  arranque, con un enlace para fijar la clave (#79).
+- Grupos corporativos y con necesidades especiales pasan a revisión del administrador; el guía
+  marca la asistencia de cada persona y ve el requerimiento de su grupo (#79).
+- Panel del administrador en vivo: reservas nuevas y alertas de aforo por SSE, aviso por correo
+  al cruzar el umbral del día y asignación de guía a las reservas confirmadas (#79).
+- Aviso 48 horas antes al titular y lista del grupo al guía (#79).
+- Historial de reservas por correo con enlace de 24 horas (#79).
+- Reprogramación con causal y soporte (PDF, JPG o PNG verificado por su firma), con aprobación
+  o rechazo del administrador según el Anexo 16 (#79).
+- Editor de senderos con borrador, publicación, hasta ocho fotos y aviso de las reservas
+  futuras al dar de baja un sendero (#79).
+- Portal y paneles conectados a la API real, con pago desde «mi reserva» y aviso en los cuatro
+  idiomas cuando los pagos aún no están configurados (#79).
+- Frailin, el asistente del portal, responde con el asistente del servidor: envía la conversación
+  completa, avisa en el idioma activo cuando se supera el límite de mensajes y, sin servidor,
+  conserva su mensaje de demostración (#82).
+- Desde el chat, el visitante abre el formulario con el sendero y la fecha que pidió (RF-20). Si
+  pide una persona, o si el asistente no resuelve dos veces seguidas, ve el contacto del equipo,
+  configurable con `ASISTENTE_CONTACTO_CORREO` y `ASISTENTE_CONTACTO_WHATSAPP` (RF-22). El
+  asistente responde en el idioma en que le escriben (#83).
+- Los correos al turista salen en el idioma con el que reservó: español, inglés, francés o
+  portugués (RF-41). La reserva guarda el idioma del portal y lo usan el código de reserva, la
+  revisión del grupo, el comprobante, el rechazo de pago, el aviso 48 horas antes, el nuevo
+  enlace y la reprogramación. El historial por correo sale en el idioma en que se pidió. Los
+  avisos al equipo siguen en español (#86).
+- En la página de su reserva, el visitante puede preguntarle al asistente por ella: fecha, hora,
+  punto de encuentro, estado, guía o el cambio de fecha que pidió. El asistente usa el mismo enlace
+  y la misma validación que «mi reserva», no recibe documentos ni datos de contacto, y sin el
+  enlace no tiene acceso a ninguna reserva (#87).
+
+### Seguridad
+
+- Sin servidor de correo, el registro ya no guarda el cuerpo de los avisos, que lleva enlaces con
+  token, y limpia el asunto y el destinatario para que un dato escrito por el turista no pueda
+  falsificar líneas (alertas de CodeQL, #84).
+- Un evento de Wompi falsificado o con otro monto no cambia el estado de ningún pago, y el
+  mismo evento repetido se aplica una sola vez (#77).
+- Los métodos no soportados responden 405 y los cuerpos o parámetros inválidos 400, en lugar
+  de un 500 (#79).
+
+### Cambiado
+
+- Backend: Spring Boot 4.1.2, springdoc 3.2.0, JaCoCo 0.8.16 y Maven 3.10.1; frontend: Vite
+  6.4.6, Vitest 5.1 y React Router 7.18; Mailpit 1.33.1.
+- Accesibilidad de la portada y del catálogo: contraste de la barra y del logo sobre las fotos,
+  enlaces del texto subrayados y títulos de las tarjetas en orden (#85).
+- La reserva sin cuenta reemplaza al registro público y a la reserva con cuenta, y la
+  cancelación por estado se sustituye por la reprogramación con causal (#79).
+
+### Retirado
+
+- PayU: código, configuración, columnas y pruebas; Wompi es la única pasarela (#78).
+- El registro público de turistas y el rol `TURISTA` (#79).
+
+## [0.3.0-sprint3] - 2026-10-23
 
 ### Agregado
 
@@ -48,48 +113,9 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 - Análisis estático con CodeQL para Java, TypeScript y los flujos de GitHub Actions (#53).
 - README con la descripción, instalación, ejecución, pruebas, flujo de trabajo y estado del
   proyecto; licencia propietaria y política de seguridad con reporte privado (#54).
-- Enlace mágico de la reserva sin cuenta: llega por correo al reservar, vence y se guarda solo
-  como hash; «mi reserva» permite consultarla, pedir otro enlace y registrar acompañantes (#76).
-- Pago total con Wompi desde el enlace de la reserva: checkout con firma de integridad,
-  eventos con verificación del checksum, idempotencia y dos reintentos tras un rechazo (#77).
-- Antes de liberar el cupo de una reserva vencida se consulta a Wompi; el titular recibe el
-  comprobante al aprobarse y un aviso de rechazo con los intentos que quedan (#78).
-- Catálogo inicial con los trece senderos del portal y cuentas del equipo creadas en el primer
-  arranque, con un enlace para fijar la clave (#79).
-- Grupos corporativos y con necesidades especiales pasan a revisión del administrador; el guía
-  marca la asistencia de cada persona y ve el requerimiento de su grupo (#79).
-- Panel del administrador en vivo: reservas nuevas y alertas de aforo por SSE, aviso por correo
-  al cruzar el umbral del día y asignación de guía a las reservas confirmadas (#79).
-- Aviso 48 horas antes al titular y lista del grupo al guía (#79).
-- Historial de reservas por correo con enlace de 24 horas (#79).
-- Reprogramación con causal y soporte (PDF, JPG o PNG verificado por su firma), con aprobación
-  o rechazo del administrador según el Anexo 16 (#79).
-- Editor de senderos con borrador, publicación, hasta ocho fotos y aviso de las reservas
-  futuras al dar de baja un sendero (#79).
-- Portal y paneles conectados a la API real, con pago desde «mi reserva» y aviso en los cuatro
-  idiomas cuando los pagos aún no están configurados (#79).
-- Frailin, el asistente del portal, responde con el asistente del servidor: envía la conversación
-  completa, avisa en el idioma activo cuando se supera el límite de mensajes y, sin servidor,
-  conserva su mensaje de demostración (NAT-175).
-- Desde el chat, el visitante abre el formulario con el sendero y la fecha que pidió (RF-20). Si
-  pide una persona, o si el asistente no resuelve dos veces seguidas, ve el contacto del equipo,
-  configurable con `ASISTENTE_CONTACTO_CORREO` y `ASISTENTE_CONTACTO_WHATSAPP` (RF-22). El
-  asistente responde en el idioma en que le escriben (NAT-94).
-- Los correos al turista salen en el idioma con el que reservó: español, inglés, francés o
-  portugués (RF-41). La reserva guarda el idioma del portal y lo usan el código de reserva, la
-  revisión del grupo, el comprobante, el rechazo de pago, el aviso 48 horas antes, el nuevo
-  enlace y la reprogramación. El historial por correo sale en el idioma en que se pidió. Los
-  avisos al equipo siguen en español (NAT-117).
-- En la página de su reserva, el visitante puede preguntarle al asistente por ella: fecha, hora,
-  punto de encuentro, estado, guía o el cambio de fecha que pidió. El asistente usa el mismo enlace
-  y la misma validación que «mi reserva», no recibe documentos ni datos de contacto, y sin el
-  enlace no tiene acceso a ninguna reserva (HU-07, NAT-94).
 
 ### Seguridad
 
-- Sin servidor de correo, el registro ya no guarda el cuerpo de los avisos, que lleva enlaces con
-  token, y limpia el asunto y el destinatario para que un dato escrito por el turista no pueda
-  falsificar líneas (alertas de CodeQL).
 - Sin sesión válida (sin token, vencido o revocado) la API responde 401 en JSON; el 403 queda
   solo para una sesión sin permiso. El frontend reconoce así la sesión vencida (#61).
 - BUG-01: la capacidad del día se bloquea antes de contar la ocupación, así que dos reservas
@@ -104,10 +130,6 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   *force push*; alertas de vulnerabilidades de Dependabot activadas.
 - `source-map-js` 1.2.2: cierra la alerta alta de denegación de servicio (#24).
 - Vite 6.4.4: control de acceso del servidor de desarrollo a los módulos (#33).
-- Un evento de Wompi falsificado o con otro monto no cambia el estado de ningún pago, y el
-  mismo evento repetido se aplica una sola vez (#77).
-- Los métodos no soportados responden 405 y los cuerpos o parámetros inválidos 400, en lugar
-  de un 500 (#79).
 
 ### Cambiado
 
@@ -126,13 +148,6 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   dependency-review v5 (#28).
 - Los diagramas y las presentaciones salen del repositorio; se mantienen en el espacio
   documental del trabajo de grado (#52).
-- La reserva sin cuenta reemplaza al registro público y a la reserva con cuenta, y la
-  cancelación por estado se sustituye por la reprogramación con causal (#79).
-
-### Retirado
-
-- PayU: código, configuración, columnas y pruebas; Wompi es la única pasarela (#78).
-- El registro público de turistas y el rol `TURISTA` (#79).
 
 ## [0.2.0] - 2026-10-13
 
@@ -155,6 +170,8 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 - CI con compilación, pruebas y cobertura mínima del 70 % en los servicios (JaCoCo) (#2).
 - Diagramas de arquitectura.
 
-[Sin publicar]: https://github.com/ggalindov/nativatrips/compare/v0.2.0...HEAD
+[Sin publicar]: https://github.com/ggalindov/nativatrips/compare/v0.4.0-sprint4...HEAD
+[0.4.0-sprint4]: https://github.com/ggalindov/nativatrips/compare/v0.3.0-sprint3...v0.4.0-sprint4
+[0.3.0-sprint3]: https://github.com/ggalindov/nativatrips/compare/v0.2.0...v0.3.0-sprint3
 [0.2.0]: https://github.com/ggalindov/nativatrips/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ggalindov/nativatrips/releases/tag/v0.1.0
