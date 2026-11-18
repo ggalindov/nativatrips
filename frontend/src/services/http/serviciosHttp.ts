@@ -48,6 +48,12 @@ interface DiaCalendarioApi {
   ocupacion: number;
 }
 
+interface RespuestaAsistenteApi {
+  contenido: string;
+  reserva: { senderoId: number; senderoNombre: string; fecha: string | null } | null;
+  derivacion: { motivo: 'PIDE_PERSONA' | 'NO_RESUELTO'; correo: string | null; whatsapp: string | null } | null;
+}
+
 interface LoginApi {
   accessToken: string;
   usuario: { email: string; nombreCompleto: string; rol: string };
@@ -526,13 +532,17 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
     },
 
     asistente: {
-      conversar: async (mensajes) =>
-        (
-          await pedir<{ contenido: string }>('/api/v1/asistente/mensajes', {
-            method: 'POST',
-            body: JSON.stringify({ mensajes }),
-          })
-        ).contenido,
+      conversar: async (mensajes) => {
+        const r = await pedir<RespuestaAsistenteApi>('/api/v1/asistente/mensajes', {
+          method: 'POST',
+          body: JSON.stringify({ mensajes }),
+        });
+        return {
+          texto: r.contenido,
+          reserva: r.reserva ? { senderoId: String(r.reserva.senderoId), senderoNombre: r.reserva.senderoNombre, fecha: r.reserva.fecha } : null,
+          derivacion: r.derivacion ?? null,
+        };
+      },
     },
     biblioteca: { listar: cargarBiblioteca },
     autenticacion: {

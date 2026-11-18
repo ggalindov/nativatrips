@@ -64,13 +64,29 @@ describe('asistente contra la API', () => {
     const fetchFalso = vi.fn<typeof fetch>().mockResolvedValue(respuesta(200, { rol: 'assistant', contenido: 'Lleva ropa abrigada.' }));
     const mensajes = [{ rol: 'user' as const, contenido: '¿Qué debo llevar?' }];
 
-    const texto = await serviciosCon(fetchFalso, null).asistente.conversar(mensajes);
+    const r = await serviciosCon(fetchFalso, null).asistente.conversar(mensajes);
 
     const [url, init] = fetchFalso.mock.calls[0];
     expect(url).toBe('https://api.test/api/v1/asistente/mensajes');
     expect(init?.method).toBe('POST');
     expect(JSON.parse(init?.body as string)).toEqual({ mensajes });
-    expect(texto).toBe('Lleva ropa abrigada.');
+    expect(r).toEqual({ texto: 'Lleva ropa abrigada.', reserva: null, derivacion: null });
+  });
+
+  it('traduce la reserva sugerida (RF-20) y la derivación con el contacto (RF-22)', async () => {
+    const fetchFalso = vi.fn<typeof fetch>().mockResolvedValue(
+      respuesta(200, {
+        rol: 'assistant',
+        contenido: 'Listo',
+        reserva: { senderoId: 3, senderoNombre: 'Lagunas de Siecha', fecha: '2026-11-28' },
+        derivacion: { motivo: 'PIDE_PERSONA', correo: 'reservas@ecopalacio.co', whatsapp: null },
+      }),
+    );
+
+    const r = await serviciosCon(fetchFalso, null).asistente.conversar([{ rol: 'user', contenido: 'Quiero reservar Siecha' }]);
+
+    expect(r?.reserva).toEqual({ senderoId: '3', senderoNombre: 'Lagunas de Siecha', fecha: '2026-11-28' });
+    expect(r?.derivacion).toEqual({ motivo: 'PIDE_PERSONA', correo: 'reservas@ecopalacio.co', whatsapp: null });
   });
 
   it('el límite de mensajes (429) se informa con su código para traducirlo', async () => {

@@ -578,7 +578,9 @@ export const es = {
     demo: 'Todavía estoy aprendiendo los caminos del páramo 🌱 Muy pronto podré responderte aquí mismo. Mientras tanto, nuestro equipo te ayuda encantado.',
     humanoTitulo: '¿Prefieres hablar con una persona?',
     humanoTexto: 'Nuestro equipo te atiende en horario de oficina.',
-    humanoContacto: '[CORREO DE CONTACTO] · [TELÉFONO]',
+    reservarEn: (sendero: string, fecha: string | null) => (fecha ? `Reservar ${sendero} · ${fecha}` : `Reservar ${sendero}`),
+    escribirCorreo: 'Escribir por correo',
+    escribirWhatsapp: 'Escribir por WhatsApp',
     aviso: 'Frailín puede equivocarse. Verifica cupos y precios antes de pagar.',
   },
   errores: {

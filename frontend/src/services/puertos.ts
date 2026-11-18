@@ -265,12 +265,34 @@ export interface MensajeAsistente {
   contenido: string;
 }
 
+/** RF-20: el visitante quiere reservar; el chat ofrece el formulario con esto ya elegido. */
+export interface ReservaSugerida {
+  senderoId: string;
+  senderoNombre: string;
+  /** Fecha ISO o null si el visitante no la dio. */
+  fecha: string | null;
+}
+
+/** RF-22: el asistente no pudo resolver o el visitante pidió hablar con una persona. */
+export interface Derivacion {
+  motivo: 'PIDE_PERSONA' | 'NO_RESUELTO';
+  correo: string | null;
+  /** Número internacional sin signos, para wa.me. */
+  whatsapp: string | null;
+}
+
+export interface RespuestaAsistente {
+  texto: string;
+  reserva: ReservaSugerida | null;
+  derivacion: Derivacion | null;
+}
+
 export interface AsistenteServicio {
   /**
    * Envía el historial completo y devuelve la respuesta del asistente. Devuelve `null` cuando no hay
    * servidor (datos en memoria): la interfaz muestra entonces su mensaje de demostración.
    */
-  conversar(mensajes: MensajeAsistente[]): Promise<string | null>;
+  conversar(mensajes: MensajeAsistente[]): Promise<RespuestaAsistente | null>;
 }
 
 export interface Servicios {
