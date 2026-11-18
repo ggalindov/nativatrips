@@ -96,32 +96,32 @@ class AsistenteControllerTest {
 
     @Test
     void unVisitanteSinSesionEsAtendido() throws Exception {
-        given(asistenteService.conversar(any())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
+        given(asistenteService.conversar(any(), any())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
 
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON))
                 .andExpect(status().isOk());
 
-        verify(asistenteService).conversar(any());
+        verify(asistenteService).conversar(any(), any());
     }
 
     @Test
     @WithMockUser(roles = "ADMINISTRADOR")
     void unaCuentaDelEquipoConversaComoVisitante() throws Exception {
-        given(asistenteService.conversar(any())).willReturn(ChatResponse.deAsistente("Hola"));
+        given(asistenteService.conversar(any(), any())).willReturn(ChatResponse.deAsistente("Hola"));
 
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(MENSAJE_JSON))
                 .andExpect(status().isOk());
 
-        verify(asistenteService).conversar(any());
+        verify(asistenteService).conversar(any(), any());
     }
 
     @Test
     void conversarConSesionEsAceptado() throws Exception {
-        given(asistenteService.conversar(any())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
+        given(asistenteService.conversar(any(), any())).willReturn(ChatResponse.deAsistente("Hola! En que te ayudo?"));
 
         mockMvc.perform(post("/api/v1/asistente/mensajes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -147,5 +147,20 @@ class AsistenteControllerTest {
         AuthenticatedUser principal = new AuthenticatedUser(UUID.randomUUID(), "guia@ecopalacio.co", Rol.GUIA_TURISTICO);
         return new UsernamePasswordAuthenticationToken(
                 principal, null, List.of(new SimpleGrantedAuthority("ROLE_GUIA_TURISTICO")));
+    }
+    @Test
+    void elEnlaceDeLaReservaDeLaCabeceraLlegaComoContextoDelAsistente() throws Exception {
+        given(asistenteService.conversar(any(), any())).willReturn(ChatResponse.deAsistente("Tu salida es el sabado"));
+
+        mockMvc.perform(post("/api/v1/asistente/mensajes")
+                        .header("X-Enlace-Reserva", "token-del-enlace")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(MENSAJE_JSON))
+                .andExpect(status().isOk());
+
+        var contexto = org.mockito.ArgumentCaptor.forClass(com.nativatrips.backend.asistente.service.AsistenteTools.Contexto.class);
+        verify(asistenteService).conversar(any(), contexto.capture());
+        org.assertj.core.api.Assertions.assertThat(contexto.getValue().enlaceReserva()).isEqualTo("token-del-enlace");
+        org.assertj.core.api.Assertions.assertThat(contexto.getValue().conReserva()).isTrue();
     }
 }

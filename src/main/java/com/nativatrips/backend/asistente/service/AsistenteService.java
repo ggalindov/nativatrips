@@ -34,7 +34,9 @@ public class AsistenteService {
             disponibilidad de cupos. Usa siempre las herramientas disponibles para responder con
             datos reales; nunca inventes precios, cupos, fechas o estados de reserva. Si te preguntan
             por una reserva, explica que se consulta y gestiona desde el enlace que llego al correo
-            del titular. Cuando el visitante quiera reservar un sendero concreto, usa
+            del titular; solo si tienes la herramienta consultar_mi_reserva el visitante tiene ese
+            enlace abierto y puedes usarla para responder sobre su propia reserva. Nunca reveles datos
+            de otras reservas. Cuando el visitante quiera reservar un sendero concreto, usa
             preparar_reserva para que vea el boton del formulario; no pidas sus datos personales por
             el chat. Si pide hablar con una persona, o si no puedes resolver lo que pregunta con tus
             herramientas, usa derivar_a_persona y dile que el portal le muestra como contactar al
@@ -61,12 +63,17 @@ public class AsistenteService {
     }
 
     public ChatResponse conversar(ChatRequest request) {
+        return conversar(request, AsistenteTools.Contexto.VACIO);
+    }
+
+    /** @param contexto el enlace de la reserva abierta y la IP, que el modelo no puede cambiar */
+    public ChatResponse conversar(ChatRequest request, AsistenteTools.Contexto contexto) {
         List<Map<String, Object>> messages = new ArrayList<>();
         for (MensajeChat mensaje : request.mensajes()) {
             messages.add(Map.of("role", mensaje.rol(), "content", mensaje.contenido()));
         }
 
-        List<Map<String, Object>> definicionesTools = tools.definiciones();
+        List<Map<String, Object>> definicionesTools = tools.definiciones(contexto);
         Efectos efectos = new Efectos();
 
         for (int intento = 0; intento < MAX_ITERACIONES_TOOLS; intento++) {
@@ -80,7 +87,7 @@ public class AsistenteService {
             }
 
             messages.add(Map.of("role", "assistant", "content", aBloquesDeSolicitud(respuesta.content())));
-            messages.add(Map.of("role", "user", "content", ejecutarTools(respuesta.content(), efectos)));
+            messages.add(Map.of("role", "user", "content", ejecutarTools(respuesta.content(), efectos, contexto)));
         }
 
         throw new BusinessRuleException(
@@ -93,11 +100,12 @@ public class AsistenteService {
         private String motivoDerivacion;
     }
 
-    private List<Map<String, Object>> ejecutarTools(List<ContentBlock> bloques, Efectos efectos) {
+    private List<Map<String, Object>> ejecutarTools(
+            List<ContentBlock> bloques, Efectos efectos, AsistenteTools.Contexto contexto) {
         List<Map<String, Object>> resultados = new ArrayList<>();
         for (ContentBlock bloque : bloques) {
             if ("tool_use".equals(bloque.type())) {
-                AsistenteTools.Resultado resultado = tools.ejecutarConEfectos(bloque.name(), bloque.input());
+                AsistenteTools.Resultado resultado = tools.ejecutarConEfectos(bloque.name(), bloque.input(), contexto);
                 if (resultado.reserva() != null) {
                     efectos.reserva = resultado.reserva();
                 }

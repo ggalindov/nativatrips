@@ -7,6 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 import com.nativatrips.backend.common.exception.ResourceNotFoundException;
+import com.nativatrips.backend.reservas.service.MiReservaService;
 import com.nativatrips.backend.reservas.service.ReservaService;
 import com.nativatrips.backend.senderos.service.SenderoService;
 import com.nativatrips.backend.asistente.dto.Derivacion;
@@ -34,12 +35,15 @@ class AsistenteToolsTest {
     @Mock
     private ReservaService reservaService;
 
+    @Mock
+    private MiReservaService miReservaService;
+
     private AsistenteTools asistenteTools;
 
     @BeforeEach
     void setUp() {
         Clock reloj = Clock.fixed(Instant.parse("2026-11-18T15:00:00Z"), ZoneId.of("America/Bogota"));
-        asistenteTools = new AsistenteTools(senderoService, reservaService, JsonMapper.builder().build(), reloj);
+        asistenteTools = new AsistenteTools(senderoService, reservaService, miReservaService, JsonMapper.builder().build(), reloj);
     }
 
     @Test
@@ -104,7 +108,7 @@ class AsistenteToolsTest {
     void prepararReservaDejaElSenderoYLaFechaParaElBoton() {
         given(senderoService.obtener(3L)).willReturn(sendero(3L, "Lagunas de Siecha"));
 
-        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3, "fecha", "2026-11-28"));
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3, "fecha", "2026-11-28"), AsistenteTools.Contexto.VACIO);
 
         assertThat(resultado.reserva()).isNotNull();
         assertThat(resultado.reserva().senderoId()).isEqualTo(3L);
@@ -118,7 +122,7 @@ class AsistenteToolsTest {
     void prepararReservaSinFechaDejaSoloElSendero() {
         given(senderoService.obtener(3L)).willReturn(sendero(3L, "Lagunas de Siecha"));
 
-        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3));
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3), AsistenteTools.Contexto.VACIO);
 
         assertThat(resultado.reserva().fecha()).isNull();
     }
@@ -127,7 +131,7 @@ class AsistenteToolsTest {
     void prepararReservaConUnaFechaPasadaNoOfreceElBoton() {
         given(senderoService.obtener(3L)).willReturn(sendero(3L, "Lagunas de Siecha"));
 
-        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3, "fecha", "2026-11-01"));
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 3, "fecha", "2026-11-01"), AsistenteTools.Contexto.VACIO);
 
         assertThat(resultado.reserva()).isNull();
         assertThat(resultado.contenido()).contains("ya paso");
@@ -137,7 +141,7 @@ class AsistenteToolsTest {
     void prepararReservaDeUnSenderoQueNoSeOfreceDevuelveError() {
         given(senderoService.obtener(9L)).willThrow(new ResourceNotFoundException("Sendero no encontrado"));
 
-        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 9));
+        var resultado = asistenteTools.ejecutarConEfectos("preparar_reserva", Map.of("senderoId", 9), AsistenteTools.Contexto.VACIO);
 
         assertThat(resultado.reserva()).isNull();
         assertThat(resultado.contenido()).contains("Sendero no encontrado");
@@ -145,11 +149,62 @@ class AsistenteToolsTest {
 
     @Test
     void derivarAPersonaDejaElMotivo() {
-        var pide = asistenteTools.ejecutarConEfectos("derivar_a_persona", Map.of("motivo", "PIDE_PERSONA"));
-        var otro = asistenteTools.ejecutarConEfectos("derivar_a_persona", Map.of("motivo", "cualquier cosa"));
+        var pide = asistenteTools.ejecutarConEfectos("derivar_a_persona", Map.of("motivo", "PIDE_PERSONA"), AsistenteTools.Contexto.VACIO);
+        var otro = asistenteTools.ejecutarConEfectos("derivar_a_persona", Map.of("motivo", "cualquier cosa"), AsistenteTools.Contexto.VACIO);
 
         assertThat(pide.motivoDerivacion()).isEqualTo(Derivacion.PIDE_PERSONA);
         assertThat(otro.motivoDerivacion()).isEqualTo(Derivacion.NO_RESUELTO);
         assertThat(pide.reserva()).isNull();
+    }
+    @Test
+    void consultarMiReservaSoloExisteConElEnlaceAbierto() {
+        assertThat(asistenteTools.definiciones())
+                .extracting(definicion -> definicion.get("name"))
+                .doesNotContain("consultar_mi_reserva");
+        assertThat(asistenteTools.definiciones(new AsistenteTools.Contexto("token", "203.0.113.7")))
+                .extracting(definicion -> definicion.get("name"))
+                .contains("consultar_mi_reserva");
+    }
+
+    @Test
+    void sinEnlaceElModeloNoPuedeLeerReservasAunqueLoIntente() {
+        var resultado = asistenteTools.ejecutarConEfectos("consultar_mi_reserva", Map.of(), AsistenteTools.Contexto.VACIO);
+
+        assertThat(resultado.contenido()).contains("Sin el enlace de la reserva");
+        org.mockito.Mockito.verifyNoInteractions(miReservaService);
+    }
+
+    @Test
+    void conElEnlaceDevuelveUnResumenSinDocumentosNiDatosDeContacto() {
+        var titular = new com.nativatrips.backend.reservas.dto.TitularResponse(
+                "Laura Gomez", com.nativatrips.backend.reservas.model.TipoDocumento.CC, "1020304050", "CO",
+                "laura@example.com", "57", "3001234567");
+        var acompanante = new com.nativatrips.backend.reservas.dto.PersonaResponse(
+                "Pedro Gomez", com.nativatrips.backend.reservas.model.TipoDocumento.CC, "99887766", "CO");
+        var reserva = new com.nativatrips.backend.reservas.dto.MiReservaResponse(
+                "NT-7Q4KX2", 3L, "Lagunas de Siecha", LocalDate.of(2026, 11, 28), java.time.LocalTime.of(7, 0), 2,
+                titular, List.of(acompanante), com.nativatrips.backend.reservas.model.EstadoReserva.CONFIRMADA, null,
+                "Marta Leon", "Portada del parque", com.nativatrips.backend.reservas.model.TipoGrupo.ESTANDAR, null, null);
+        given(miReservaService.consultar("token", "203.0.113.7")).willReturn(reserva);
+
+        var resultado = asistenteTools.ejecutarConEfectos(
+                "consultar_mi_reserva", Map.of(), new AsistenteTools.Contexto("token", "203.0.113.7"));
+
+        assertThat(resultado.contenido())
+                .contains("NT-7Q4KX2", "Lagunas de Siecha", "2026-11-28", "07:00", "CONFIRMADA", "Marta Leon")
+                .contains("\"acompanantesRegistrados\":1")
+                .doesNotContain("1020304050", "99887766", "laura@example.com", "3001234567", "Pedro");
+    }
+
+    @Test
+    void unEnlaceVencidoSeExplicaSinRomperLaConversacion() {
+        given(miReservaService.consultar(eq("vencido"), any()))
+                .willThrow(new com.nativatrips.backend.common.exception.BusinessRuleException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "El enlace no es valido o ya caduco"));
+
+        var resultado = asistenteTools.ejecutarConEfectos(
+                "consultar_mi_reserva", Map.of(), new AsistenteTools.Contexto("vencido", "203.0.113.7"));
+
+        assertThat(resultado.contenido()).contains("El enlace no es valido o ya caduco");
     }
 }
