@@ -71,6 +71,10 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
 - Frailin, el asistente del portal, responde con el asistente del servidor: envía la conversación
   completa, avisa en el idioma activo cuando se supera el límite de mensajes y, sin servidor,
   conserva su mensaje de demostración (NAT-175).
+- Desde el chat, el visitante abre el formulario con el sendero y la fecha que pidió (RF-20). Si
+  pide una persona, o si el asistente no resuelve dos veces seguidas, ve el contacto del equipo,
+  configurable con `ASISTENTE_CONTACTO_CORREO` y `ASISTENTE_CONTACTO_WHATSAPP` (RF-22). El
+  asistente responde en el idioma en que le escriben (NAT-94).
 
 ### Seguridad
 
