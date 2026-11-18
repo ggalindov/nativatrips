@@ -18,7 +18,7 @@ describe('catálogo de senderos', () => {
 
     await usuario.type(screen.getByRole('searchbox', { name: 'Buscar sendero' }), 'caquezas');
     expect(screen.getByRole('status')).toHaveTextContent('1 sendero');
-    expect(screen.getByRole('heading', { level: 3, name: 'Los Cáquezas' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Los Cáquezas' })).toBeInTheDocument();
 
     await usuario.click(screen.getByRole('button', { name: 'Exigente' }));
     expect(screen.getByRole('heading', { name: 'No encontramos senderos con esos filtros' })).toBeInTheDocument();

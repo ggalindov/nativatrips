@@ -27,9 +27,11 @@ interface Props {
   sendero: Sendero;
   numero?: number;
   onVistaRapida?: (s: Sendero) => void;
+  /** Nivel del título: h2 cuando la tarjeta cuelga directo del h1 de la página. */
+  nivelTitulo?: 'h2' | 'h3';
 }
 
-export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
+export function TarjetaSendero({ sendero: s, numero, onVistaRapida, nivelTitulo: Titulo = 'h3' }: Props) {
   const f = fotoDeSendero(s.clave);
   const { t } = useIdioma();
   const c = useContenido();
@@ -73,7 +75,7 @@ export function TarjetaSendero({ sendero: s, numero, onVistaRapida }: Props) {
           )}
         </div>
         <div className="flex flex-1 flex-col gap-4 p-6">
-          <h3 className="m-0 font-display text-2xl leading-tight font-bold tracking-tight">{s.nombre}</h3>
+          <Titulo className="m-0 font-display text-2xl leading-tight font-bold tracking-tight">{s.nombre}</Titulo>
           <p className="m-0 line-clamp-2 text-sm leading-relaxed text-tinta">{s.descripcion}</p>
           <dl className="m-0 grid grid-cols-3 gap-3 rounded-2xl bg-arena px-4 py-3 text-sm">
             {[
