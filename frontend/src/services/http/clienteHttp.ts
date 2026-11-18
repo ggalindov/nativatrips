@@ -50,6 +50,7 @@ function codigoPara(estado: number, cuerpo: ErrorApi | null): CodigoError | null
   if (delServidor) return delServidor;
   if (estado === 400) return 'datosInvalidos';
   if (estado === 401) return 'credenciales';
+  if (estado === 429) return 'demasiadosMensajes';
   if (estado === 413 || estado === 415) return 'archivoNoPermitido';
   if (estado >= 500) return 'servidor';
   return null;

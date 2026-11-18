@@ -574,6 +574,7 @@ export const fr: Diccionario = {
     noDisponible: 'Cette fonction sera disponible dès que le serveur l’activera.',
     cuentaNoEquipo: 'Ce compte n’appartient pas à l’équipe.',
     asistenteNoDisponible: 'L’assistant n’est pas disponible pour le moment.',
+    demasiadosMensajes: 'Vous avez envoyé trop de messages d’affilée. Réessayez dans un moment.',
     datosInvalidos: 'Vérifiez les informations du formulaire.',
     servidor: 'Un problème est survenu sur notre serveur. Réessayez dans quelques minutes.',
     sesionVencida: 'Votre session a expiré ou a été fermée. Reconnectez-vous.',

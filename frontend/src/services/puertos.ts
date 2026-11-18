@@ -259,7 +259,22 @@ export interface AutenticacionServicio {
   restablecerClave(token: string, nueva: string): Promise<void>;
 }
 
+/** Un turno de la conversación con el asistente, tal como lo espera la API. */
+export interface MensajeAsistente {
+  rol: 'user' | 'assistant';
+  contenido: string;
+}
+
+export interface AsistenteServicio {
+  /**
+   * Envía el historial completo y devuelve la respuesta del asistente. Devuelve `null` cuando no hay
+   * servidor (datos en memoria): la interfaz muestra entonces su mensaje de demostración.
+   */
+  conversar(mensajes: MensajeAsistente[]): Promise<string | null>;
+}
+
 export interface Servicios {
+  asistente: AsistenteServicio;
   senderos: SenderosServicio;
   catalogo: CatalogoServicio;
   reservas: ReservasServicio;
@@ -287,7 +302,8 @@ export type CodigoError =
   | 'enlaceRecuperacionVencido'
   | 'archivoNoPermitido'
   | 'reservasFuturas'
-  | 'pagosNoConfigurados';
+  | 'pagosNoConfigurados'
+  | 'demasiadosMensajes';
 
 /**
  * Error esperable de negocio. `codigo` permite mostrarlo en el idioma de la

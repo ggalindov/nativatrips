@@ -574,6 +574,7 @@ export const en: Diccionario = {
     noDisponible: 'This feature will be available once the server enables it.',
     cuentaNoEquipo: 'This account doesn’t belong to the staff.',
     asistenteNoDisponible: 'The assistant is not available right now.',
+    demasiadosMensajes: 'You sent many messages in a row. Please try again in a little while.',
     datosInvalidos: 'Please check the form details.',
     servidor: 'Something went wrong on our server. Please try again in a few minutes.',
     sesionVencida: 'Your session expired or was closed. Please sign in again.',

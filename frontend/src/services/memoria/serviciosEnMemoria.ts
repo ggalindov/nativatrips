@@ -347,6 +347,7 @@ export function crearServiciosEnMemoria({ latenciaMs = 250 }: Opciones = {}): Se
       }),
     },
 
+    asistente: { conversar: async () => null },
     biblioteca: { listar: cargarBiblioteca },
     autenticacion: {
       iniciarSesion: async (correo, clave) => {
