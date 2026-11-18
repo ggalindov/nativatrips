@@ -227,11 +227,15 @@ nativatrips/
 | Análisis y diseño                        | 13/09/2026  | Requerimientos, arquitectura y diagramas                                                           | Completado  |
 | Sprints 0 a 2 · `v0.1.0`, `v0.2.0`       | 11/10/2026  | Base técnica, senderos, reservas, autenticación y primera versión de pagos                         | Completado  |
 | Fase 0 · cimientos del repositorio       | 19/10/2026  | Protección de `main`, plantillas, OpenAPI, escaneo de secretos, dependencias y accesibilidad en CI | Completado  |
-| Sprint 3 · `v0.3.0-sprint3`              | 23/10/2026  | Capacidad por día, aforo protegido contra reservas simultáneas, reserva sin cuenta, roles, seguridad de sesión, asistente para visitantes y portal conectado a la API | En curso    |
-| Sprint 4 · `v0.4.0-sprint4`              | 06/11/2026  | Pago total en línea con Wompi, enlace mágico, solicitudes, recomendación, reprogramación, guía y biblioteca | Pendiente   |
-| Sprint 5 · `v0.5.0-sprint5`              | 20/11/2026  | Avisos al turista, indicadores, cuentas del equipo, reporte ambiental y despliegue                | Pendiente   |
+| Sprint 3 · `v0.3.0-sprint3`              | 23/10/2026  | Capacidad por día, aforo protegido contra reservas simultáneas, reserva sin cuenta, roles, seguridad de sesión y asistente para visitantes | Completado  |
+| Sprint 4 · `v0.4.0-sprint4`              | 18/11/2026  | Enlace mágico, pago con Wompi en sandbox, panel del equipo en vivo, revisión de grupos, guía, reprogramación, editor de senderos, correos en cuatro idiomas y asistente conectado al portal | Completado  |
+| Sprint 5 · `v0.5.0-sprint5`              | 28/02/2027  | Wompi en producción, recomendación, avisos por WhatsApp, indicadores, reporte ambiental y despliegue | Pendiente   |
 | Cierre de Proyecto de Grado 1            | 30/11/2026  | Informe de avance                                                                                 | Pendiente   |
 | Piloto con Eco Palacio · `v1.0.0`        | 04/04/2027  | Versión en producción y piloto de cuatro semanas                                                   | Pendiente   |
+
+Al cierre del Sprint 4 están completos en `main` 35 de los 48 requerimientos funcionales del
+alcance (72,9 %). Lo que falta del pago con Wompi depende de la cuenta y las llaves del
+beneficiario, por eso queda en el Sprint 5.
 
 El detalle de cada versión está en el [CHANGELOG](CHANGELOG.md).
 
@@ -259,14 +263,17 @@ El detalle de cada versión está en el [CHANGELOG](CHANGELOG.md).
 
 ## 11. Limitaciones conocidas y trabajo futuro
 
-- El pago en línea con Wompi se integra en el Sprint 4; hasta entonces el flujo de
-  pago no está disponible para el turista.
+- El pago con Wompi está integrado contra el sandbox; falta la prueba de punta a punta con las
+  llaves del sandbox y la activación en producción con la cuenta del beneficiario (Sprint 5).
+  Sin llaves configuradas, pagar responde 503 y el portal lo avisa en los cuatro idiomas.
 - El asistente conversacional depende de un servicio externo de pago por uso; sin llave
   configurada responde 503.
-- El portal todavía usa datos en memoria en algunas vistas mientras se conectan a la API.
+- El portal, los correos al turista y el asistente están en cuatro idiomas, pero las
+  descripciones de los senderos todavía solo están en español.
 - Falta la batería de pruebas de inyección de instrucciones del asistente, las pruebas de
   extremo a extremo y las pruebas de carga.
-- Avisos por WhatsApp, panel de indicadores y reporte ambiental quedan para el Sprint 5.
+- Motor de recomendación, avisos por WhatsApp, panel de indicadores y reporte ambiental quedan
+  para el Sprint 5.
 - Trabajo futuro: itinerarios de varios días, CRM de clientes y panel analítico.
 
 ---
