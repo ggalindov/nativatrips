@@ -10,6 +10,8 @@ import {
   suscribirCarga,
   techoDeAvance,
 } from '@/app/carga';
+import { fuenteVideoPaisajes, precargarMedio } from '@/app/medios';
+import { conexionLimitada } from '@/ui/conexion';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { Simbolo } from '@/ui/Logo';
 import { CURVA } from '@/ui/movimiento';
@@ -62,8 +64,10 @@ function documentoCargado(): Promise<void> {
  * Pantalla de carga de la primera visita: una persona sube por el sendero a
  * medida que llegan las fuentes, el documento con sus imágenes y el código de
  * la página abierta, y planta la bandera en la cima cuando todo está listo.
- * Si la carga se demora, avisa que la conexión está lenta y, más adelante,
- * ofrece entrar sin esperar.
+ * En la portada también espera el video de paisajes (en 480p en celulares),
+ * salvo con ahorro de datos o 2G, para que arranque sin cortes. Si la carga se
+ * demora, avisa que la conexión está lenta y, más adelante, ofrece entrar sin
+ * esperar.
  */
 export function PantallaCarga() {
   const reducido = useReducedMotion() ?? false;
@@ -88,6 +92,9 @@ export function PantallaCarga() {
     }
     registrarCarga(document.fonts?.ready ?? Promise.resolve());
     registrarCarga(documentoCargado());
+    if (window.location.pathname === '/' && !conexionLimitada()) {
+      registrarCarga(precargarMedio(fuenteVideoPaisajes()));
+    }
     const actualizar = () => {
       estado.current = estadoCarga();
       setCompleta(estado.current.completa);
@@ -103,11 +110,14 @@ export function PantallaCarga() {
     // El tiempo se cuenta desde que se abrió la página, no desde que llegó este código:
     // en una conexión lenta la espera empezó con la pantalla de carga de index.html.
     let cuadro = 0;
+    let anterior = performance.now();
     const tic = () => {
       const transcurrido = performance.now();
+      const entreCuadros = Math.min(100, transcurrido - anterior);
+      anterior = transcurrido;
       const { total, hechas, completa: lista } = estado.current;
       const techo = techoDeAvance(total === 0 ? 1 : hechas / total, lista, transcurrido);
-      setAvance((actual) => siguienteAvance(actual, techo, transcurrido));
+      setAvance((actual) => siguienteAvance(actual, techo, transcurrido, entreCuadros));
       setTiempo(transcurrido);
       cuadro = requestAnimationFrame(tic);
     };
@@ -137,7 +147,8 @@ export function PantallaCarga() {
 
   useEffect(() => {
     if (!listo || !visible) return;
-    const espera = setTimeout(cerrar, 650);
+    // Un momento en la cima con la bandera puesta antes de bajar el telón.
+    const espera = setTimeout(cerrar, 1100);
     return () => clearTimeout(espera);
   }, [listo, visible]);
 
@@ -154,8 +165,8 @@ export function PantallaCarga() {
           aria-valuemax={100}
           aria-valuenow={Math.round(avance * 100)}
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-8 bg-bosque text-white"
-          exit={{ clipPath: 'inset(0 0 100% 0)' }}
-          transition={{ duration: 0.9, ease: CURVA }}
+          exit={{ clipPath: 'inset(0 0 100% 0)', opacity: 0.6 }}
+          transition={{ duration: reducido ? 0.3 : 1.4, ease: CURVA }}
         >
           <svg viewBox="0 0 220 220" className="w-[min(70vw,320px)]" aria-hidden="true">
             <defs>
