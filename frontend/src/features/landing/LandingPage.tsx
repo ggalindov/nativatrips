@@ -226,7 +226,7 @@ function Galeria() {
       </div>
       <Carrusel />
       <p className="mx-auto m-0 px-4 text-center text-xs text-tinta-suave">
-        {g.creditos} · <Link to="/creditos">{g.verCreditos}</Link>
+        {g.creditos} · <Link to="/creditos" className="underline underline-offset-2">{g.verCreditos}</Link>
       </p>
     </section>
   );

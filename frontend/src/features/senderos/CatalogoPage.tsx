@@ -212,7 +212,7 @@ export function CatalogoPage() {
               ) : vista === 'cuadricula' ? (
                 <Escalonado inmediato key={`c-${texto}-${dificultad}`} como="ul" className="m-0 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-3">
                   {resultados.map((s, i) => (
-                    <TarjetaSendero key={s.id} sendero={s} numero={i + 1} onVistaRapida={setRapida} />
+                    <TarjetaSendero key={s.id} sendero={s} numero={i + 1} onVistaRapida={setRapida} nivelTitulo="h2" />
                   ))}
                 </Escalonado>
               ) : (

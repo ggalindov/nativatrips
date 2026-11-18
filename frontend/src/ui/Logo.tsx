@@ -63,7 +63,7 @@ export function Logo({ lema = 'PNN Chingaza · Colombia', tono = 'oscuro', compa
           <span className="font-light text-lima">Trips</span>
         </span>
         {compacto && firma && (
-          <span className={`mt-[3px] text-[9px] font-semibold tracking-[0.14em] whitespace-nowrap uppercase ${claro ? 'text-tinta-suave' : 'text-white/60'}`}>
+          <span className={`mt-[3px] text-[9px] font-semibold tracking-[0.14em] whitespace-nowrap uppercase ${claro ? 'text-tinta-suave' : 'text-white/80'}`}>
             <span className="font-normal normal-case italic">by</span> Ecopalacio <span className="text-lima">Chingaza</span>
           </span>
         )}

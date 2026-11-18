@@ -47,7 +47,7 @@ export function BarraNavegacion() {
       >
         <div
           className={`relative flex w-full max-w-6xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-4 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-500 ${
-            transparente ? 'border-white/15 bg-bosque/25' : 'border-white/10 bg-bosque/85 shadow-[0_18px_40px_-18px_rgb(19_32_26/0.7)]'
+            transparente ? 'border-white/15 bg-bosque/75' : 'border-white/10 bg-bosque/85 shadow-[0_18px_40px_-18px_rgb(19_32_26/0.7)]'
           }`}
         >
           <Link to="/" aria-label={t.nav.inicio} className="no-underline">
