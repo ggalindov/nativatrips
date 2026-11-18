@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { medioNoDisponible, medioPrecargado, precargarMedio, reiniciarMedios, suscribirMedios } from './medios';
 
 function respuesta(tipo: string, estado = 200) {
-  return new Response(new Blob(['datos'], { type: tipo }), { status: estado, headers: { 'content-type': tipo } });
+  return new Response('datos', { status: estado, headers: { 'content-type': tipo } });
 }
 
 describe('precarga de medios', () => {
