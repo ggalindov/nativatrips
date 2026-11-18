@@ -80,6 +80,10 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   revisión del grupo, el comprobante, el rechazo de pago, el aviso 48 horas antes, el nuevo
   enlace y la reprogramación. El historial por correo sale en el idioma en que se pidió. Los
   avisos al equipo siguen en español (NAT-117).
+- En la página de su reserva, el visitante puede preguntarle al asistente por ella: fecha, hora,
+  punto de encuentro, estado, guía o el cambio de fecha que pidió. El asistente usa el mismo enlace
+  y la misma validación que «mi reserva», no recibe documentos ni datos de contacto, y sin el
+  enlace no tiene acceso a ninguna reserva (HU-07, NAT-94).
 
 ### Seguridad
 
