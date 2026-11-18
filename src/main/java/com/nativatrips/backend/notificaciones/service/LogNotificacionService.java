@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Respaldo sin servidor de correo (MAIL_HOST vacio): los avisos quedan en el registro. El asunto
- * y el cuerpo llevan datos que escribio el turista, asi que se limpian para que no puedan
- * falsificar lineas del registro.
+ * lleva datos que escribio el turista, asi que se limpia para que no pueda falsificar lineas; el
+ * cuerpo no se escribe porque lleva enlaces con token.
  */
 public class LogNotificacionService implements NotificacionService {
 
@@ -17,11 +17,9 @@ public class LogNotificacionService implements NotificacionService {
     public void enviarCorreo(String destinatario, String asunto, String cuerpo) {
         String para = enmascarar(destinatario);
         log.info("[NOTIFICACION] Para: {} | Asunto: {}", para, Registro.limpio(asunto));
-        // El cuerpo lleva enlaces con token (recuperacion, mi reserva): solo en DEBUG, apagado por
-        // defecto. En local se ve con LOGGING_LEVEL_COM_NATIVATRIPS_BACKEND_NOTIFICACIONES=DEBUG.
-        if (log.isDebugEnabled()) {
-            log.debug("[NOTIFICACION] Cuerpo para {}: {}", para, Registro.limpio(cuerpo));
-        }
+        // El cuerpo lleva enlaces con token (recuperacion de la clave, mi reserva): nunca se escribe
+        // en el registro. Para ver los correos en desarrollo esta Mailpit en el docker compose.
+        log.debug("[NOTIFICACION] Cuerpo omitido ({} caracteres)", cuerpo == null ? 0 : cuerpo.length());
     }
 
     /** {@code juana.perez@correo.co} queda como {@code j***@correo.co}, sin saltos de linea. */
