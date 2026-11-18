@@ -68,6 +68,9 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   futuras al dar de baja un sendero (#79).
 - Portal y paneles conectados a la API real, con pago desde «mi reserva» y aviso en los cuatro
   idiomas cuando los pagos aún no están configurados (#79).
+- Frailin, el asistente del portal, responde con el asistente del servidor: envía la conversación
+  completa, avisa en el idioma activo cuando se supera el límite de mensajes y, sin servidor,
+  conserva su mensaje de demostración (NAT-175).
 
 ### Seguridad
 

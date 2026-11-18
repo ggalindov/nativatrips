@@ -4,12 +4,29 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useLocation } from 'react-router-dom';
 import { useIdioma } from '@/i18n/IdiomaContext';
 import { CURVA } from '@/ui/movimiento';
+import { useMensajeError } from '@/services/useConsulta';
+import { useServicios } from '@/services/ServiciosContext';
+import type { MensajeAsistente } from '@/services/puertos';
 import { Frailin } from './Frailin';
 
 interface Mensaje {
   id: number;
   rol: 'visitante' | 'frailin';
   texto: string;
+  /** Aviso propio de la interfaz (demostración o error): se muestra, pero no se reenvía al servidor. */
+  local?: boolean;
+}
+
+const MAX_TURNOS = 50;
+
+/** Historial que espera la API: solo lo conversado de verdad, empezando por quien escribe. */
+function turnosParaApi(mensajes: Mensaje[]): MensajeAsistente[] {
+  const turnos = mensajes
+    .filter((m) => !m.local)
+    .map((m): MensajeAsistente => ({ rol: m.rol === 'visitante' ? 'user' : 'assistant', contenido: m.texto }))
+    .slice(-MAX_TURNOS);
+  while (turnos.length > 0 && turnos[0].rol === 'assistant') turnos.shift();
+  return turnos;
 }
 
 const CLAVE_CONVERSACION = 'nativatrips.frailin';
@@ -81,13 +98,15 @@ function Escribiendo({ etiqueta }: { etiqueta: string }) {
 }
 
 /**
- * Frailín, el asistente del sitio (RF-19). Por ahora es solo la interfaz:
- * responde con un mensaje de demostración y ofrece hablar con una persona
- * (RF-22). La conexión con el asistente del servidor queda para después.
+ * Frailín, el asistente del sitio (RF-19). Envía la conversación al asistente del
+ * servidor y ofrece hablar con una persona (RF-22). Sin servidor (datos en memoria)
+ * responde con un mensaje de demostración.
  */
 export function Asistente() {
   const { t } = useIdioma();
   const c = t.chat;
+  const { asistente } = useServicios();
+  const mensajeDeError = useMensajeError();
   const { pathname } = useLocation();
   const [abierto, setAbierto] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>(leerConversacion);
@@ -152,13 +171,18 @@ export function Asistente() {
   const enviar = (contenido: string) => {
     const limpio = contenido.trim().slice(0, MAX_CARACTERES);
     if (!limpio || escribiendo) return;
-    setMensajes((m) => [...m, { id: Date.now(), rol: 'visitante', texto: limpio }]);
+    const historial: Mensaje[] = [...mensajes, { id: mensajes.length + 1, rol: 'visitante', texto: limpio }];
+    setMensajes(historial);
     setTexto('');
     setEscribiendo(true);
-    setTimeout(() => {
-      setMensajes((m) => [...m, { id: Date.now() + 1, rol: 'frailin', texto: c.demo }]);
-      setEscribiendo(false);
-    }, 1100);
+    asistente
+      .conversar(turnosParaApi(historial))
+      .then((respuesta): Mensaje => (respuesta === null ? { id: 0, rol: 'frailin', texto: c.demo, local: true } : { id: 0, rol: 'frailin', texto: respuesta }))
+      .catch((error: unknown): Mensaje => ({ id: 0, rol: 'frailin', texto: mensajeDeError(error), local: true }))
+      .then((respuesta) => {
+        setMensajes((m) => [...m, { ...respuesta, id: m.length + 1 }]);
+        setEscribiendo(false);
+      });
   };
 
   const alEnviar = (e: FormEvent) => {

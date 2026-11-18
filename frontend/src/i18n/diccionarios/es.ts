@@ -597,6 +597,7 @@ export const es = {
     noDisponible: 'Esta función estará disponible cuando el servidor la habilite.',
     cuentaNoEquipo: 'Esta cuenta no pertenece al equipo.',
     asistenteNoDisponible: 'El asistente no está disponible en este momento.',
+    demasiadosMensajes: 'Enviaste muchos mensajes seguidos. Escríbenos de nuevo en un rato.',
     datosInvalidos: 'Revisa los datos del formulario.',
     servidor: 'Tuvimos un problema en el servidor. Intenta de nuevo en unos minutos.',
     sesionVencida: 'Tu sesión venció o se cerró. Ingresa de nuevo.',

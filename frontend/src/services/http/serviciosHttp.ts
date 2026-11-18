@@ -525,6 +525,15 @@ export function crearServiciosHttp(opciones: OpcionesCliente): Servicios {
       resumenGerencia: async () => pendiente(),
     },
 
+    asistente: {
+      conversar: async (mensajes) =>
+        (
+          await pedir<{ contenido: string }>('/api/v1/asistente/mensajes', {
+            method: 'POST',
+            body: JSON.stringify({ mensajes }),
+          })
+        ).contenido,
+    },
     biblioteca: { listar: cargarBiblioteca },
     autenticacion: {
       iniciarSesion: async (correo, clave) => {
