@@ -50,8 +50,10 @@ export function reiniciarCarga() {
   cerrada = false;
 }
 
-/** El recorrido completo dura al menos esto, para que la subida se alcance a ver. */
-export const DURACION_MINIMA_MS = 1600;
+/** El recorrido completo dura al menos esto, para que la subida se vea con calma. */
+export const DURACION_MINIMA_MS = 3200;
+/** Constante de tiempo del suavizado: cuanto mayor, más pausada la marcha. */
+const SUAVIZADO_MS = 260;
 /** Desde aquí se avisa que la conexión parece lenta. */
 export const AVISO_LENTO_MS = 8000;
 /** Desde aquí se ofrece entrar sin esperar a que termine la carga. */
@@ -68,13 +70,24 @@ export function techoDeAvance(fraccionHecha: number, completa: boolean, tiempoMs
   return Math.min(0.96, fraccionHecha + espera);
 }
 
-/** Paso de un cuadro: se acerca suavemente al techo, sin superar el ritmo mínimo de la subida. */
-export function siguienteAvance(actual: number, techo: number, tiempoMs: number): number {
-  const limiteTiempo = Math.min(1, tiempoMs / DURACION_MINIMA_MS);
+/** Arranca y llega despacio, como quien toma ritmo y luego se detiene en la cima. */
+function suave(x: number): number {
+  return x * x * (3 - 2 * x);
+}
+
+/**
+ * Paso de un cuadro: se acerca suavemente al techo, sin superar el ritmo
+ * mínimo de la subida. El suavizado depende del tiempo entre cuadros, así que
+ * la marcha se ve igual en un celular a 30 cuadros por segundo que en una
+ * pantalla a 120.
+ */
+export function siguienteAvance(actual: number, techo: number, tiempoMs: number, cuadroMs = 1000 / 60): number {
+  const limiteTiempo = suave(Math.min(1, tiempoMs / DURACION_MINIMA_MS));
   const objetivo = Math.min(techo, limiteTiempo);
   if (objetivo <= actual) return actual;
-  const paso = (objetivo - actual) * 0.12;
-  return objetivo - actual < 0.002 ? objetivo : actual + paso;
+  const factor = 1 - Math.exp(-Math.max(0, cuadroMs) / SUAVIZADO_MS);
+  const siguiente = actual + (objetivo - actual) * factor;
+  return objetivo - siguiente < 0.002 ? objetivo : siguiente;
 }
 
 export type AvisoCarga = 'ninguno' | 'lento' | 'sin-conexion';

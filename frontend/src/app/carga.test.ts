@@ -51,6 +51,15 @@ describe('avance del excursionista', () => {
     expect(avance).toBe(1);
   });
 
+  it('arranca despacio y se ve igual a 30 que a 120 cuadros por segundo', () => {
+    expect(siguienteAvance(0, 1, DURACION_MINIMA_MS * 0.1)).toBeLessThan(0.01);
+    let lento = 0;
+    let rapido = 0;
+    for (let ms = 0; ms <= 2000; ms += 1000 / 30) lento = siguienteAvance(lento, 1, ms, 1000 / 30);
+    for (let ms = 0; ms <= 2000; ms += 1000 / 120) rapido = siguienteAvance(rapido, 1, ms, 1000 / 120);
+    expect(Math.abs(lento - rapido)).toBeLessThan(0.03);
+  });
+
   it('nunca retrocede', () => {
     expect(siguienteAvance(0.7, 0.5, 5000)).toBe(0.7);
   });
