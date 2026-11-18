@@ -555,7 +555,9 @@ export const en: Diccionario = {
     demo: 'I’m still learning the páramo’s paths 🌱 Very soon I’ll be able to answer you right here. In the meantime, our team is happy to help.',
     humanoTitulo: 'Would you rather talk to a person?',
     humanoTexto: 'Our team is available during office hours.',
-    humanoContacto: '[CORREO DE CONTACTO] · [TELÉFONO]',
+    reservarEn: (sendero: string, fecha: string | null) => (fecha ? `Book ${sendero} · ${fecha}` : `Book ${sendero}`),
+    escribirCorreo: 'Write by email',
+    escribirWhatsapp: 'Write on WhatsApp',
     aviso: 'Frailín can make mistakes. Check spots and prices before paying.',
   },
   errores: {
