@@ -75,6 +75,11 @@ Se publica como `v0.3.0-sprint3` en la review del Sprint 3 (23 de octubre de 202
   pide una persona, o si el asistente no resuelve dos veces seguidas, ve el contacto del equipo,
   configurable con `ASISTENTE_CONTACTO_CORREO` y `ASISTENTE_CONTACTO_WHATSAPP` (RF-22). El
   asistente responde en el idioma en que le escriben (NAT-94).
+- Los correos al turista salen en el idioma con el que reservó: español, inglés, francés o
+  portugués (RF-41). La reserva guarda el idioma del portal y lo usan el código de reserva, la
+  revisión del grupo, el comprobante, el rechazo de pago, el aviso 48 horas antes, el nuevo
+  enlace y la reprogramación. El historial por correo sale en el idioma en que se pidió. Los
+  avisos al equipo siguen en español (NAT-117).
 
 ### Seguridad
 
